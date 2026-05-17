@@ -4,13 +4,15 @@ module SU_MCP
   module Terrain
     # Derives compact conforming boundary plans for adaptive terrain cells.
     class AdaptiveOutputConformity
-      def self.cells(cells)
+      def self.cells(cells, state: nil, collapse_coplanar_edges: false)
         min_row_index = index_cells_by(cells, :min_row)
         max_row_index = index_cells_by(cells, :max_row)
         min_column_index = index_cells_by(cells, :min_column)
         max_column_index = index_cells_by(cells, :max_column)
 
         cells.map do |cell|
+          next cell if cell.key?(:emission_triangles)
+
           edge_splits = edge_splits_for(
             cell,
             min_row_index: min_row_index,
@@ -19,6 +21,12 @@ module SU_MCP
             max_column_index: max_column_index
           )
           boundary_vertices = boundary_vertices_for(cell, edge_splits)
+          boundary_vertices = collapsed_boundary_vertices(
+            cell,
+            boundary_vertices,
+            state,
+            collapse_coplanar_edges
+          )
           fan_center = fan_center_for(cell, boundary_vertices)
           cell.merge(
             boundary_vertices: boundary_vertices,
@@ -154,6 +162,65 @@ module SU_MCP
           top_columns.map { |column| [column, max_row] } +
           left_rows.map { |row| [min_column, row] }
         ).uniq
+      end
+
+      def self.collapsed_boundary_vertices(
+        cell,
+        boundary_vertices,
+        state,
+        collapse_coplanar_edges
+      )
+        return boundary_vertices unless collapse_coplanar_edges
+        return boundary_vertices unless state
+        return boundary_vertices if boundary_vertices.length == 4
+        return boundary_vertices unless boundary_vertices_linear_on_cell_edges?(
+          cell,
+          boundary_vertices,
+          state
+        )
+
+        rectangle_boundary_vertices(cell)
+      end
+
+      def self.rectangle_boundary_vertices(cell)
+        [
+          [cell.fetch(:min_column), cell.fetch(:min_row)],
+          [cell.fetch(:max_column), cell.fetch(:min_row)],
+          [cell.fetch(:max_column), cell.fetch(:max_row)],
+          [cell.fetch(:min_column), cell.fetch(:max_row)]
+        ]
+      end
+
+      def self.boundary_vertices_linear_on_cell_edges?(cell, boundary_vertices, state)
+        boundary_vertices.all? do |column, row|
+          actual = height_at(state, column, row)
+          expected = interpolated_cell_height(state, cell, column, row)
+          (actual - expected).abs <= 1e-9
+        end
+      end
+
+      # rubocop:disable Metrics/AbcSize
+      def self.interpolated_cell_height(state, cell, column, row)
+        min_column = cell.fetch(:min_column)
+        max_column = cell.fetch(:max_column)
+        min_row = cell.fetch(:min_row)
+        max_row = cell.fetch(:max_row)
+        x_span = max_column - min_column
+        y_span = max_row - min_row
+        y_ratio = y_span.zero? ? 0.0 : (row - min_row).to_f / y_span
+        x_ratio = x_span.zero? ? 0.0 : (column - min_column).to_f / x_span
+        z00 = height_at(state, min_column, min_row)
+        z10 = height_at(state, max_column, min_row)
+        z01 = height_at(state, min_column, max_row)
+        z11 = height_at(state, max_column, max_row)
+        left = z00 + ((z01 - z00) * y_ratio)
+        right = z10 + ((z11 - z10) * y_ratio)
+        left + ((right - left) * x_ratio)
+      end
+      # rubocop:enable Metrics/AbcSize
+
+      def self.height_at(state, column, row)
+        state.elevations.fetch((row * state.dimensions.fetch('columns')) + column)
       end
 
       def self.fan_center_for(cell, boundary_vertices)

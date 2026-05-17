@@ -34,7 +34,21 @@ class TerrainFeatureGeometryBuilderTest < Minitest::Test
     assert_equal([[0.0, 2.0], [6.0, 2.0]], corridor.dig('ownerLocalShape', 'centerline'))
   end
 
-  def test_derives_survey_planar_target_fairing_and_inferred_pressure_strengths
+  def test_corridor_forced_mask_inputs_are_reference_detail_not_broad_pressure
+    geometry = builder.build(state: state_with_features([corridor_feature('corridor-1')]))
+    forced_roles = geometry.reference_segments.map { |segment| segment.fetch('role') } -
+                   ['centerline']
+    broad_pressure = geometry.pressure_regions.find do |region|
+      region.fetch('id') == 'corridor-1:corridor_pressure'
+    end
+
+    assert_equal(%w[endpoint_cap endpoint_cap side_transition side_transition],
+                 forced_roles.sort)
+    assert_equal('corridor', broad_pressure.fetch('primitive'))
+    assert_equal('centerline', broad_pressure.fetch('role'))
+  end
+
+  def test_derives_survey_target_fairing_and_inferred_pressure_strengths
     geometry = builder.build(state: state_with_features([
                                                           survey_feature('survey-1'),
                                                           planar_feature('planar-1'),
@@ -47,10 +61,124 @@ class TerrainFeatureGeometryBuilderTest < Minitest::Test
     end
 
     assert_equal('firm', strengths_by_role.fetch('survey_anchor'))
-    assert_equal('firm', strengths_by_role.fetch('planar_support'))
+    refute_includes(strengths_by_role.keys, 'planar_support')
     assert_equal('soft', strengths_by_role.fetch('target_support'))
     assert_equal('soft', strengths_by_role.fetch('fairing_support'))
     assert_equal('soft', strengths_by_role.fetch('hard_break'))
+  end
+
+  def test_planar_region_without_falloff_does_not_emit_broad_pressure
+    geometry = builder.build(state: state_with_features([planar_feature('planar-1')]))
+    planar_pressure = geometry.pressure_regions.find do |region|
+      region.fetch('role') == 'planar_support'
+    end
+
+    assert_nil(planar_pressure)
+    assert_empty(geometry.reference_segments)
+  end
+
+  def test_planar_region_with_falloff_emits_edge_detail_only
+    geometry = builder.build(
+      state: state_with_features([
+                                   planar_feature(
+                                     'planar-1',
+                                     blend: { 'distance' => 1.0, 'falloff' => 'smooth' }
+                                   )
+                                 ])
+    )
+
+    assert_empty(geometry.pressure_regions)
+    assert_equal(%w[falloff falloff falloff falloff],
+                 geometry.reference_segments.map { |segment| segment.fetch('role') })
+  end
+
+  def test_later_absolute_planar_region_suppresses_older_soft_pressure_inside_support
+    geometry = builder.build(
+      state: state_with_features([
+                                   target_feature('target-under-planar', radius: 1.0),
+                                   planar_feature('planar-overwrite', revision: 2)
+                                 ])
+    )
+
+    assert_empty(geometry.pressure_regions)
+  end
+
+  def test_newer_target_region_on_top_of_absolute_planar_region_is_preserved
+    geometry = builder.build(
+      state: state_with_features([
+                                   planar_feature('planar-base', revision: 1),
+                                   target_feature('target-over-planar', radius: 1.0, revision: 2)
+                                 ])
+    )
+
+    roles = geometry.pressure_regions.map { |region| region.fetch('role') }
+
+    assert_equal(['target_support'], roles)
+  end
+
+  def test_later_absolute_planar_region_suppresses_older_corridor_detail_inside_support
+    geometry = builder.build(
+      state: state_with_features([
+                                   corridor_feature(
+                                     'corridor-under-planar',
+                                     start_point: [2.0, 2.0],
+                                     end_point: [3.0, 2.0],
+                                     width: 1.0,
+                                     side_blend: { 'distance' => 0.0, 'falloff' => 'none' }
+                                   ),
+                                   planar_feature('planar-overwrite', revision: 2)
+                                 ])
+    )
+
+    assert_empty(geometry.reference_segments)
+    assert_empty(geometry.pressure_regions)
+  end
+
+  def test_later_absolute_planar_region_preserves_crossing_corridor_edge_detail
+    geometry = builder.build(
+      state: state_with_features([
+                                   corridor_feature('corridor-crossing'),
+                                   planar_feature('planar-overwrite', revision: 2)
+                                 ])
+    )
+
+    roles = geometry.reference_segments.map { |segment| segment.fetch('role') }
+
+    assert_includes(roles, 'side_transition')
+    assert_includes(roles, 'endpoint_cap')
+  end
+
+  def test_newer_corridor_on_top_of_absolute_planar_region_is_preserved
+    geometry = builder.build(
+      state: state_with_features([
+                                   planar_feature('planar-base', revision: 1),
+                                   corridor_feature(
+                                     'corridor-over-planar',
+                                     start_point: [2.0, 2.0],
+                                     end_point: [3.0, 2.0],
+                                     width: 1.0,
+                                     side_blend: { 'distance' => 0.0, 'falloff' => 'none' },
+                                     revision: 2
+                                   )
+                                 ])
+    )
+
+    assert_equal(5, geometry.reference_segments.length)
+    assert_equal(['corridor'], geometry.pressure_regions.map { |region| region.fetch('primitive') })
+  end
+
+  def test_later_absolute_planar_region_does_not_suppress_hard_protected_regions
+    geometry = builder.build(
+      state: state_with_features([
+                                   preserve_feature('preserve-under-planar'),
+                                   planar_feature('planar-overwrite', revision: 2)
+                                 ])
+    )
+
+    assert_equal(['preserve-under-planar:protected'],
+                 geometry.protected_regions.map { |region| region.fetch('id') })
+    assert_equal(['protected_boundary'],
+                 geometry.pressure_regions.map { |region| region.fetch('role') })
   end
 
   def test_derives_exact_geometry_for_all_geometry_producing_intents
@@ -116,7 +244,7 @@ class TerrainFeatureGeometryBuilderTest < Minitest::Test
     assert_equal('none', geometry.failure_category)
     assert_equal(2, geometry.output_anchor_candidates.length)
     assert_equal(1, geometry.protected_regions.length)
-    assert_equal(7, geometry.pressure_regions.length)
+    assert_equal(6, geometry.pressure_regions.length)
     assert_equal(5, geometry.reference_segments.length)
     assert_equal(8, geometry.affected_windows.length)
   end
@@ -146,7 +274,7 @@ class TerrainFeatureGeometryBuilderTest < Minitest::Test
     end
     assert_equal(%w[firm rectangle], pressures_by_role.fetch('protected_boundary'))
     assert_equal(%w[firm circle], pressures_by_role.fetch('survey_anchor'))
-    assert_equal(%w[firm rectangle], pressures_by_role.fetch('planar_support'))
+    refute_includes(pressures_by_role.keys, 'planar_support')
     assert_equal(%w[soft circle], pressures_by_role.fetch('target_support'))
     assert_equal(%w[soft rectangle], pressures_by_role.fetch('fairing_support'))
     assert_equal(%w[soft rectangle], pressures_by_role.fetch('hard_break'))
@@ -185,7 +313,7 @@ class TerrainFeatureGeometryBuilderTest < Minitest::Test
     )
   end
 
-  def feature(id:, kind:, roles:, payload:, affected_window: default_affected_window)
+  def feature(id:, kind:, roles:, payload:, affected_window: default_affected_window, revision: 1)
     {
       'id' => id,
       'kind' => kind,
@@ -195,7 +323,7 @@ class TerrainFeatureGeometryBuilderTest < Minitest::Test
       'payload' => payload,
       'affectedWindow' => affected_window,
       'provenance' => { 'originClass' => 'test', 'originOperation' => kind,
-                        'createdAtRevision' => 1, 'updatedAtRevision' => 1 }
+                        'createdAtRevision' => revision, 'updatedAtRevision' => revision }
     }
   end
 
@@ -218,15 +346,23 @@ class TerrainFeatureGeometryBuilderTest < Minitest::Test
                   })
   end
 
-  def corridor_feature(id, width: 2.0, side_blend: { 'distance' => 1.0, 'falloff' => 'cosine' })
+  def corridor_feature(id, width: 2.0, side_blend: { 'distance' => 1.0, 'falloff' => 'cosine' },
+                       start_point: [0.0, 2.0], end_point: [6.0, 2.0], revision: 1)
     payload = {
-      'startControl' => { 'point' => { 'x' => 0.0, 'y' => 2.0 }, 'elevation' => 1.0 },
-      'endControl' => { 'point' => { 'x' => 6.0, 'y' => 2.0 }, 'elevation' => 2.0 }
+      'startControl' => {
+        'point' => { 'x' => start_point.fetch(0), 'y' => start_point.fetch(1) },
+        'elevation' => 1.0
+      },
+      'endControl' => {
+        'point' => { 'x' => end_point.fetch(0), 'y' => end_point.fetch(1) },
+        'elevation' => 2.0
+      }
     }
     payload['width'] = width if width
     payload['sideBlend'] = side_blend if side_blend
     feature(id: id, kind: 'linear_corridor',
-            roles: %w[centerline side_transition endpoint_cap control], payload: payload)
+            roles: %w[centerline side_transition endpoint_cap control], payload: payload,
+            revision: revision)
   end
 
   def survey_feature(id)
@@ -240,19 +376,21 @@ class TerrainFeatureGeometryBuilderTest < Minitest::Test
                        'supportRegion' => support_region })
   end
 
-  def planar_feature(id)
+  def planar_feature(id, blend: nil, revision: 1)
+    region = { 'type' => 'rectangle', 'bounds' => bounds }
+    region['blend'] = blend if blend
     feature(id: id, kind: 'planar_region', roles: %w[support boundary],
-            payload: { 'region' => { 'type' => 'rectangle', 'bounds' => bounds } })
+            payload: { 'region' => region }, revision: revision)
   end
 
-  def target_feature(id)
+  def target_feature(id, radius: 2.0, revision: 1)
     region = {
       'type' => 'circle',
       'center' => { 'x' => 3.0, 'y' => 3.0 },
-      'radius' => 2.0
+      'radius' => radius
     }
     feature(id: id, kind: 'target_region', roles: %w[support falloff],
-            payload: { 'region' => region })
+            payload: { 'region' => region }, revision: revision)
   end
 
   def fairing_feature(id)

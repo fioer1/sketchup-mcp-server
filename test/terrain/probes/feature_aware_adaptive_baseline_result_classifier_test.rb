@@ -34,6 +34,40 @@ class FeatureAwareAdaptiveBaselineResultClassifierTest < Minitest::Test
     assert_equal('neutral', row.fetch('verdict'))
   end
 
+  def test_fails_rows_when_supported_forced_subdivision_pressure_was_skipped
+    row = classify(
+      current_row(
+        quality_status: 'captured',
+        forced_summary: {
+          'supportedInputCounts' => { 'anchor' => 1 },
+          'skippedInputCounts' => {},
+          'hitCount' => 0
+        }
+      )
+    )
+
+    assert_equal('failed', row.fetch('verdict'))
+    assert_includes(row.fetch('verdictReason'), 'forced subdivision')
+  end
+
+  def test_broad_corridor_density_is_not_classified_as_topology_improvement
+    row = classify(
+      current_row(
+        face_count: 108,
+        density_hits: 20,
+        quality_status: 'captured',
+        quality_summary: {
+          'status' => 'captured',
+          'families' => { 'linear_corridor' => { 'sampleCount' => 8 } },
+          'roleSummaries' => { 'centerline' => { 'sampleCount' => 8 } }
+        }
+      )
+    )
+
+    assert_equal('neutral', row.fetch('verdict'))
+    refute_includes(row.fetch('verdictReason'), 'feature policy applied')
+  end
+
   def test_classifies_refused_missing_policy_and_slow_rows
     assert_equal('failed', classify(current_row(outcome: 'refused')).fetch('verdict'))
     assert_equal('failed', classify(current_row(policy: nil)).fetch('verdict'))
@@ -75,7 +109,9 @@ class FeatureAwareAdaptiveBaselineResultClassifierTest < Minitest::Test
     density_hits: 0,
     fallback_counts: {},
     policy: :default,
-    quality_status: nil
+    quality_status: nil,
+    forced_summary: nil,
+    quality_summary: nil
   )
     {
       'rowId' => 'feature-row',
@@ -84,23 +120,35 @@ class FeatureAwareAdaptiveBaselineResultClassifierTest < Minitest::Test
       'faceCount' => face_count,
       'dirtyWindow' => { 'columns' => 9, 'rows' => 9 },
       'patchScope' => { 'affectedPatchCount' => 1, 'replacementPatchCount' => 9 },
-      'adaptivePolicySummary' => policy_summary(policy, density_hits, fallback_counts),
-      'featureQualitySummary' => quality_summary(quality_status)
+      'adaptivePolicySummary' => policy_summary(
+        policy,
+        density_hits,
+        fallback_counts,
+        forced_summary
+      ),
+      'featureQualitySummary' => quality_payload(quality_summary, quality_status)
     }.compact
   end
 
-  def policy_summary(policy, density_hits, fallback_counts)
+  def quality_payload(explicit_summary, status)
+    return explicit_summary if explicit_summary
+
+    quality_summary_for_status(status)
+  end
+
+  def policy_summary(policy, density_hits, fallback_counts, forced_summary)
     return nil if policy.nil?
 
     {
       'policyFingerprint' => 'policy',
       'densityHitCount' => density_hits,
       'hardProtectedToleranceHitCount' => 0,
-      'fallbackCounts' => fallback_counts
-    }
+      'fallbackCounts' => fallback_counts,
+      'forcedSubdivisionSummary' => forced_summary
+    }.compact
   end
 
-  def quality_summary(status)
+  def quality_summary_for_status(status)
     return nil unless status
 
     { 'status' => status }

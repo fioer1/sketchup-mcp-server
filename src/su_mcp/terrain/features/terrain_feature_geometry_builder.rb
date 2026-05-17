@@ -8,6 +8,7 @@ require_relative 'terrain_feature_geometry'
 module SU_MCP
   module Terrain
     # Derives executable, SketchUp-free output constraints from durable feature intent.
+    # rubocop:disable Metrics/ClassLength
     class TerrainFeatureGeometryBuilder
       FEATURE_DERIVERS = {
         'preserve_region' => :derive_preserve,
@@ -33,9 +34,14 @@ module SU_MCP
 
         feature_source = features ||
                          EffectiveFeatureView.new(state.feature_intent).selection.fetch(:features)
+        @feature_revisions = feature_source.to_h do |feature|
+          [feature.fetch('id'), feature_revision(feature)]
+        end
+        @absolute_planar_regions = absolute_planar_regions_for(feature_source)
         feature_source.each do |feature|
           derive_feature(feature)
         end
+        suppress_occluded_output_geometry
 
         TerrainFeatureGeometry.new(
           outputAnchorCandidates: @anchors,
@@ -52,6 +58,27 @@ module SU_MCP
       private
 
       attr_reader :state
+
+      def feature_revision(feature)
+        Integer(feature.dig('provenance', 'updatedAtRevision') ||
+          feature.dig('lifecycle', 'updatedAtRevision') ||
+          0)
+      end
+
+      def absolute_planar_regions_for(features)
+        features.filter_map do |feature|
+          next unless feature.fetch('kind') == 'planar_region'
+          next if positive_region_blend?(feature)
+
+          {
+            feature_id: feature.fetch('id'),
+            revision: feature_revision(feature),
+            region: primitive_region(feature.dig('payload', 'region'))
+          }
+        rescue ArgumentError, KeyError
+          nil
+        end
+      end
 
       def derive_feature(feature)
         append_affected_window(feature)
@@ -137,7 +164,10 @@ module SU_MCP
       end
 
       def derive_planar(feature)
-        derive_region_pressure(feature, role: 'planar_support', strength: 'firm')
+        region = primitive_region(feature.dig('payload', 'region'))
+        return unless positive_region_blend?(feature)
+
+        add_region_boundary_segments(feature, region, role: 'falloff')
       end
 
       def derive_target(feature)
@@ -155,6 +185,13 @@ module SU_MCP
       def derive_region_pressure(feature, role:, strength:, region_key: 'region')
         region = primitive_region(feature.dig('payload', region_key))
         @pressure_regions << pressure_from_region(feature, region, role, strength)
+      end
+
+      def positive_region_blend?(feature)
+        blend = FeatureIntentSet.stringify_keys(feature.dig('payload', 'region', 'blend') || {})
+        distance = blend.fetch('distance', 0.0).to_f
+        falloff = blend.fetch('falloff', distance.positive? ? 'smooth' : 'none').to_s
+        distance.positive? && falloff != 'none'
       end
 
       # rubocop:disable Metrics/AbcSize
@@ -228,6 +265,141 @@ module SU_MCP
         }
       end
 
+      def add_region_boundary_segments(feature, region, role:)
+        if region.fetch('primitive') == 'rectangle'
+          add_rectangle_boundary_segments(feature, region.fetch('ownerLocalBounds'), role)
+        else
+          add_circle_boundary_segments(feature, region.fetch('ownerLocalCenterRadius'), role)
+        end
+      end
+
+      def add_rectangle_boundary_segments(feature, shape, role)
+        min, max = shape
+        min_x, max_x = [min.fetch(0), max.fetch(0)].minmax
+        min_y, max_y = [min.fetch(1), max.fetch(1)].minmax
+        [
+          [[min_x, min_y], [max_x, min_y]],
+          [[max_x, min_y], [max_x, max_y]],
+          [[max_x, max_y], [min_x, max_y]],
+          [[min_x, max_y], [min_x, min_y]]
+        ].each do |start_point, end_point|
+          @reference_segments << segment(feature, role, start_point, end_point)
+        end
+      end
+
+      def add_circle_boundary_segments(feature, shape, role)
+        center_x, center_y, radius = shape
+        segment_count = 16
+        points = segment_count.times.map do |index|
+          angle = (2.0 * Math::PI * index) / segment_count
+          [center_x + (Math.cos(angle) * radius), center_y + (Math.sin(angle) * radius)]
+        end
+        points.zip(points.rotate).each do |start_point, end_point|
+          @reference_segments << segment(feature, role, start_point, end_point)
+        end
+      end
+
+      def suppress_occluded_output_geometry
+        return if @absolute_planar_regions.empty?
+
+        @anchors.reject! do |anchor|
+          anchor.fetch('strength') != 'hard' && occluded_point?(
+            anchor.fetch('featureId'),
+            anchor.fetch('ownerLocalPoint')
+          )
+        end
+        @pressure_regions.reject! do |region|
+          !region.fetch('role').to_s.include?('protected') && occluded_geometry?(region)
+        end
+        @reference_segments.reject! { |segment| occluded_geometry?(segment) }
+      end
+
+      def occluded_geometry?(entry)
+        @absolute_planar_regions.any? do |planar|
+          next false unless newer_planar_region?(planar, entry['featureId'])
+
+          entry_contained_by_region?(entry, planar.fetch(:region))
+        end
+      end
+
+      def newer_planar_region?(planar, feature_id)
+        planar.fetch(:revision) > @feature_revisions.fetch(feature_id, 0)
+      end
+
+      def occluded_point?(feature_id, point)
+        @absolute_planar_regions.any? do |planar|
+          next false unless planar.fetch(:revision) > @feature_revisions.fetch(feature_id, 0)
+
+          point_contained_by_region?(point, planar.fetch(:region))
+        end
+      end
+
+      def entry_contained_by_region?(entry, region)
+        if entry.key?('ownerLocalStart') && entry.key?('ownerLocalEnd')
+          return segment_contained_by_region?(entry, region)
+        end
+
+        shape = entry['ownerLocalShape'] || entry['ownerLocalBounds'] ||
+                entry['ownerLocalCenterRadius']
+        case entry['primitive']
+        when 'rectangle'
+          rectangle_contained_by_region?(shape, region)
+        when 'circle'
+          circle_contained_by_region?(shape, region)
+        when 'corridor'
+          segment_points_contained_by_region?(shape.fetch('centerline'), region)
+        else
+          false
+        end
+      rescue KeyError, TypeError, NoMethodError
+        false
+      end
+
+      def segment_contained_by_region?(segment, region)
+        segment_points_contained_by_region?(
+          [segment.fetch('ownerLocalStart'), segment.fetch('ownerLocalEnd')],
+          region
+        )
+      end
+
+      def segment_points_contained_by_region?(points, region)
+        points.all? { |point| point_contained_by_region?(point, region) }
+      end
+
+      def rectangle_contained_by_region?(shape, region)
+        min, max = shape
+        [[min.fetch(0), min.fetch(1)], [min.fetch(0), max.fetch(1)],
+         [max.fetch(0), min.fetch(1)], [max.fetch(0), max.fetch(1)]].all? do |point|
+          point_contained_by_region?(point, region)
+        end
+      end
+
+      def circle_contained_by_region?(shape, region)
+        center_x, center_y, radius = shape
+        [[center_x - radius, center_y], [center_x + radius, center_y],
+         [center_x, center_y - radius], [center_x, center_y + radius]].all? do |point|
+          point_contained_by_region?(point, region)
+        end
+      end
+
+      def point_contained_by_region?(point, region)
+        case region.fetch('primitive')
+        when 'rectangle'
+          min, max = region.fetch('ownerLocalBounds')
+          point.fetch(0).between?(*[min.fetch(0), max.fetch(0)].minmax) &&
+            point.fetch(1).between?(*[min.fetch(1), max.fetch(1)].minmax)
+        when 'circle'
+          center_x, center_y, radius = region.fetch('ownerLocalCenterRadius')
+          dx = point.fetch(0) - center_x
+          dy = point.fetch(1) - center_y
+          ((dx * dx) + (dy * dy)) <= radius * radius
+        else
+          false
+        end
+      rescue KeyError, TypeError
+        false
+      end
+
       def append_affected_window(feature)
         window = FeatureIntentSet.stringify_keys(feature.fetch('affectedWindow', nil))
         return unless window.is_a?(Hash) && window['min'].is_a?(Hash) && window['max'].is_a?(Hash)
@@ -291,5 +463,6 @@ module SU_MCP
         }
       end
     end
+    # rubocop:enable Metrics/ClassLength
   end
 end

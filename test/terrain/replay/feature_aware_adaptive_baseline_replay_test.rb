@@ -105,7 +105,12 @@ class FeatureAwareAdaptiveBaselineReplayTest < Minitest::Test
       {
         toleranceRange: { min: 0.0025, max: 0.01 },
         densityHitCount: 3,
-        fallbackCounts: { absentFeatureGeometry: 0, partialFeatureGeometry: 0 }
+        fallbackCounts: { absentFeatureGeometry: 0, partialFeatureGeometry: 0 },
+        forcedSubdivisionSummary: {
+          supportedInputCounts: { anchor: 1 },
+          skippedInputCounts: {},
+          hitCount: 2
+        }
       },
       row.fetch(:adaptivePolicySummary)
     )
@@ -471,7 +476,12 @@ class FeatureAwareAdaptiveBaselineReplayTest < Minitest::Test
         adaptivePolicySummary: {
           toleranceRange: { min: 0.0025, max: 0.01 },
           densityHitCount: 3,
-          fallbackCounts: { absentFeatureGeometry: 0, partialFeatureGeometry: 0 }
+          fallbackCounts: { absentFeatureGeometry: 0, partialFeatureGeometry: 0 },
+          forcedSubdivisionSummary: {
+            supportedInputCounts: { anchor: 1 },
+            skippedInputCounts: {},
+            hitCount: 2
+          }
         },
         affectedPatchScope: { patches: %w[adaptive-patch-v1-c1-r1] },
         renderingSummary: { status: 'captured', topology: 'single_mesh' },

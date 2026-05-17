@@ -52,6 +52,76 @@ class FeatureAwareAdaptiveBaselineQualitySamplerTest < Minitest::Test
     assert_equal(0.123, result.fetch(:seconds))
   end
 
+  def test_records_corridor_role_summaries_without_treating_centerline_as_detail
+    state = build_state(feature_intent: feature_intent_with_corridor)
+    sampler = SU_MCP::Terrain::FeatureAwareAdaptiveBaselineQualitySampler.new(
+      model: FakeModel.new(FakeOwner.new('terrain-main')),
+      repository: FakeRepository.new(state),
+      surface_query: PlanarSurfaceQuery.new(offset: 0.002),
+      sample_budget: 20,
+      clock: SteppingClock.new
+    )
+
+    result = sampler.capture(
+      row: {
+        'rowId' => 'corridor-row',
+        'publicCommandPayload' => {
+          'targetReference' => { 'sourceElementId' => 'terrain-main' }
+        }
+      },
+      result: {
+        output: {
+          derivedMesh: {
+            simplificationTolerance: 0.01
+          }
+        }
+      },
+      baseline_evidence: {}
+    )
+
+    summary = result.fetch(:summary)
+
+    assert_equal('captured', summary.fetch(:status))
+    assert_includes(summary.fetch(:families).keys, :linear_corridor)
+    assert_operator(summary.dig(:roleSummaries, :side_transition, :sampleCount), :>, 0)
+    assert_operator(summary.dig(:roleSummaries, :endpoint_cap, :sampleCount), :>, 0)
+    assert_operator(summary.dig(:roleSummaries, :centerline, :sampleCount), :>, 0)
+  end
+
+  def test_samples_no_falloff_planar_region_without_output_pressure
+    state = build_state(feature_intent: feature_intent_with_planar_region)
+    sampler = SU_MCP::Terrain::FeatureAwareAdaptiveBaselineQualitySampler.new(
+      model: FakeModel.new(FakeOwner.new('terrain-main')),
+      repository: FakeRepository.new(state),
+      surface_query: PlanarSurfaceQuery.new(offset: 0.002),
+      sample_budget: 16,
+      clock: SteppingClock.new
+    )
+
+    result = sampler.capture(
+      row: {
+        'rowId' => 'planar-region',
+        'publicCommandPayload' => {
+          'targetReference' => { 'sourceElementId' => 'terrain-main' }
+        }
+      },
+      result: {
+        output: {
+          derivedMesh: {
+            simplificationTolerance: 0.01
+          }
+        }
+      },
+      baseline_evidence: {}
+    )
+
+    summary = result.fetch(:summary)
+
+    assert_equal('captured', summary.fetch(:status))
+    assert_equal(16, summary.dig(:families, :planar_region, :sampleCount))
+    assert_equal(16, summary.dig(:roleSummaries, :support, :sampleCount))
+  end
+
   BASIS = {
     'xAxis' => [1.0, 0.0, 0.0],
     'yAxis' => [0.0, 1.0, 0.0],
@@ -136,10 +206,100 @@ class FeatureAwareAdaptiveBaselineQualitySamplerTest < Minitest::Test
       'revision' => 1,
       'effectiveRevision' => 1,
       'features' => features,
-      'effectiveIndex' => SU_MCP::Terrain::FeatureIntentSet.effective_index_for(
-        features,
-        effective_revision: 1
-      ),
+      'generation' => SU_MCP::Terrain::FeatureIntentSet.default_h.fetch('generation')
+    }
+  end
+
+  def feature_intent_with_corridor
+    features = [
+      {
+        'id' => 'feature:linear_corridor:explicit_edit:corridor-a:aaaaaaaaaaaa',
+        'kind' => 'linear_corridor',
+        'sourceMode' => 'explicit_edit',
+        'semanticScope' => 'corridor-a',
+        'strengthClass' => 'firm',
+        'roles' => %w[centerline side_transition endpoint_cap],
+        'priority' => 70,
+        'payload' => {
+          'startControl' => { 'point' => { 'x' => 0.0, 'y' => 1.0 }, 'elevation' => 1.0 },
+          'endControl' => { 'point' => { 'x' => 2.0, 'y' => 1.0 }, 'elevation' => 2.0 },
+          'width' => 1.0,
+          'sideBlend' => { 'distance' => 0.5, 'falloff' => 'cosine' }
+        },
+        'affectedWindow' => {
+          'min' => { 'column' => 0, 'row' => 0 },
+          'max' => { 'column' => 2, 'row' => 2 }
+        },
+        'relevanceWindow' => {
+          'min' => { 'column' => 0, 'row' => 0 },
+          'max' => { 'column' => 2, 'row' => 2 }
+        },
+        'lifecycle' => {
+          'status' => 'active',
+          'supersededBy' => nil,
+          'updatedAtRevision' => 1
+        },
+        'provenance' => {
+          'originClass' => 'edit_terrain_surface',
+          'originOperation' => 'corridor_transition',
+          'createdAtRevision' => 1,
+          'updatedAtRevision' => 1
+        }
+      }
+    ]
+    {
+      'schemaVersion' => 3,
+      'revision' => 1,
+      'effectiveRevision' => 1,
+      'features' => features,
+      'generation' => SU_MCP::Terrain::FeatureIntentSet.default_h.fetch('generation')
+    }
+  end
+
+  def feature_intent_with_planar_region
+    features = [
+      {
+        'id' => 'feature:planar_region:explicit_edit:region-a:aaaaaaaaaaaa',
+        'kind' => 'planar_region',
+        'sourceMode' => 'explicit_edit',
+        'semanticScope' => 'region-a',
+        'strengthClass' => 'firm',
+        'roles' => %w[boundary support control falloff],
+        'priority' => 55,
+        'payload' => {
+          'region' => {
+            'type' => 'rectangle',
+            'bounds' => {
+              'minX' => 0.0, 'minY' => 0.0, 'maxX' => 2.0, 'maxY' => 2.0
+            }
+          }
+        },
+        'affectedWindow' => {
+          'min' => { 'column' => 0, 'row' => 0 },
+          'max' => { 'column' => 2, 'row' => 2 }
+        },
+        'relevanceWindow' => {
+          'min' => { 'column' => 0, 'row' => 0 },
+          'max' => { 'column' => 2, 'row' => 2 }
+        },
+        'lifecycle' => {
+          'status' => 'active',
+          'supersededBy' => nil,
+          'updatedAtRevision' => 1
+        },
+        'provenance' => {
+          'originClass' => 'edit_terrain_surface',
+          'originOperation' => 'planar_region_fit',
+          'createdAtRevision' => 1,
+          'updatedAtRevision' => 1
+        }
+      }
+    ]
+    {
+      'schemaVersion' => 3,
+      'revision' => 1,
+      'effectiveRevision' => 1,
+      'features' => features,
       'generation' => SU_MCP::Terrain::FeatureIntentSet.default_h.fetch('generation')
     }
   end

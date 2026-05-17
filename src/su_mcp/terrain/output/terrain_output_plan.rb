@@ -124,14 +124,17 @@ module SU_MCP
           window: window,
           state: state
         )
+        adaptive_cells = adaptive_cells_for(
+          state,
+          adaptive_patch_policy,
+          feature_aware_adaptive_policy,
+          intent: intent,
+          cell_window: cell_window
+        )
         cells = AdaptiveOutputConformity.cells(
-          adaptive_cells_for(
-            state,
-            adaptive_patch_policy,
-            feature_aware_adaptive_policy,
-            intent: intent,
-            cell_window: cell_window
-          )
+          adaptive_cells,
+          state: state,
+          collapse_coplanar_edges: !feature_aware_adaptive_policy.nil?
         )
         summary = adaptive_summary_for(state, cells, terrain_state_summary, previous_state_summary)
         new(
@@ -330,8 +333,12 @@ module SU_MCP
         )
         {
           max_error: probe.fetch(:max_error),
-          split: probe.fetch(:exceeded) || split_pressure.fetch(:density_split)
+          split: probe.fetch(:exceeded) || feature_split_required?(split_pressure)
         }
+      end
+
+      def self.feature_split_required?(split_pressure)
+        split_pressure.fetch(:density_split) || split_pressure.fetch(:forced_split)
       end
 
       def self.feature_split_pressure(
@@ -341,8 +348,13 @@ module SU_MCP
         max_column,
         max_row
       )
-        return { tolerance: ADAPTIVE_SIMPLIFICATION_TOLERANCE, density_split: false } unless
-          feature_aware_adaptive_policy
+        unless feature_aware_adaptive_policy
+          return {
+            tolerance: ADAPTIVE_SIMPLIFICATION_TOLERANCE,
+            density_split: false,
+            forced_split: false
+          }
+        end
 
         feature_aware_adaptive_policy.split_pressure_for(
           { min_column: min_column, min_row: min_row,

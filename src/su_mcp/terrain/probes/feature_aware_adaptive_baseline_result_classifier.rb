@@ -40,6 +40,8 @@ module SU_MCP
         return ['failed', 'missing baseline row'] unless baseline
         return ['failed', 'row refused or lacks mesh evidence'] unless accepted_mesh_row?(row)
         return ['failed', 'missing adaptive policy summary'] unless row['adaptivePolicySummary']
+        return ['failed', 'supported forced subdivision pressure was skipped'] if
+          forced_subdivision_skipped?(row)
         return ['regressed', 'dirty window or patch scope changed'] if scope_changed?(row, baseline)
         return ['regressed', 'timing exceeded regression threshold'] if
           timing_delta_percent(row, baseline) > TIMING_REGRESSION_PERCENT
@@ -61,10 +63,58 @@ module SU_MCP
       end
 
       def feature_policy_applied?(row)
+        return false if broad_corridor_density_only?(row)
+
+        policy_signal_count(row.fetch('adaptivePolicySummary')).positive?
+      end
+
+      def policy_signal_count(summary)
+        [
+          summary.fetch('densityHitCount', 0),
+          summary.fetch('hardProtectedToleranceHitCount', 0),
+          summary.key?('toleranceRange') ? 1 : 0,
+          forced_hit_count(summary)
+        ].sum(&:to_i)
+      end
+
+      def forced_subdivision_skipped?(row)
         summary = row.fetch('adaptivePolicySummary')
-        summary.fetch('densityHitCount', 0).positive? ||
-          summary.fetch('hardProtectedToleranceHitCount', 0).positive? ||
-          summary.key?('toleranceRange')
+        forced = summary['forcedSubdivisionSummary'] || summary[:forcedSubdivisionSummary]
+        return false unless forced
+        return false unless supported_forced_input_count(forced).positive?
+
+        forced_hit_count(summary).zero?
+      end
+
+      def supported_forced_input_count(forced_summary)
+        counts = forced_summary['supportedInputCounts'] ||
+                 forced_summary[:supportedInputCounts] ||
+                 {}
+        counts.values.sum(&:to_i)
+      end
+
+      def forced_hit_count(summary)
+        forced = summary['forcedSubdivisionSummary'] || summary[:forcedSubdivisionSummary]
+        return 0 unless forced
+
+        (forced['hitCount'] || forced[:hitCount]).to_i
+      end
+
+      def broad_corridor_density_only?(row)
+        summary = row.fetch('adaptivePolicySummary')
+        return false unless summary.fetch('densityHitCount', 0).positive?
+        return false if forced_hit_count(summary).positive?
+
+        corridor_quality_only?(row)
+      end
+
+      def corridor_quality_only?(row)
+        quality = row['featureQualitySummary'] || {}
+        families = quality['families'] || {}
+        roles = quality['roleSummaries'] || {}
+        return false unless families.keys.map(&:to_s).sort == ['linear_corridor']
+
+        (roles.keys.map(&:to_s) - ['centerline']).empty?
       end
 
       def quality_captured?(row)

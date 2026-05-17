@@ -83,7 +83,8 @@ module SU_MCP
 
       def planned_samples(state, owner)
         geometry = TerrainFeatureGeometryBuilder.new.build(state: state)
-        targets = sample_targets(geometry, feature_kinds_by_id(state))
+        feature_kinds = feature_kinds_by_id(state)
+        targets = sample_targets(geometry, feature_kinds) + planar_region_targets(state)
         state_sampler = TerrainStateElevationSampler.new(state)
         local_samples = distribute_samples(targets).select do |sample|
           state_sampler.inside_bounds?(point_hash(sample.fetch(:point)))
@@ -104,6 +105,40 @@ module SU_MCP
           region_targets(geometry.protected_regions, feature_kinds) +
           segment_targets(geometry.reference_segments, feature_kinds) +
           anchor_targets(geometry.output_anchor_candidates, feature_kinds)
+      end
+
+      def planar_region_targets(state)
+        FeatureIntentSet.new(state.feature_intent).features.filter_map do |feature|
+          next unless feature.fetch('kind') == 'planar_region'
+
+          region = FeatureIntentSet.stringify_keys(feature.dig('payload', 'region') || {})
+          primitive = region['type']
+          shape = intent_region_shape(region)
+          next unless %w[rectangle circle].include?(primitive) && shape
+
+          {
+            type: :region,
+            primitive: primitive,
+            shape: shape,
+            family: :planar_region,
+            role: 'support',
+            strength: 'firm'
+          }
+        end
+      end
+
+      def intent_region_shape(region)
+        case region['type']
+        when 'rectangle'
+          bounds = FeatureIntentSet.stringify_keys(region['bounds'] || {})
+          [[bounds.fetch('minX'), bounds.fetch('minY')],
+           [bounds.fetch('maxX'), bounds.fetch('maxY')]]
+        when 'circle'
+          center = FeatureIntentSet.stringify_keys(region['center'] || {})
+          [center.fetch('x'), center.fetch('y'), region.fetch('radius')]
+        end
+      rescue KeyError
+        nil
       end
 
       def region_targets(regions, feature_kinds)
@@ -261,7 +296,8 @@ module SU_MCP
         summary_for(measured).merge(
           status: 'captured',
           baseToleranceMeters: rounded(base_tolerance),
-          families: family_summaries(measured)
+          families: family_summaries(measured),
+          roleSummaries: role_summaries(measured)
         )
       end
 
@@ -338,6 +374,11 @@ module SU_MCP
 
       def family_summaries(measurements)
         measurements.group_by { |measurement| measurement.fetch(:family) }
+                    .transform_values { |items| summary_for(items) }
+      end
+
+      def role_summaries(measurements)
+        measurements.group_by { |measurement| (measurement[:role] || 'feature').to_sym }
                     .transform_values { |items| summary_for(items) }
       end
 

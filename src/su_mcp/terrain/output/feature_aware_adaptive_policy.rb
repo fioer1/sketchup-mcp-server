@@ -3,6 +3,8 @@
 require 'digest'
 require 'json'
 
+require_relative 'feature_aware_forced_subdivision_mask'
+
 module SU_MCP
   module Terrain
     # Pure planning policy seam for feature-aware adaptive output.
@@ -19,32 +21,50 @@ module SU_MCP
         @base_tolerance = base_tolerance
         @tolerance_hits = []
         @density_hit_count = 0
+        @output_anchor_candidates = if feature_geometry
+                                      feature_geometry.output_anchor_candidates
+                                    else
+                                      []
+                                    end
+        @protected_regions = feature_geometry ? feature_geometry.protected_regions : []
+        @pressure_regions = feature_geometry ? feature_geometry.pressure_regions : []
+        @supported_pressure_regions = normalized_supported_pressure_regions
+        @forced_subdivision_mask = FeatureAwareForcedSubdivisionMask.new(
+          feature_geometry: feature_geometry,
+          state: state
+        )
       end
 
       def local_tolerance_for(bounds)
-        tolerance = applicable_tolerance_values(bounds).min || base_tolerance
+        tolerance = applicable_tolerance_values(owner_bounds(bounds)).min || base_tolerance
         tolerance = [tolerance, base_tolerance * TOLERANCE_FLOOR_MULTIPLIER].max
         record_tolerance_hit(tolerance) if tolerance < base_tolerance
         tolerance
       end
 
       def target_cell_size_for(bounds)
-        matches = supported_pressure_regions.filter_map do |region|
-          next unless shape_intersects_bounds?(region, bounds)
-
-          positive_integer(region['targetCellSize'])
-        end
-        target = matches.min
+        target = target_cell_size_for_owner(owner_bounds(bounds))
         @density_hit_count += 1 if target
         target
       end
 
       def split_pressure_for(bounds, column_span:, row_span:)
-        target_cell_size = target_cell_size_for(bounds)
+        owner = owner_bounds(bounds)
+        target_cell_size = target_cell_size_for_owner(owner)
+        forced_split = forced_subdivision_mask.split_required?(
+          bounds,
+          column_span: column_span,
+          row_span: row_span,
+          owner_bounds: owner
+        )
+        tolerance = local_tolerance_for_owner(owner)
+        @density_hit_count += 1 if target_cell_size
+        record_tolerance_hit(tolerance) if tolerance < base_tolerance
         {
-          tolerance: local_tolerance_for(bounds),
+          tolerance: tolerance,
           target_cell_size: target_cell_size,
-          density_split: density_split_required?(target_cell_size, column_span, row_span)
+          density_split: density_split_required?(target_cell_size, column_span, row_span),
+          forced_split: forced_split
         }
       end
 
@@ -57,6 +77,7 @@ module SU_MCP
           hardProtectedToleranceHitCount: hard_protected_tolerance_hit_count,
           hardProtectedToleranceRange: hard_protected_tolerance_range,
           densityHitCount: @density_hit_count,
+          forcedSubdivisionSummary: forced_subdivision_mask.summary,
           fallbackCounts: fallback_counts
         }.compact
       end
@@ -68,43 +89,65 @@ module SU_MCP
           protectedMultiplier: PROTECTED_MULTIPLIER,
           firmMultiplier: FIRM_MULTIPLIER,
           softMultiplier: SOFT_MULTIPLIER,
-          toleranceFloorMultiplier: TOLERANCE_FLOOR_MULTIPLIER
+          toleranceFloorMultiplier: TOLERANCE_FLOOR_MULTIPLIER,
+          anchorForcedCellSize: FeatureAwareForcedSubdivisionMask::ANCHOR_FORCED_CELL_SIZE,
+          protectedBoundaryForcedCellSize:
+            FeatureAwareForcedSubdivisionMask::PROTECTED_BOUNDARY_FORCED_CELL_SIZE,
+          corridorDetailForcedCellSize:
+            FeatureAwareForcedSubdivisionMask::CORRIDOR_DETAIL_FORCED_CELL_SIZE
         )
       end
 
       private
 
-      attr_reader :feature_geometry, :state, :base_tolerance
+      attr_reader :feature_geometry, :state, :base_tolerance, :forced_subdivision_mask,
+                  :output_anchor_candidates, :protected_regions, :pressure_regions,
+                  :supported_pressure_regions
 
-      def applicable_tolerance_values(bounds)
+      def target_cell_size_for_owner(owner)
+        matches = supported_pressure_regions.filter_map do |region|
+          next unless terrain_bounds_intersect?(region.fetch(:bounds), owner)
+
+          region.fetch(:target_cell_size)
+        end
+        matches.min
+      end
+
+      def local_tolerance_for_owner(owner)
+        tolerance = applicable_tolerance_values(owner).min || base_tolerance
+        [tolerance, base_tolerance * TOLERANCE_FLOOR_MULTIPLIER].max
+      end
+
+      def applicable_tolerance_values(owner)
         tolerance_values = []
-        tolerance_values.concat(anchor_tolerance_values(bounds))
-        tolerance_values.concat(protected_region_tolerance_values(bounds))
-        tolerance_values.concat(pressure_region_tolerance_values(bounds))
+        tolerance_values.concat(anchor_tolerance_values(owner))
+        tolerance_values.concat(protected_region_tolerance_values(owner))
+        tolerance_values.concat(pressure_region_tolerance_values(owner))
         tolerance_values.compact
       end
 
-      def anchor_tolerance_values(bounds)
+      def anchor_tolerance_values(owner)
         output_anchor_candidates.filter_map do |anchor|
-          next unless point_intersects_bounds?(anchor['ownerLocalPoint'], bounds)
+          next unless point_intersects_owner?(anchor['ownerLocalPoint'], owner)
 
           base_tolerance * multiplier_for(anchor['strength'], anchor['role'])
         end
       end
 
-      def protected_region_tolerance_values(bounds)
+      def protected_region_tolerance_values(owner)
         protected_regions.filter_map do |region|
-          next unless shape_intersects_bounds?(region, bounds)
+          region_bounds = shape_bounds(region)
+          next unless region_bounds && terrain_bounds_intersect?(region_bounds, owner)
 
           base_tolerance * PROTECTED_MULTIPLIER
         end
       end
 
-      def pressure_region_tolerance_values(bounds)
+      def pressure_region_tolerance_values(owner)
         supported_pressure_regions.filter_map do |region|
-          next unless shape_intersects_bounds?(region, bounds)
+          next unless terrain_bounds_intersect?(region.fetch(:bounds), owner)
 
-          base_tolerance * multiplier_for(region['strength'], region['role'])
+          base_tolerance * multiplier_for(region.fetch(:strength), region.fetch(:role))
         end
       end
 
@@ -140,45 +183,61 @@ module SU_MCP
         SOFT_MULTIPLIER
       end
 
-      def shape_intersects_bounds?(entry, bounds)
-        case entry['primitive']
-        when 'rectangle'
-          rectangle_intersects_bounds?(entry['ownerLocalShape'], bounds)
-        when 'circle'
-          circle_intersects_bounds?(entry['ownerLocalShape'], bounds)
-        else
-          false
+      def normalized_supported_pressure_regions
+        pressure_regions.filter_map do |region|
+          next unless %w[rectangle circle].include?(region['primitive'])
+
+          bounds = shape_bounds(region)
+          next unless bounds
+
+          {
+            bounds: bounds,
+            target_cell_size: positive_integer(region['targetCellSize']),
+            strength: region['strength'],
+            role: region['role']
+          }
         end
       end
 
-      def rectangle_intersects_bounds?(shape, bounds)
+      def shape_bounds(entry)
+        case entry['primitive']
+        when 'rectangle'
+          rectangle_bounds(shape_payload(entry))
+        when 'circle'
+          circle_bounds(shape_payload(entry))
+        end
+      end
+
+      def shape_payload(entry)
+        entry['ownerLocalShape'] || entry['ownerLocalBounds'] || entry['ownerLocalCenterRadius']
+      end
+
+      def rectangle_bounds(shape)
         return false unless shape.is_a?(Array) && shape.length == 2
 
         min, max = shape
-        feature_bounds = {
+        {
           min_x: [min.fetch(0), max.fetch(0)].min,
           min_y: [min.fetch(1), max.fetch(1)].min,
           max_x: [min.fetch(0), max.fetch(0)].max,
           max_y: [min.fetch(1), max.fetch(1)].max
         }
-        terrain_bounds_intersect?(feature_bounds, owner_bounds(bounds))
       rescue KeyError, TypeError, NoMethodError
-        false
+        nil
       end
 
-      def circle_intersects_bounds?(shape, bounds)
+      def circle_bounds(shape)
         return false unless shape.is_a?(Array) && shape.length == 3
 
         center_x, center_y, radius = shape
-        feature_bounds = {
+        {
           min_x: center_x - radius,
           min_y: center_y - radius,
           max_x: center_x + radius,
           max_y: center_y + radius
         }
-        terrain_bounds_intersect?(feature_bounds, owner_bounds(bounds))
       rescue TypeError
-        false
+        nil
       end
 
       def terrain_bounds_intersect?(first, second)
@@ -188,10 +247,9 @@ module SU_MCP
           first.fetch(:max_y) >= second.fetch(:min_y)
       end
 
-      def point_intersects_bounds?(point, bounds)
+      def point_intersects_owner?(point, owner)
         return false unless point.is_a?(Array) && point.length >= 2
 
-        owner = owner_bounds(bounds)
         point.fetch(0).between?(owner.fetch(:min_x), owner.fetch(:max_x)) &&
           point.fetch(1).between?(owner.fetch(:min_y), owner.fetch(:max_y))
       rescue KeyError, TypeError
@@ -215,30 +273,6 @@ module SU_MCP
         origin = state&.origin&.fetch(axis, 0.0) || 0.0
         spacing = state&.spacing&.fetch(axis, 1.0) || 1.0
         origin + (index * spacing)
-      end
-
-      def output_anchor_candidates
-        return [] unless feature_geometry
-
-        feature_geometry.output_anchor_candidates
-      end
-
-      def protected_regions
-        return [] unless feature_geometry
-
-        feature_geometry.protected_regions
-      end
-
-      def supported_pressure_regions
-        pressure_regions.select do |region|
-          %w[rectangle circle].include?(region['primitive'])
-        end
-      end
-
-      def pressure_regions
-        return [] unless feature_geometry
-
-        feature_geometry.pressure_regions
       end
 
       def fallback_counts

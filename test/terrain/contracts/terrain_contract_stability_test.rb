@@ -623,6 +623,8 @@ class TerrainContractStabilityTest < Minitest::Test
       selectedStrengthCounts intersectionSummary localTolerancePolicy diagnosticOnly
       featureAwareAdaptivePolicy adaptivePolicySummary toleranceRange densityHitCount
       hardProtectedToleranceHitCount fallbackCounts targetCellSize targetDensity
+      forcedSubdivisionSummary forcedSubdivisionHitCount forcedMask supportedInputCounts
+      skippedInputCounts ownerLocalStart ownerLocalEnd
     ].each { |term| refute_includes(serialized, term) }
     refute_includes(serialized_output, 'regeneration')
   end

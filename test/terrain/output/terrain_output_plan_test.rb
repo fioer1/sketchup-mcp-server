@@ -4,6 +4,7 @@ require_relative '../../test_helper'
 require_relative '../../../src/su_mcp/terrain/state/tiled_heightmap_state'
 require_relative '../../../src/su_mcp/terrain/state/heightmap_state'
 require_relative '../../../src/su_mcp/terrain/features/terrain_feature_geometry'
+require_relative '../../../src/su_mcp/terrain/features/terrain_feature_geometry_builder'
 require_relative '../../../src/su_mcp/terrain/regions/sample_window'
 require_relative '../../../src/su_mcp/terrain/output/terrain_output_cell_window'
 require_relative '../../../src/su_mcp/terrain/output/adaptive_patches/adaptive_patch_policy'
@@ -427,6 +428,65 @@ class TerrainOutputPlanTest < Minitest::Test # rubocop:disable Metrics/ClassLeng
     )
   end
 
+  def test_v2_forced_mask_subdivides_flat_cell_without_density_or_height_residual
+    state = build_v2_state(columns: 17, rows: 17, elevations: Array.new(17 * 17, 0.0))
+    baseline = SU_MCP::Terrain::TerrainOutputPlan.full_grid(
+      state: state,
+      terrain_state_summary: { digest: 'baseline', revision: 1 }
+    )
+    feature_policy = SU_MCP::Terrain::FeatureAwareAdaptivePolicy.new(
+      feature_geometry: forced_anchor_geometry,
+      state: state,
+      base_tolerance: 0.01
+    )
+
+    plan = SU_MCP::Terrain::TerrainOutputPlan.full_grid(
+      state: state,
+      terrain_state_summary: { digest: 'forced-mask', revision: 1 },
+      feature_aware_adaptive_policy: feature_policy
+    )
+
+    local_cells = plan.adaptive_cells.select { |cell| cell_center_within?(cell, 7, 7, 9, 9) }
+
+    assert_operator(plan.face_count, :>, baseline.face_count)
+    assert(local_cells.all? { |cell| cell_width(cell) <= 2 && cell_height(cell) <= 2 })
+    assert_operator(
+      feature_policy.summary.dig(:forcedSubdivisionSummary, :hitCount),
+      :>,
+      0
+    )
+  end
+
+  def test_v2_dirty_forced_mask_does_not_expand_replacement_to_far_patches
+    state = build_v2_state(columns: 97, rows: 97, elevations: Array.new(97 * 97, 0.0))
+    patch_policy = SU_MCP::Terrain::AdaptivePatches::AdaptivePatchPolicy.new(patch_cell_size: 16)
+    feature_policy = SU_MCP::Terrain::FeatureAwareAdaptivePolicy.new(
+      feature_geometry: far_forced_anchor_geometry,
+      state: state,
+      base_tolerance: 0.01
+    )
+    window = SU_MCP::Terrain::SampleWindow.new(
+      min_column: 40,
+      min_row: 40,
+      max_column: 42,
+      max_row: 42
+    )
+
+    plan = SU_MCP::Terrain::TerrainOutputPlan.dirty_window(
+      state: state,
+      terrain_state_summary: { digest: 'dirty-forced-mask', revision: 2 },
+      previous_terrain_state_summary: { digest: 'baseline', revision: 1 },
+      window: window,
+      adaptive_patch_policy: patch_policy,
+      feature_aware_adaptive_policy: feature_policy
+    )
+
+    refute(
+      plan.adaptive_cells.any? { |cell| cell_intersects_bounds?(cell, 82, 82, 88, 88) },
+      'far forced masks must not expand dirty replacement planning to distant patches'
+    )
+  end
+
   def test_v2_adaptive_max_cell_error_reports_exact_error
     state = error_probe_state(
       columns: 3,
@@ -633,6 +693,34 @@ class TerrainOutputPlanTest < Minitest::Test # rubocop:disable Metrics/ClassLeng
     SU_MCP::Terrain::TerrainFeatureGeometry.new(
       pressureRegions: [
         rectangle_pressure('far-firm-corridor', 'firm', [[80.0, 80.0], [88.0, 88.0]], 1)
+      ]
+    )
+  end
+
+  def forced_anchor_geometry
+    SU_MCP::Terrain::TerrainFeatureGeometry.new(
+      outputAnchorCandidates: [
+        {
+          'id' => 'hard-control',
+          'featureId' => 'feature-hard',
+          'role' => 'control',
+          'strength' => 'hard',
+          'ownerLocalPoint' => [8.0, 8.0]
+        }
+      ]
+    )
+  end
+
+  def far_forced_anchor_geometry
+    SU_MCP::Terrain::TerrainFeatureGeometry.new(
+      outputAnchorCandidates: [
+        {
+          'id' => 'far-hard-control',
+          'featureId' => 'feature-hard',
+          'role' => 'control',
+          'strength' => 'hard',
+          'ownerLocalPoint' => [84.0, 84.0]
+        }
       ]
     )
   end

@@ -95,6 +95,120 @@ class FeatureAwareAdaptivePolicyTest < Minitest::Test
     assert_equal(1, policy.summary.fetch(:fallbackCounts).fetch(:unsupportedFeatureGeometry))
   end
 
+  def test_supported_forced_masks_are_classified_separately_from_tolerance_and_density
+    policy = build_policy(
+      feature_geometry: geometry(
+        outputAnchorCandidates: [
+          {
+            'id' => 'hard-control',
+            'featureId' => 'feature-hard',
+            'role' => 'control',
+            'strength' => 'hard',
+            'ownerLocalPoint' => [4.0, 4.0]
+          }
+        ],
+        protectedRegions: [
+          {
+            'id' => 'protected',
+            'featureId' => 'feature-protected',
+            'role' => 'protected',
+            'primitive' => 'rectangle',
+            'ownerLocalBounds' => [[2.0, 2.0], [6.0, 6.0]]
+          }
+        ]
+      )
+    )
+
+    pressure = policy.split_pressure_for(bounds(3, 3, 5, 5), column_span: 2, row_span: 2)
+
+    assert_equal(true, pressure.fetch(:forced_split))
+    assert_equal(false, pressure.fetch(:density_split))
+    assert_nil(pressure.fetch(:target_cell_size))
+    assert_in_delta(0.0025, pressure.fetch(:tolerance), 0.000001)
+    assert_equal(
+      {
+        supportedInputCounts: { anchor: 1, protected_boundary: 1 },
+        skippedInputCounts: {},
+        hitCount: 1
+      },
+      policy.summary.fetch(:forcedSubdivisionSummary)
+    )
+  end
+
+  def test_unsupported_forced_mask_inputs_are_skipped_without_density_pressure
+    policy = build_policy(
+      feature_geometry: geometry(
+        pressureRegions: [
+          {
+            'id' => 'corridor-pressure',
+            'featureId' => 'corridor',
+            'role' => 'centerline',
+            'strength' => 'firm',
+            'primitive' => 'corridor',
+            'ownerLocalShape' => {
+              'centerline' => [[0.0, 4.0], [8.0, 4.0]],
+              'width' => 2.0,
+              'blendDistance' => 1.0
+            },
+            'targetCellSize' => 1
+          },
+          { 'id' => 'polygon-pressure', 'featureId' => 'polygon', 'primitive' => 'polygon' }
+        ]
+      )
+    )
+
+    pressure = policy.split_pressure_for(bounds(0, 0, 8, 8), column_span: 8, row_span: 8)
+
+    assert_equal(false, pressure.fetch(:forced_split))
+    assert_equal(false, pressure.fetch(:density_split))
+    assert_nil(pressure.fetch(:target_cell_size))
+    assert_equal(
+      {
+        supportedInputCounts: {},
+        skippedInputCounts: { broad_corridor_pressure: 1, unsupported_pressure_primitive: 1 },
+        hitCount: 0
+      },
+      policy.summary.fetch(:forcedSubdivisionSummary)
+    )
+  end
+
+  def test_corridor_reference_segments_force_side_and_cap_detail_not_centerline_pressure
+    policy = build_policy(
+      feature_geometry: geometry(
+        pressureRegions: [
+          {
+            'id' => 'corridor-pressure',
+            'featureId' => 'corridor',
+            'role' => 'centerline',
+            'strength' => 'firm',
+            'primitive' => 'corridor',
+            'ownerLocalShape' => {
+              'centerline' => [[0.0, 4.0], [8.0, 4.0]],
+              'width' => 2.0,
+              'blendDistance' => 1.0
+            },
+            'targetCellSize' => 1
+          }
+        ],
+        referenceSegments: [
+          reference_segment('side', 'side_transition', [0.0, 6.0], [8.0, 6.0]),
+          reference_segment('cap', 'endpoint_cap', [0.0, 2.0], [0.0, 6.0]),
+          reference_segment('center', 'centerline', [0.0, 4.0], [8.0, 4.0])
+        ]
+      )
+    )
+
+    side = policy.split_pressure_for(bounds(2, 5, 6, 7), column_span: 4, row_span: 2)
+    interior = policy.split_pressure_for(bounds(2, 3, 6, 5), column_span: 4, row_span: 2)
+
+    assert_equal(true, side.fetch(:forced_split))
+    assert_equal(false, interior.fetch(:forced_split))
+    assert_equal(
+      { corridor_detail: 2 },
+      policy.summary.fetch(:forcedSubdivisionSummary).fetch(:supportedInputCounts)
+    )
+  end
+
   private
 
   def build_policy(feature_geometry:)
@@ -135,6 +249,18 @@ class FeatureAwareAdaptivePolicyTest < Minitest::Test
       'primitive' => 'rectangle',
       'ownerLocalShape' => owner_local_bounds,
       'targetCellSize' => target_cell_size
+    }
+  end
+
+  def reference_segment(id, role, start_point, end_point)
+    {
+      'id' => id,
+      'featureId' => 'corridor',
+      'role' => role,
+      'strength' => 'firm',
+      'ownerLocalStart' => start_point,
+      'ownerLocalEnd' => end_point,
+      'targetCellSize' => 2
     }
   end
 

@@ -1,0 +1,2631 @@
+{
+  "schemaVersion": 1,
+  "corpusId": "feature-aware-adaptive-baseline-results",
+  "baselineCorpusId": "feature-aware-adaptive-baseline",
+  "capturedAt": "2026-05-17T22:36:09+03:00",
+  "captureKind": "live_sketchup_timing",
+  "fixture": {
+    "path": "C:/Users/Gleb/AppData/Roaming/SketchUp/SketchUp 2026/SketchUp/Plugins/su_mcp/test/terrain/replay/feature_aware_adaptive_baseline.json",
+    "sha256": "e65fdf3d8339d01b85068763c78ffe6645ef34c2343dbb170d4bc02ec3046a6d"
+  },
+  "environment": {
+    "sketchUpVersion": "26.1.189",
+    "sketchUpPlatform": "platform_win",
+    "extensionVersion": "1.9.0",
+    "runtime": "su_ruby_live_sketchup"
+  },
+  "limits": {
+    "maxSamples": 65536,
+    "maxColumns": 256,
+    "maxRows": 256
+  },
+  "terrainSpecs": [
+    {
+      "sourceElementId": "feature-aware-baseline-terrain",
+      "dimensions": {
+        "columns": 49,
+        "rows": 49
+      },
+      "samples": 2401,
+      "regularGridFaces": 4608
+    },
+    {
+      "sourceElementId": "feature-aware-baseline-terrain-large-timing",
+      "dimensions": {
+        "columns": 224,
+        "rows": 224
+      },
+      "samples": 50176,
+      "regularGridFaces": 99458
+    },
+    {
+      "sourceElementId": "feature-aware-baseline-terrain-wide-timing",
+      "dimensions": {
+        "columns": 192,
+        "rows": 192
+      },
+      "samples": 36864,
+      "regularGridFaces": 72962
+    }
+  ],
+  "rows": [
+    {
+      "rowId": "create-baseline",
+      "sourceElementId": "feature-aware-baseline-terrain",
+      "commandKind": "create",
+      "featureContextClass": "none",
+      "seconds": 0.085663800004113,
+      "timingBuckets": {
+        "commandOutputPlanning": 0.027704399995855056,
+        "featureSelectionDiagnostics": 0.002279599997564219,
+        "dirtyWindowMapping": 3.0399998649954796e-05,
+        "adaptivePlanning": 0.004927200003294274,
+        "mutation": 0.0423337000029278,
+        "total": 0.085663800004113
+      },
+      "outcome": "created",
+      "meshType": "adaptive_tin",
+      "faceCount": 1173,
+      "vertexCount": 626,
+      "adaptivePolicySummary": {
+        "policyFingerprint": "13d8e5817200c65aa4d7cc23cbf9602e05ae6fa8722760a7c9755d6f09d598e3",
+        "featureGeometryDigest": "587de4ecbaeaa2c143d951f85c070860517493478957e31872af0d415e9740fd",
+        "hardProtectedToleranceHitCount": 0,
+        "densityHitCount": 0,
+        "forcedSubdivisionSummary": {
+          "supportedInputCounts": {
+          },
+          "skippedInputCounts": {
+          },
+          "hitCount": 0
+        },
+        "fallbackCounts": {
+          "absentFeatureGeometry": 0,
+          "partialFeatureGeometry": 0,
+          "unsupportedFeatureGeometry": 0
+        }
+      },
+      "featureQualitySummary": {
+        "status": "not_applicable",
+        "reason": "no_feature_regions",
+        "sampleCount": 0
+      },
+      "harnessQualitySeconds": 0.004996,
+      "simplificationTolerance": 0.01,
+      "maxSimplificationError": 0.00990000000000002,
+      "dirtyWindow": {
+        "minColumn": 0,
+        "minRow": 0,
+        "maxColumn": 48,
+        "maxRow": 48,
+        "columns": 49,
+        "rows": 49
+      },
+      "patchScope": {
+        "affectedPatchCount": 9,
+        "replacementPatchCount": 9,
+        "conformanceRing": 1
+      }
+    },
+    {
+      "rowId": "target-local-center",
+      "sourceElementId": "feature-aware-baseline-terrain",
+      "commandKind": "edit",
+      "featureContextClass": "target_region",
+      "seconds": 0.16383499999938067,
+      "timingBuckets": {
+        "commandOutputPlanning": 0.028594600000360515,
+        "featureSelectionDiagnostics": 0.0008057000013650395,
+        "dirtyWindowMapping": 4.7900000936351717e-05,
+        "adaptivePlanning": 0.004852099998970516,
+        "mutation": 0.07293410000420408,
+        "total": 0.16383499999938067
+      },
+      "outcome": "edited",
+      "meshType": "adaptive_tin",
+      "faceCount": 1257,
+      "vertexCount": 680,
+      "adaptivePolicySummary": {
+        "policyFingerprint": "13d8e5817200c65aa4d7cc23cbf9602e05ae6fa8722760a7c9755d6f09d598e3",
+        "featureGeometryDigest": "38d6b8c8d37a6a0b0a2ec0b9ca0e3565aa5c0be1d0445ac556c53a05ad460c89",
+        "hardProtectedToleranceHitCount": 0,
+        "densityHitCount": 41,
+        "forcedSubdivisionSummary": {
+          "supportedInputCounts": {
+          },
+          "skippedInputCounts": {
+          },
+          "hitCount": 0
+        },
+        "fallbackCounts": {
+          "absentFeatureGeometry": 0,
+          "partialFeatureGeometry": 0,
+          "unsupportedFeatureGeometry": 0
+        }
+      },
+      "featureQualitySummary": {
+        "sampleCount": 128,
+        "hitCount": 128,
+        "missCount": 0,
+        "maxErrorMeters": 0.0,
+        "meanErrorMeters": 0.0,
+        "p95ErrorMeters": 0.0,
+        "withinLocalTolerancePercent": 100.0,
+        "localToleranceRangeMeters": {
+          "min": 0.01,
+          "max": 0.01
+        },
+        "status": "captured",
+        "baseToleranceMeters": 0.01,
+        "families": {
+          "target_region": {
+            "sampleCount": 128,
+            "hitCount": 128,
+            "missCount": 0,
+            "maxErrorMeters": 0.0,
+            "meanErrorMeters": 0.0,
+            "p95ErrorMeters": 0.0,
+            "withinLocalTolerancePercent": 100.0,
+            "localToleranceRangeMeters": {
+              "min": 0.01,
+              "max": 0.01
+            }
+          }
+        },
+        "roleSummaries": {
+          "target_support": {
+            "sampleCount": 128,
+            "hitCount": 128,
+            "missCount": 0,
+            "maxErrorMeters": 0.0,
+            "meanErrorMeters": 0.0,
+            "p95ErrorMeters": 0.0,
+            "withinLocalTolerancePercent": 100.0,
+            "localToleranceRangeMeters": {
+              "min": 0.01,
+              "max": 0.01
+            }
+          }
+        }
+      },
+      "harnessQualitySeconds": 0.068325,
+      "simplificationTolerance": 0.01,
+      "maxSimplificationError": 0.00990000000000002,
+      "dirtyWindow": {
+        "minColumn": 20,
+        "minRow": 20,
+        "maxColumn": 28,
+        "maxRow": 28,
+        "columns": 9,
+        "rows": 9
+      },
+      "patchScope": {
+        "affectedPatchCount": 1,
+        "replacementPatchCount": 9,
+        "conformanceRing": 1
+      }
+    },
+    {
+      "rowId": "target-adjacent-east",
+      "sourceElementId": "feature-aware-baseline-terrain",
+      "commandKind": "edit",
+      "featureContextClass": "adjacent_target_region",
+      "seconds": 0.18079560000478523,
+      "timingBuckets": {
+        "commandOutputPlanning": 0.031745000000228174,
+        "featureSelectionDiagnostics": 0.0007898999974713661,
+        "dirtyWindowMapping": 5.9499994677025825e-05,
+        "adaptivePlanning": 0.005897399998502806,
+        "mutation": 0.08689809999486897,
+        "total": 0.18079560000478523
+      },
+      "outcome": "edited",
+      "meshType": "adaptive_tin",
+      "faceCount": 1331,
+      "vertexCount": 727,
+      "adaptivePolicySummary": {
+        "policyFingerprint": "13d8e5817200c65aa4d7cc23cbf9602e05ae6fa8722760a7c9755d6f09d598e3",
+        "featureGeometryDigest": "644e0baa272de1172bce8d19c475050e6e5f3174562677057fd8102d39e00fc5",
+        "hardProtectedToleranceHitCount": 0,
+        "densityHitCount": 68,
+        "forcedSubdivisionSummary": {
+          "supportedInputCounts": {
+          },
+          "skippedInputCounts": {
+          },
+          "hitCount": 0
+        },
+        "fallbackCounts": {
+          "absentFeatureGeometry": 0,
+          "partialFeatureGeometry": 0,
+          "unsupportedFeatureGeometry": 0
+        }
+      },
+      "featureQualitySummary": {
+        "sampleCount": 128,
+        "hitCount": 128,
+        "missCount": 0,
+        "maxErrorMeters": 0.005,
+        "meanErrorMeters": 0.000313,
+        "p95ErrorMeters": 0.005,
+        "withinLocalTolerancePercent": 100.0,
+        "localToleranceRangeMeters": {
+          "min": 0.01,
+          "max": 0.01
+        },
+        "status": "captured",
+        "baseToleranceMeters": 0.01,
+        "families": {
+          "target_region": {
+            "sampleCount": 128,
+            "hitCount": 128,
+            "missCount": 0,
+            "maxErrorMeters": 0.005,
+            "meanErrorMeters": 0.000313,
+            "p95ErrorMeters": 0.005,
+            "withinLocalTolerancePercent": 100.0,
+            "localToleranceRangeMeters": {
+              "min": 0.01,
+              "max": 0.01
+            }
+          }
+        },
+        "roleSummaries": {
+          "target_support": {
+            "sampleCount": 128,
+            "hitCount": 128,
+            "missCount": 0,
+            "maxErrorMeters": 0.005,
+            "meanErrorMeters": 0.000313,
+            "p95ErrorMeters": 0.005,
+            "withinLocalTolerancePercent": 100.0,
+            "localToleranceRangeMeters": {
+              "min": 0.01,
+              "max": 0.01
+            }
+          }
+        }
+      },
+      "harnessQualitySeconds": 0.067727,
+      "simplificationTolerance": 0.01,
+      "maxSimplificationError": 0.00990000000000002,
+      "dirtyWindow": {
+        "minColumn": 20,
+        "minRow": 20,
+        "maxColumn": 36,
+        "maxRow": 28,
+        "columns": 17,
+        "rows": 9
+      },
+      "patchScope": {
+        "affectedPatchCount": 2,
+        "replacementPatchCount": 9,
+        "conformanceRing": 1
+      }
+    },
+    {
+      "rowId": "target-repeat-center",
+      "sourceElementId": "feature-aware-baseline-terrain",
+      "commandKind": "edit",
+      "featureContextClass": "repeat_target_region",
+      "seconds": 0.18311450000328477,
+      "timingBuckets": {
+        "commandOutputPlanning": 0.027944499997829553,
+        "featureSelectionDiagnostics": 0.001007500002742745,
+        "dirtyWindowMapping": 5.62999994144775e-05,
+        "adaptivePlanning": 0.005575900002440903,
+        "mutation": 0.07984720000240486,
+        "total": 0.18311450000328477
+      },
+      "outcome": "edited",
+      "meshType": "adaptive_tin",
+      "faceCount": 1331,
+      "vertexCount": 727,
+      "adaptivePolicySummary": {
+        "policyFingerprint": "13d8e5817200c65aa4d7cc23cbf9602e05ae6fa8722760a7c9755d6f09d598e3",
+        "featureGeometryDigest": "cae18b6cb7700d7fc0f3add049ce4ae81a10ac33dbc51dd8f72c100677f9f5c2",
+        "hardProtectedToleranceHitCount": 0,
+        "densityHitCount": 68,
+        "forcedSubdivisionSummary": {
+          "supportedInputCounts": {
+          },
+          "skippedInputCounts": {
+          },
+          "hitCount": 0
+        },
+        "fallbackCounts": {
+          "absentFeatureGeometry": 0,
+          "partialFeatureGeometry": 0,
+          "unsupportedFeatureGeometry": 0
+        }
+      },
+      "featureQualitySummary": {
+        "sampleCount": 128,
+        "hitCount": 128,
+        "missCount": 0,
+        "maxErrorMeters": 0.0,
+        "meanErrorMeters": 0.0,
+        "p95ErrorMeters": 0.0,
+        "withinLocalTolerancePercent": 100.0,
+        "localToleranceRangeMeters": {
+          "min": 0.01,
+          "max": 0.01
+        },
+        "status": "captured",
+        "baseToleranceMeters": 0.01,
+        "families": {
+          "target_region": {
+            "sampleCount": 128,
+            "hitCount": 128,
+            "missCount": 0,
+            "maxErrorMeters": 0.0,
+            "meanErrorMeters": 0.0,
+            "p95ErrorMeters": 0.0,
+            "withinLocalTolerancePercent": 100.0,
+            "localToleranceRangeMeters": {
+              "min": 0.01,
+              "max": 0.01
+            }
+          }
+        },
+        "roleSummaries": {
+          "target_support": {
+            "sampleCount": 128,
+            "hitCount": 128,
+            "missCount": 0,
+            "maxErrorMeters": 0.0,
+            "meanErrorMeters": 0.0,
+            "p95ErrorMeters": 0.0,
+            "withinLocalTolerancePercent": 100.0,
+            "localToleranceRangeMeters": {
+              "min": 0.01,
+              "max": 0.01
+            }
+          }
+        }
+      },
+      "harnessQualitySeconds": 0.056486,
+      "simplificationTolerance": 0.01,
+      "maxSimplificationError": 0.00990000000000002,
+      "dirtyWindow": {
+        "minColumn": 20,
+        "minRow": 20,
+        "maxColumn": 36,
+        "maxRow": 28,
+        "columns": 17,
+        "rows": 9
+      },
+      "patchScope": {
+        "affectedPatchCount": 2,
+        "replacementPatchCount": 9,
+        "conformanceRing": 1
+      }
+    },
+    {
+      "rowId": "corridor-diagonal-intersect",
+      "sourceElementId": "feature-aware-baseline-terrain",
+      "commandKind": "edit",
+      "featureContextClass": "intersecting_linear_corridor",
+      "seconds": 0.19911340000544442,
+      "timingBuckets": {
+        "commandOutputPlanning": 0.04448009999759961,
+        "featureSelectionDiagnostics": 0.0015870999995968305,
+        "dirtyWindowMapping": 0.00011600000289035961,
+        "adaptivePlanning": 0.0070429000043077394,
+        "mutation": 0.09269330000097398,
+        "total": 0.19911340000544442
+      },
+      "outcome": "edited",
+      "meshType": "adaptive_tin",
+      "faceCount": 1689,
+      "vertexCount": 911,
+      "adaptivePolicySummary": {
+        "policyFingerprint": "13d8e5817200c65aa4d7cc23cbf9602e05ae6fa8722760a7c9755d6f09d598e3",
+        "featureGeometryDigest": "55ae074dee0d3e1dae29c78c41be43f4d293de8de839167863d180f3d8c0fc6e",
+        "hardProtectedToleranceHitCount": 0,
+        "densityHitCount": 88,
+        "forcedSubdivisionSummary": {
+          "supportedInputCounts": {
+            "corridor_detail": 4
+          },
+          "skippedInputCounts": {
+            "broad_corridor_pressure": 1,
+            "unsupported_reference_role": 1
+          },
+          "hitCount": 42
+        },
+        "fallbackCounts": {
+          "absentFeatureGeometry": 0,
+          "partialFeatureGeometry": 0,
+          "unsupportedFeatureGeometry": 1
+        }
+      },
+      "featureQualitySummary": {
+        "sampleCount": 126,
+        "hitCount": 126,
+        "missCount": 0,
+        "maxErrorMeters": 0.187233,
+        "meanErrorMeters": 0.018036,
+        "p95ErrorMeters": 0.088163,
+        "withinLocalTolerancePercent": 61.904762,
+        "localToleranceRangeMeters": {
+          "min": 0.005,
+          "max": 0.01
+        },
+        "status": "captured",
+        "baseToleranceMeters": 0.01,
+        "families": {
+          "target_region": {
+            "sampleCount": 36,
+            "hitCount": 36,
+            "missCount": 0,
+            "maxErrorMeters": 0.004697,
+            "meanErrorMeters": 0.001683,
+            "p95ErrorMeters": 0.004608,
+            "withinLocalTolerancePercent": 100.0,
+            "localToleranceRangeMeters": {
+              "min": 0.01,
+              "max": 0.01
+            }
+          },
+          "linear_corridor": {
+            "sampleCount": 90,
+            "hitCount": 90,
+            "missCount": 0,
+            "maxErrorMeters": 0.187233,
+            "meanErrorMeters": 0.024577,
+            "p95ErrorMeters": 0.110408,
+            "withinLocalTolerancePercent": 46.666667,
+            "localToleranceRangeMeters": {
+              "min": 0.005,
+              "max": 0.005
+            }
+          }
+        },
+        "roleSummaries": {
+          "target_support": {
+            "sampleCount": 36,
+            "hitCount": 36,
+            "missCount": 0,
+            "maxErrorMeters": 0.004697,
+            "meanErrorMeters": 0.001683,
+            "p95ErrorMeters": 0.004608,
+            "withinLocalTolerancePercent": 100.0,
+            "localToleranceRangeMeters": {
+              "min": 0.01,
+              "max": 0.01
+            }
+          },
+          "centerline": {
+            "sampleCount": 18,
+            "hitCount": 18,
+            "missCount": 0,
+            "maxErrorMeters": 0.004737,
+            "meanErrorMeters": 0.002632,
+            "p95ErrorMeters": 0.004737,
+            "withinLocalTolerancePercent": 100.0,
+            "localToleranceRangeMeters": {
+              "min": 0.005,
+              "max": 0.005
+            }
+          },
+          "endpoint_cap": {
+            "sampleCount": 36,
+            "hitCount": 36,
+            "missCount": 0,
+            "maxErrorMeters": 0.187233,
+            "meanErrorMeters": 0.05398,
+            "p95ErrorMeters": 0.180644,
+            "withinLocalTolerancePercent": 22.222222,
+            "localToleranceRangeMeters": {
+              "min": 0.005,
+              "max": 0.005
+            }
+          },
+          "side_transition": {
+            "sampleCount": 36,
+            "hitCount": 36,
+            "missCount": 0,
+            "maxErrorMeters": 0.016215,
+            "meanErrorMeters": 0.006147,
+            "p95ErrorMeters": 0.015019,
+            "withinLocalTolerancePercent": 44.444444,
+            "localToleranceRangeMeters": {
+              "min": 0.005,
+              "max": 0.005
+            }
+          }
+        }
+      },
+      "harnessQualitySeconds": 0.075775,
+      "simplificationTolerance": 0.01,
+      "maxSimplificationError": 0.00990000000000002,
+      "dirtyWindow": {
+        "minColumn": 14,
+        "minRow": 14,
+        "maxColumn": 36,
+        "maxRow": 36,
+        "columns": 23,
+        "rows": 23
+      },
+      "patchScope": {
+        "affectedPatchCount": 9,
+        "replacementPatchCount": 9,
+        "conformanceRing": 1
+      }
+    },
+    {
+      "rowId": "planar-pad-intersect",
+      "sourceElementId": "feature-aware-baseline-terrain",
+      "commandKind": "edit",
+      "featureContextClass": "intersecting_planar_region",
+      "seconds": 0.23689590000140015,
+      "timingBuckets": {
+        "commandOutputPlanning": 0.04088490000140155,
+        "featureSelectionDiagnostics": 0.0018148999952245504,
+        "dirtyWindowMapping": 0.00011709999671438709,
+        "adaptivePlanning": 0.006910400006745476,
+        "mutation": 0.10237449999840464,
+        "total": 0.23689590000140015
+      },
+      "outcome": "edited",
+      "meshType": "adaptive_tin",
+      "faceCount": 1577,
+      "vertexCount": 854,
+      "adaptivePolicySummary": {
+        "policyFingerprint": "13d8e5817200c65aa4d7cc23cbf9602e05ae6fa8722760a7c9755d6f09d598e3",
+        "featureGeometryDigest": "e7c025e6e966b21103d9f1844ba4bf7c2ff0bb650cba04b131613c02f42b783e",
+        "hardProtectedToleranceHitCount": 0,
+        "densityHitCount": 52,
+        "forcedSubdivisionSummary": {
+          "supportedInputCounts": {
+            "corridor_detail": 4
+          },
+          "skippedInputCounts": {
+            "broad_corridor_pressure": 1,
+            "unsupported_reference_role": 1
+          },
+          "hitCount": 42
+        },
+        "fallbackCounts": {
+          "absentFeatureGeometry": 0,
+          "partialFeatureGeometry": 0,
+          "unsupportedFeatureGeometry": 1
+        }
+      },
+      "featureQualitySummary": {
+        "sampleCount": 126,
+        "hitCount": 126,
+        "missCount": 0,
+        "maxErrorMeters": 0.187233,
+        "meanErrorMeters": 0.017647,
+        "p95ErrorMeters": 0.088163,
+        "withinLocalTolerancePercent": 68.253968,
+        "localToleranceRangeMeters": {
+          "min": 0.005,
+          "max": 0.01
+        },
+        "status": "captured",
+        "baseToleranceMeters": 0.01,
+        "families": {
+          "target_region": {
+            "sampleCount": 18,
+            "hitCount": 18,
+            "missCount": 0,
+            "maxErrorMeters": 0.005,
+            "meanErrorMeters": 0.000997,
+            "p95ErrorMeters": 0.005,
+            "withinLocalTolerancePercent": 100.0,
+            "localToleranceRangeMeters": {
+              "min": 0.01,
+              "max": 0.01
+            }
+          },
+          "linear_corridor": {
+            "sampleCount": 90,
+            "hitCount": 90,
+            "missCount": 0,
+            "maxErrorMeters": 0.187233,
+            "meanErrorMeters": 0.02404,
+            "p95ErrorMeters": 0.110408,
+            "withinLocalTolerancePercent": 55.555556,
+            "localToleranceRangeMeters": {
+              "min": 0.005,
+              "max": 0.005
+            }
+          },
+          "planar_region": {
+            "sampleCount": 18,
+            "hitCount": 18,
+            "missCount": 0,
+            "maxErrorMeters": 0.004,
+            "meanErrorMeters": 0.002333,
+            "p95ErrorMeters": 0.004,
+            "withinLocalTolerancePercent": 100.0,
+            "localToleranceRangeMeters": {
+              "min": 0.005,
+              "max": 0.005
+            }
+          }
+        },
+        "roleSummaries": {
+          "target_support": {
+            "sampleCount": 18,
+            "hitCount": 18,
+            "missCount": 0,
+            "maxErrorMeters": 0.005,
+            "meanErrorMeters": 0.000997,
+            "p95ErrorMeters": 0.005,
+            "withinLocalTolerancePercent": 100.0,
+            "localToleranceRangeMeters": {
+              "min": 0.01,
+              "max": 0.01
+            }
+          },
+          "centerline": {
+            "sampleCount": 18,
+            "hitCount": 18,
+            "missCount": 0,
+            "maxErrorMeters": 0.023686,
+            "meanErrorMeters": 0.004031,
+            "p95ErrorMeters": 0.023686,
+            "withinLocalTolerancePercent": 88.888889,
+            "localToleranceRangeMeters": {
+              "min": 0.005,
+              "max": 0.005
+            }
+          },
+          "endpoint_cap": {
+            "sampleCount": 36,
+            "hitCount": 36,
+            "missCount": 0,
+            "maxErrorMeters": 0.187233,
+            "meanErrorMeters": 0.05398,
+            "p95ErrorMeters": 0.180644,
+            "withinLocalTolerancePercent": 22.222222,
+            "localToleranceRangeMeters": {
+              "min": 0.005,
+              "max": 0.005
+            }
+          },
+          "side_transition": {
+            "sampleCount": 36,
+            "hitCount": 36,
+            "missCount": 0,
+            "maxErrorMeters": 0.014584,
+            "meanErrorMeters": 0.004103,
+            "p95ErrorMeters": 0.013484,
+            "withinLocalTolerancePercent": 72.222222,
+            "localToleranceRangeMeters": {
+              "min": 0.005,
+              "max": 0.005
+            }
+          },
+          "support": {
+            "sampleCount": 18,
+            "hitCount": 18,
+            "missCount": 0,
+            "maxErrorMeters": 0.004,
+            "meanErrorMeters": 0.002333,
+            "p95ErrorMeters": 0.004,
+            "withinLocalTolerancePercent": 100.0,
+            "localToleranceRangeMeters": {
+              "min": 0.005,
+              "max": 0.005
+            }
+          }
+        }
+      },
+      "harnessQualitySeconds": 0.071237,
+      "simplificationTolerance": 0.01,
+      "maxSimplificationError": 0.00990000000000002,
+      "dirtyWindow": {
+        "minColumn": 14,
+        "minRow": 14,
+        "maxColumn": 36,
+        "maxRow": 36,
+        "columns": 23,
+        "rows": 23
+      },
+      "patchScope": {
+        "affectedPatchCount": 9,
+        "replacementPatchCount": 9,
+        "conformanceRing": 1
+      }
+    },
+    {
+      "rowId": "survey-control-intersect",
+      "sourceElementId": "feature-aware-baseline-terrain",
+      "commandKind": "edit",
+      "featureContextClass": "intersecting_survey_control",
+      "seconds": 0.2600123999945936,
+      "timingBuckets": {
+        "commandOutputPlanning": 0.04215269999986049,
+        "featureSelectionDiagnostics": 0.00210019999940414,
+        "dirtyWindowMapping": 0.00011979999544564635,
+        "adaptivePlanning": 0.007055499998386949,
+        "mutation": 0.09615699999994831,
+        "total": 0.2600123999945936
+      },
+      "outcome": "edited",
+      "meshType": "adaptive_tin",
+      "faceCount": 1627,
+      "vertexCount": 872,
+      "adaptivePolicySummary": {
+        "policyFingerprint": "13d8e5817200c65aa4d7cc23cbf9602e05ae6fa8722760a7c9755d6f09d598e3",
+        "featureGeometryDigest": "528516c1859a405dda2c0be987e8d8b79efef7b53622ecb59a10c65321b67a43",
+        "toleranceRange": {
+          "min": 0.005,
+          "max": 0.005
+        },
+        "hardProtectedToleranceHitCount": 0,
+        "densityHitCount": 101,
+        "forcedSubdivisionSummary": {
+          "supportedInputCounts": {
+            "anchor": 1,
+            "corridor_detail": 4
+          },
+          "skippedInputCounts": {
+            "broad_corridor_pressure": 1,
+            "unsupported_reference_role": 1
+          },
+          "hitCount": 44
+        },
+        "fallbackCounts": {
+          "absentFeatureGeometry": 0,
+          "partialFeatureGeometry": 0,
+          "unsupportedFeatureGeometry": 1
+        }
+      },
+      "featureQualitySummary": {
+        "sampleCount": 113,
+        "hitCount": 113,
+        "missCount": 0,
+        "maxErrorMeters": 0.178611,
+        "meanErrorMeters": 0.015935,
+        "p95ErrorMeters": 0.092452,
+        "withinLocalTolerancePercent": 70.79646,
+        "localToleranceRangeMeters": {
+          "min": 0.005,
+          "max": 0.01
+        },
+        "status": "captured",
+        "baseToleranceMeters": 0.01,
+        "families": {
+          "survey_control": {
+            "sampleCount": 15,
+            "hitCount": 15,
+            "missCount": 0,
+            "maxErrorMeters": 0.004958,
+            "meanErrorMeters": 0.002622,
+            "p95ErrorMeters": 0.004958,
+            "withinLocalTolerancePercent": 100.0,
+            "localToleranceRangeMeters": {
+              "min": 0.005,
+              "max": 0.005
+            }
+          },
+          "target_region": {
+            "sampleCount": 14,
+            "hitCount": 14,
+            "missCount": 0,
+            "maxErrorMeters": 0.000348,
+            "meanErrorMeters": 2.5e-05,
+            "p95ErrorMeters": 0.000348,
+            "withinLocalTolerancePercent": 100.0,
+            "localToleranceRangeMeters": {
+              "min": 0.01,
+              "max": 0.01
+            }
+          },
+          "linear_corridor": {
+            "sampleCount": 70,
+            "hitCount": 70,
+            "missCount": 0,
+            "maxErrorMeters": 0.178611,
+            "meanErrorMeters": 0.024656,
+            "p95ErrorMeters": 0.132544,
+            "withinLocalTolerancePercent": 52.857143,
+            "localToleranceRangeMeters": {
+              "min": 0.005,
+              "max": 0.005
+            }
+          },
+          "planar_region": {
+            "sampleCount": 14,
+            "hitCount": 14,
+            "missCount": 0,
+            "maxErrorMeters": 0.0025,
+            "meanErrorMeters": 0.0025,
+            "p95ErrorMeters": 0.0025,
+            "withinLocalTolerancePercent": 100.0,
+            "localToleranceRangeMeters": {
+              "min": 0.005,
+              "max": 0.005
+            }
+          }
+        },
+        "roleSummaries": {
+          "survey_anchor": {
+            "sampleCount": 15,
+            "hitCount": 15,
+            "missCount": 0,
+            "maxErrorMeters": 0.004958,
+            "meanErrorMeters": 0.002622,
+            "p95ErrorMeters": 0.004958,
+            "withinLocalTolerancePercent": 100.0,
+            "localToleranceRangeMeters": {
+              "min": 0.005,
+              "max": 0.005
+            }
+          },
+          "target_support": {
+            "sampleCount": 14,
+            "hitCount": 14,
+            "missCount": 0,
+            "maxErrorMeters": 0.000348,
+            "meanErrorMeters": 2.5e-05,
+            "p95ErrorMeters": 0.000348,
+            "withinLocalTolerancePercent": 100.0,
+            "localToleranceRangeMeters": {
+              "min": 0.01,
+              "max": 0.01
+            }
+          },
+          "centerline": {
+            "sampleCount": 14,
+            "hitCount": 14,
+            "missCount": 0,
+            "maxErrorMeters": 0.037489,
+            "meanErrorMeters": 0.008369,
+            "p95ErrorMeters": 0.037489,
+            "withinLocalTolerancePercent": 78.571429,
+            "localToleranceRangeMeters": {
+              "min": 0.005,
+              "max": 0.005
+            }
+          },
+          "endpoint_cap": {
+            "sampleCount": 28,
+            "hitCount": 28,
+            "missCount": 0,
+            "maxErrorMeters": 0.178611,
+            "meanErrorMeters": 0.053189,
+            "p95ErrorMeters": 0.172001,
+            "withinLocalTolerancePercent": 25.0,
+            "localToleranceRangeMeters": {
+              "min": 0.005,
+              "max": 0.005
+            }
+          },
+          "side_transition": {
+            "sampleCount": 28,
+            "hitCount": 28,
+            "missCount": 0,
+            "maxErrorMeters": 0.012502,
+            "meanErrorMeters": 0.004267,
+            "p95ErrorMeters": 0.010609,
+            "withinLocalTolerancePercent": 67.857143,
+            "localToleranceRangeMeters": {
+              "min": 0.005,
+              "max": 0.005
+            }
+          },
+          "support": {
+            "sampleCount": 14,
+            "hitCount": 14,
+            "missCount": 0,
+            "maxErrorMeters": 0.0025,
+            "meanErrorMeters": 0.0025,
+            "p95ErrorMeters": 0.0025,
+            "withinLocalTolerancePercent": 100.0,
+            "localToleranceRangeMeters": {
+              "min": 0.005,
+              "max": 0.005
+            }
+          }
+        }
+      },
+      "harnessQualitySeconds": 0.076968,
+      "simplificationTolerance": 0.01,
+      "maxSimplificationError": 0.00990000000000002,
+      "dirtyWindow": {
+        "minColumn": 14,
+        "minRow": 14,
+        "maxColumn": 36,
+        "maxRow": 36,
+        "columns": 23,
+        "rows": 23
+      },
+      "patchScope": {
+        "affectedPatchCount": 9,
+        "replacementPatchCount": 9,
+        "conformanceRing": 1
+      }
+    },
+    {
+      "rowId": "fairing-envelope-intersect",
+      "sourceElementId": "feature-aware-baseline-terrain",
+      "commandKind": "edit",
+      "featureContextClass": "intersecting_fairing_region",
+      "seconds": 0.25014289999671746,
+      "timingBuckets": {
+        "commandOutputPlanning": 0.04940820000047097,
+        "featureSelectionDiagnostics": 0.0024631999986013398,
+        "dirtyWindowMapping": 0.00011610000365180895,
+        "adaptivePlanning": 0.008017100000870414,
+        "mutation": 0.10893900000519352,
+        "total": 0.25014289999671746
+      },
+      "outcome": "edited",
+      "meshType": "adaptive_tin",
+      "faceCount": 1789,
+      "vertexCount": 936,
+      "adaptivePolicySummary": {
+        "policyFingerprint": "13d8e5817200c65aa4d7cc23cbf9602e05ae6fa8722760a7c9755d6f09d598e3",
+        "featureGeometryDigest": "43e56e39909dd6df2fa344f632a1fe9a14e49a34ef6f4a3d7b9e0a81cb85eafa",
+        "toleranceRange": {
+          "min": 0.005,
+          "max": 0.005
+        },
+        "hardProtectedToleranceHitCount": 0,
+        "densityHitCount": 148,
+        "forcedSubdivisionSummary": {
+          "supportedInputCounts": {
+            "anchor": 1,
+            "corridor_detail": 4
+          },
+          "skippedInputCounts": {
+            "broad_corridor_pressure": 1,
+            "unsupported_reference_role": 1
+          },
+          "hitCount": 44
+        },
+        "fallbackCounts": {
+          "absentFeatureGeometry": 0,
+          "partialFeatureGeometry": 0,
+          "unsupportedFeatureGeometry": 1
+        }
+      },
+      "featureQualitySummary": {
+        "sampleCount": 109,
+        "hitCount": 109,
+        "missCount": 0,
+        "maxErrorMeters": 0.133462,
+        "meanErrorMeters": 0.015021,
+        "p95ErrorMeters": 0.097957,
+        "withinLocalTolerancePercent": 77.06422,
+        "localToleranceRangeMeters": {
+          "min": 0.005,
+          "max": 0.01
+        },
+        "status": "captured",
+        "baseToleranceMeters": 0.01,
+        "families": {
+          "fairing_region": {
+            "sampleCount": 12,
+            "hitCount": 12,
+            "missCount": 0,
+            "maxErrorMeters": 0.005167,
+            "meanErrorMeters": 0.003336,
+            "p95ErrorMeters": 0.005167,
+            "withinLocalTolerancePercent": 100.0,
+            "localToleranceRangeMeters": {
+              "min": 0.01,
+              "max": 0.01
+            }
+          },
+          "survey_control": {
+            "sampleCount": 13,
+            "hitCount": 13,
+            "missCount": 0,
+            "maxErrorMeters": 0.004488,
+            "meanErrorMeters": 0.002695,
+            "p95ErrorMeters": 0.004488,
+            "withinLocalTolerancePercent": 100.0,
+            "localToleranceRangeMeters": {
+              "min": 0.005,
+              "max": 0.005
+            }
+          },
+          "target_region": {
+            "sampleCount": 12,
+            "hitCount": 12,
+            "missCount": 0,
+            "maxErrorMeters": 0.004522,
+            "meanErrorMeters": 0.001522,
+            "p95ErrorMeters": 0.004522,
+            "withinLocalTolerancePercent": 100.0,
+            "localToleranceRangeMeters": {
+              "min": 0.01,
+              "max": 0.01
+            }
+          },
+          "linear_corridor": {
+            "sampleCount": 60,
+            "hitCount": 60,
+            "missCount": 0,
+            "maxErrorMeters": 0.133462,
+            "meanErrorMeters": 0.025182,
+            "p95ErrorMeters": 0.110482,
+            "withinLocalTolerancePercent": 58.333333,
+            "localToleranceRangeMeters": {
+              "min": 0.005,
+              "max": 0.005
+            }
+          },
+          "planar_region": {
+            "sampleCount": 12,
+            "hitCount": 12,
+            "missCount": 0,
+            "maxErrorMeters": 0.004995,
+            "meanErrorMeters": 0.002754,
+            "p95ErrorMeters": 0.004995,
+            "withinLocalTolerancePercent": 100.0,
+            "localToleranceRangeMeters": {
+              "min": 0.005,
+              "max": 0.005
+            }
+          }
+        },
+        "roleSummaries": {
+          "fairing_support": {
+            "sampleCount": 12,
+            "hitCount": 12,
+            "missCount": 0,
+            "maxErrorMeters": 0.005167,
+            "meanErrorMeters": 0.003336,
+            "p95ErrorMeters": 0.005167,
+            "withinLocalTolerancePercent": 100.0,
+            "localToleranceRangeMeters": {
+              "min": 0.01,
+              "max": 0.01
+            }
+          },
+          "survey_anchor": {
+            "sampleCount": 13,
+            "hitCount": 13,
+            "missCount": 0,
+            "maxErrorMeters": 0.004488,
+            "meanErrorMeters": 0.002695,
+            "p95ErrorMeters": 0.004488,
+            "withinLocalTolerancePercent": 100.0,
+            "localToleranceRangeMeters": {
+              "min": 0.005,
+              "max": 0.005
+            }
+          },
+          "target_support": {
+            "sampleCount": 12,
+            "hitCount": 12,
+            "missCount": 0,
+            "maxErrorMeters": 0.004522,
+            "meanErrorMeters": 0.001522,
+            "p95ErrorMeters": 0.004522,
+            "withinLocalTolerancePercent": 100.0,
+            "localToleranceRangeMeters": {
+              "min": 0.01,
+              "max": 0.01
+            }
+          },
+          "centerline": {
+            "sampleCount": 12,
+            "hitCount": 12,
+            "missCount": 0,
+            "maxErrorMeters": 0.057597,
+            "meanErrorMeters": 0.007733,
+            "p95ErrorMeters": 0.057597,
+            "withinLocalTolerancePercent": 75.0,
+            "localToleranceRangeMeters": {
+              "min": 0.005,
+              "max": 0.005
+            }
+          },
+          "endpoint_cap": {
+            "sampleCount": 24,
+            "hitCount": 24,
+            "missCount": 0,
+            "maxErrorMeters": 0.133462,
+            "meanErrorMeters": 0.054766,
+            "p95ErrorMeters": 0.128133,
+            "withinLocalTolerancePercent": 25.0,
+            "localToleranceRangeMeters": {
+              "min": 0.005,
+              "max": 0.005
+            }
+          },
+          "side_transition": {
+            "sampleCount": 24,
+            "hitCount": 24,
+            "missCount": 0,
+            "maxErrorMeters": 0.014135,
+            "meanErrorMeters": 0.004323,
+            "p95ErrorMeters": 0.011137,
+            "withinLocalTolerancePercent": 83.333333,
+            "localToleranceRangeMeters": {
+              "min": 0.005,
+              "max": 0.005
+            }
+          },
+          "support": {
+            "sampleCount": 12,
+            "hitCount": 12,
+            "missCount": 0,
+            "maxErrorMeters": 0.004995,
+            "meanErrorMeters": 0.002754,
+            "p95ErrorMeters": 0.004995,
+            "withinLocalTolerancePercent": 100.0,
+            "localToleranceRangeMeters": {
+              "min": 0.005,
+              "max": 0.005
+            }
+          }
+        }
+      },
+      "harnessQualitySeconds": 0.072885,
+      "simplificationTolerance": 0.01,
+      "maxSimplificationError": 0.00990000000000002,
+      "dirtyWindow": {
+        "minColumn": 14,
+        "minRow": 14,
+        "maxColumn": 36,
+        "maxRow": 36,
+        "columns": 23,
+        "rows": 23
+      },
+      "patchScope": {
+        "affectedPatchCount": 9,
+        "replacementPatchCount": 9,
+        "conformanceRing": 1
+      }
+    },
+    {
+      "rowId": "feature-aware-baseline-terrain-large-timing-create",
+      "sourceElementId": "feature-aware-baseline-terrain-large-timing",
+      "commandKind": "create",
+      "featureContextClass": "timing_terrain_create",
+      "seconds": 10.036998000003223,
+      "timingBuckets": {
+        "commandOutputPlanning": 5.3139265999998315,
+        "featureSelectionDiagnostics": 0.042605200003890786,
+        "dirtyWindowMapping": 0.0005717000021832064,
+        "adaptivePlanning": 1.6862112000017078,
+        "mutation": 2.738274099996488,
+        "total": 10.036998000003223
+      },
+      "outcome": "created",
+      "meshType": "adaptive_tin",
+      "faceCount": 76191,
+      "vertexCount": 38416,
+      "adaptivePolicySummary": {
+        "policyFingerprint": "13d8e5817200c65aa4d7cc23cbf9602e05ae6fa8722760a7c9755d6f09d598e3",
+        "featureGeometryDigest": "587de4ecbaeaa2c143d951f85c070860517493478957e31872af0d415e9740fd",
+        "hardProtectedToleranceHitCount": 0,
+        "densityHitCount": 0,
+        "forcedSubdivisionSummary": {
+          "supportedInputCounts": {
+          },
+          "skippedInputCounts": {
+          },
+          "hitCount": 0
+        },
+        "fallbackCounts": {
+          "absentFeatureGeometry": 0,
+          "partialFeatureGeometry": 0,
+          "unsupportedFeatureGeometry": 0
+        }
+      },
+      "featureQualitySummary": {
+        "status": "not_applicable",
+        "reason": "no_feature_regions",
+        "sampleCount": 0
+      },
+      "harnessQualitySeconds": 0.114952,
+      "simplificationTolerance": 0.01,
+      "maxSimplificationError": 0.009999999999999995,
+      "dirtyWindow": {
+        "minColumn": 0,
+        "minRow": 0,
+        "maxColumn": 223,
+        "maxRow": 223,
+        "columns": 224,
+        "rows": 224
+      },
+      "patchScope": {
+        "affectedPatchCount": 196,
+        "replacementPatchCount": 196,
+        "conformanceRing": 1
+      }
+    },
+    {
+      "rowId": "large-varied-local-target-timing",
+      "sourceElementId": "feature-aware-baseline-terrain-large-timing",
+      "commandKind": "edit",
+      "featureContextClass": "large_varied_local_target",
+      "seconds": 3.390751699997054,
+      "timingBuckets": {
+        "commandOutputPlanning": 0.7634678000031272,
+        "featureSelectionDiagnostics": 0.0006387000030372292,
+        "dirtyWindowMapping": 0.00022720000561093912,
+        "adaptivePlanning": 0.07784829999582144,
+        "mutation": 1.1159354000046733,
+        "total": 3.390751699997054
+      },
+      "outcome": "edited",
+      "meshType": "adaptive_tin",
+      "faceCount": 18770,
+      "vertexCount": 9575,
+      "adaptivePolicySummary": {
+        "policyFingerprint": "13d8e5817200c65aa4d7cc23cbf9602e05ae6fa8722760a7c9755d6f09d598e3",
+        "featureGeometryDigest": "b01fcfe9906f6a74991cbef58001afd23505093dcaf0eb3a0f65a5dbaf89e6cf",
+        "hardProtectedToleranceHitCount": 0,
+        "densityHitCount": 143,
+        "forcedSubdivisionSummary": {
+          "supportedInputCounts": {
+          },
+          "skippedInputCounts": {
+          },
+          "hitCount": 0
+        },
+        "fallbackCounts": {
+          "absentFeatureGeometry": 0,
+          "partialFeatureGeometry": 0,
+          "unsupportedFeatureGeometry": 0
+        }
+      },
+      "featureQualitySummary": {
+        "sampleCount": 128,
+        "hitCount": 128,
+        "missCount": 0,
+        "maxErrorMeters": 0.0,
+        "meanErrorMeters": 0.0,
+        "p95ErrorMeters": 0.0,
+        "withinLocalTolerancePercent": 100.0,
+        "localToleranceRangeMeters": {
+          "min": 0.01,
+          "max": 0.01
+        },
+        "status": "captured",
+        "baseToleranceMeters": 0.01,
+        "families": {
+          "target_region": {
+            "sampleCount": 128,
+            "hitCount": 128,
+            "missCount": 0,
+            "maxErrorMeters": 0.0,
+            "meanErrorMeters": 0.0,
+            "p95ErrorMeters": 0.0,
+            "withinLocalTolerancePercent": 100.0,
+            "localToleranceRangeMeters": {
+              "min": 0.01,
+              "max": 0.01
+            }
+          }
+        },
+        "roleSummaries": {
+          "target_support": {
+            "sampleCount": 128,
+            "hitCount": 128,
+            "missCount": 0,
+            "maxErrorMeters": 0.0,
+            "meanErrorMeters": 0.0,
+            "p95ErrorMeters": 0.0,
+            "withinLocalTolerancePercent": 100.0,
+            "localToleranceRangeMeters": {
+              "min": 0.01,
+              "max": 0.01
+            }
+          }
+        }
+      },
+      "harnessQualitySeconds": 2.980159,
+      "simplificationTolerance": 0.01,
+      "maxSimplificationError": 0.009999999999999995,
+      "dirtyWindow": {
+        "minColumn": 45,
+        "minRow": 45,
+        "maxColumn": 69,
+        "maxRow": 69,
+        "columns": 25,
+        "rows": 25
+      },
+      "patchScope": {
+        "affectedPatchCount": 9,
+        "replacementPatchCount": 25,
+        "conformanceRing": 1
+      }
+    },
+    {
+      "rowId": "large-varied-corridor-diagonal-timing",
+      "sourceElementId": "feature-aware-baseline-terrain-large-timing",
+      "commandKind": "edit",
+      "featureContextClass": "large_varied_linear_corridor",
+      "seconds": 14.726722800005518,
+      "timingBuckets": {
+        "commandOutputPlanning": 5.230935400002636,
+        "featureSelectionDiagnostics": 0.0012138000020058826,
+        "dirtyWindowMapping": 0.0024028999978327192,
+        "adaptivePlanning": 1.3686569999990752,
+        "mutation": 4.691820899999584,
+        "total": 14.726722800005518
+      },
+      "outcome": "edited",
+      "meshType": "adaptive_tin",
+      "faceCount": 71925,
+      "vertexCount": 36372,
+      "adaptivePolicySummary": {
+        "policyFingerprint": "13d8e5817200c65aa4d7cc23cbf9602e05ae6fa8722760a7c9755d6f09d598e3",
+        "featureGeometryDigest": "3d2b1d8e54baad3318670fbc1e1790674ec27688449d4322f1319e3492b358c1",
+        "hardProtectedToleranceHitCount": 0,
+        "densityHitCount": 128,
+        "forcedSubdivisionSummary": {
+          "supportedInputCounts": {
+            "corridor_detail": 4
+          },
+          "skippedInputCounts": {
+            "broad_corridor_pressure": 1,
+            "unsupported_reference_role": 1
+          },
+          "hitCount": 295
+        },
+        "fallbackCounts": {
+          "absentFeatureGeometry": 0,
+          "partialFeatureGeometry": 0,
+          "unsupportedFeatureGeometry": 1
+        }
+      },
+      "featureQualitySummary": {
+        "sampleCount": 126,
+        "hitCount": 126,
+        "missCount": 0,
+        "maxErrorMeters": 0.315954,
+        "meanErrorMeters": 0.019226,
+        "p95ErrorMeters": 0.10658,
+        "withinLocalTolerancePercent": 70.634921,
+        "localToleranceRangeMeters": {
+          "min": 0.005,
+          "max": 0.01
+        },
+        "status": "captured",
+        "baseToleranceMeters": 0.01,
+        "families": {
+          "target_region": {
+            "sampleCount": 21,
+            "hitCount": 21,
+            "missCount": 0,
+            "maxErrorMeters": 0.00477,
+            "meanErrorMeters": 0.002225,
+            "p95ErrorMeters": 0.004545,
+            "withinLocalTolerancePercent": 100.0,
+            "localToleranceRangeMeters": {
+              "min": 0.01,
+              "max": 0.01
+            }
+          },
+          "linear_corridor": {
+            "sampleCount": 105,
+            "hitCount": 105,
+            "missCount": 0,
+            "maxErrorMeters": 0.315954,
+            "meanErrorMeters": 0.022627,
+            "p95ErrorMeters": 0.11365,
+            "withinLocalTolerancePercent": 64.761905,
+            "localToleranceRangeMeters": {
+              "min": 0.005,
+              "max": 0.005
+            }
+          }
+        },
+        "roleSummaries": {
+          "target_support": {
+            "sampleCount": 21,
+            "hitCount": 21,
+            "missCount": 0,
+            "maxErrorMeters": 0.00477,
+            "meanErrorMeters": 0.002225,
+            "p95ErrorMeters": 0.004545,
+            "withinLocalTolerancePercent": 100.0,
+            "localToleranceRangeMeters": {
+              "min": 0.01,
+              "max": 0.01
+            }
+          },
+          "centerline": {
+            "sampleCount": 21,
+            "hitCount": 21,
+            "missCount": 0,
+            "maxErrorMeters": 0.004545,
+            "meanErrorMeters": 0.002597,
+            "p95ErrorMeters": 0.004545,
+            "withinLocalTolerancePercent": 100.0,
+            "localToleranceRangeMeters": {
+              "min": 0.005,
+              "max": 0.005
+            }
+          },
+          "endpoint_cap": {
+            "sampleCount": 42,
+            "hitCount": 42,
+            "missCount": 0,
+            "maxErrorMeters": 0.315954,
+            "meanErrorMeters": 0.05246,
+            "p95ErrorMeters": 0.242526,
+            "withinLocalTolerancePercent": 19.047619,
+            "localToleranceRangeMeters": {
+              "min": 0.005,
+              "max": 0.005
+            }
+          },
+          "side_transition": {
+            "sampleCount": 42,
+            "hitCount": 42,
+            "missCount": 0,
+            "maxErrorMeters": 0.005455,
+            "meanErrorMeters": 0.002808,
+            "p95ErrorMeters": 0.005091,
+            "withinLocalTolerancePercent": 92.857143,
+            "localToleranceRangeMeters": {
+              "min": 0.005,
+              "max": 0.005
+            }
+          }
+        }
+      },
+      "harnessQualitySeconds": 2.65988,
+      "simplificationTolerance": 0.01,
+      "maxSimplificationError": 0.009999999999999995,
+      "dirtyWindow": {
+        "minColumn": 13,
+        "minRow": 17,
+        "maxColumn": 188,
+        "maxRow": 177,
+        "columns": 176,
+        "rows": 161
+      },
+      "patchScope": {
+        "affectedPatchCount": 132,
+        "replacementPatchCount": 169,
+        "conformanceRing": 1
+      }
+    },
+    {
+      "rowId": "large-varied-planar-pad-timing",
+      "sourceElementId": "feature-aware-baseline-terrain-large-timing",
+      "commandKind": "edit",
+      "featureContextClass": "large_varied_planar_pad",
+      "seconds": 13.229462900002545,
+      "timingBuckets": {
+        "commandOutputPlanning": 4.866613300000608,
+        "featureSelectionDiagnostics": 0.0014026999997440726,
+        "dirtyWindowMapping": 0.002909499999077525,
+        "adaptivePlanning": 1.2628184000059264,
+        "mutation": 4.2289225999993505,
+        "total": 13.229462900002545
+      },
+      "outcome": "edited",
+      "meshType": "adaptive_tin",
+      "faceCount": 67189,
+      "vertexCount": 34151,
+      "adaptivePolicySummary": {
+        "policyFingerprint": "13d8e5817200c65aa4d7cc23cbf9602e05ae6fa8722760a7c9755d6f09d598e3",
+        "featureGeometryDigest": "88b76aa833dce0d7bad32828e6da4fd7ac59eb5fa513fd32a290c2862859fe36",
+        "hardProtectedToleranceHitCount": 0,
+        "densityHitCount": 0,
+        "forcedSubdivisionSummary": {
+          "supportedInputCounts": {
+            "corridor_detail": 4
+          },
+          "skippedInputCounts": {
+            "broad_corridor_pressure": 1,
+            "unsupported_reference_role": 1
+          },
+          "hitCount": 295
+        },
+        "fallbackCounts": {
+          "absentFeatureGeometry": 0,
+          "partialFeatureGeometry": 0,
+          "unsupportedFeatureGeometry": 1
+        }
+      },
+      "featureQualitySummary": {
+        "sampleCount": 126,
+        "hitCount": 125,
+        "missCount": 1,
+        "maxErrorMeters": 0.302738,
+        "meanErrorMeters": 0.01881,
+        "p95ErrorMeters": 0.136115,
+        "withinLocalTolerancePercent": 75.396825,
+        "localToleranceRangeMeters": {
+          "min": 0.005,
+          "max": 0.01
+        },
+        "status": "captured",
+        "baseToleranceMeters": 0.01,
+        "families": {
+          "target_region": {
+            "sampleCount": 18,
+            "hitCount": 18,
+            "missCount": 0,
+            "maxErrorMeters": 0.004909,
+            "meanErrorMeters": 0.002505,
+            "p95ErrorMeters": 0.004909,
+            "withinLocalTolerancePercent": 100.0,
+            "localToleranceRangeMeters": {
+              "min": 0.01,
+              "max": 0.01
+            }
+          },
+          "linear_corridor": {
+            "sampleCount": 90,
+            "hitCount": 89,
+            "missCount": 1,
+            "maxErrorMeters": 0.302738,
+            "meanErrorMeters": 0.025423,
+            "p95ErrorMeters": 0.168646,
+            "withinLocalTolerancePercent": 65.555556,
+            "localToleranceRangeMeters": {
+              "min": 0.005,
+              "max": 0.005
+            }
+          },
+          "planar_region": {
+            "sampleCount": 18,
+            "hitCount": 18,
+            "missCount": 0,
+            "maxErrorMeters": 0.004963,
+            "meanErrorMeters": 0.002416,
+            "p95ErrorMeters": 0.004963,
+            "withinLocalTolerancePercent": 100.0,
+            "localToleranceRangeMeters": {
+              "min": 0.005,
+              "max": 0.005
+            }
+          }
+        },
+        "roleSummaries": {
+          "target_support": {
+            "sampleCount": 18,
+            "hitCount": 18,
+            "missCount": 0,
+            "maxErrorMeters": 0.004909,
+            "meanErrorMeters": 0.002505,
+            "p95ErrorMeters": 0.004909,
+            "withinLocalTolerancePercent": 100.0,
+            "localToleranceRangeMeters": {
+              "min": 0.01,
+              "max": 0.01
+            }
+          },
+          "centerline": {
+            "sampleCount": 18,
+            "hitCount": 18,
+            "missCount": 0,
+            "maxErrorMeters": 0.004269,
+            "meanErrorMeters": 0.002219,
+            "p95ErrorMeters": 0.004269,
+            "withinLocalTolerancePercent": 100.0,
+            "localToleranceRangeMeters": {
+              "min": 0.005,
+              "max": 0.005
+            }
+          },
+          "endpoint_cap": {
+            "sampleCount": 36,
+            "hitCount": 35,
+            "missCount": 1,
+            "maxErrorMeters": 0.302738,
+            "meanErrorMeters": 0.060987,
+            "p95ErrorMeters": 0.300647,
+            "withinLocalTolerancePercent": 19.444444,
+            "localToleranceRangeMeters": {
+              "min": 0.005,
+              "max": 0.005
+            }
+          },
+          "side_transition": {
+            "sampleCount": 36,
+            "hitCount": 36,
+            "missCount": 0,
+            "maxErrorMeters": 0.005563,
+            "meanErrorMeters": 0.00245,
+            "p95ErrorMeters": 0.005542,
+            "withinLocalTolerancePercent": 94.444444,
+            "localToleranceRangeMeters": {
+              "min": 0.005,
+              "max": 0.005
+            }
+          },
+          "support": {
+            "sampleCount": 18,
+            "hitCount": 18,
+            "missCount": 0,
+            "maxErrorMeters": 0.004963,
+            "meanErrorMeters": 0.002416,
+            "p95ErrorMeters": 0.004963,
+            "withinLocalTolerancePercent": 100.0,
+            "localToleranceRangeMeters": {
+              "min": 0.005,
+              "max": 0.005
+            }
+          }
+        }
+      },
+      "harnessQualitySeconds": 2.426142,
+      "simplificationTolerance": 0.01,
+      "maxSimplificationError": 0.009999999999999995,
+      "dirtyWindow": {
+        "minColumn": 13,
+        "minRow": 17,
+        "maxColumn": 188,
+        "maxRow": 177,
+        "columns": 176,
+        "rows": 161
+      },
+      "patchScope": {
+        "affectedPatchCount": 132,
+        "replacementPatchCount": 169,
+        "conformanceRing": 1
+      }
+    },
+    {
+      "rowId": "large-varied-survey-control-timing",
+      "sourceElementId": "feature-aware-baseline-terrain-large-timing",
+      "commandKind": "edit",
+      "featureContextClass": "large_varied_survey_control",
+      "seconds": 15.14926579999883,
+      "timingBuckets": {
+        "commandOutputPlanning": 5.469711899997492,
+        "featureSelectionDiagnostics": 0.002212499995948747,
+        "dirtyWindowMapping": 0.0024909999992814846,
+        "adaptivePlanning": 1.3308914999943227,
+        "mutation": 4.481260600005044,
+        "total": 15.14926579999883
+      },
+      "outcome": "edited",
+      "meshType": "adaptive_tin",
+      "faceCount": 70309,
+      "vertexCount": 35621,
+      "adaptivePolicySummary": {
+        "policyFingerprint": "13d8e5817200c65aa4d7cc23cbf9602e05ae6fa8722760a7c9755d6f09d598e3",
+        "featureGeometryDigest": "0e62356659175de1a52243fcb2ab6eaf0abff4f105499bbf3854ad4b4d16ad29",
+        "toleranceRange": {
+          "min": 0.005,
+          "max": 0.005
+        },
+        "hardProtectedToleranceHitCount": 0,
+        "densityHitCount": 2983,
+        "forcedSubdivisionSummary": {
+          "supportedInputCounts": {
+            "anchor": 1,
+            "corridor_detail": 4
+          },
+          "skippedInputCounts": {
+            "broad_corridor_pressure": 1,
+            "unsupported_reference_role": 1
+          },
+          "hitCount": 299
+        },
+        "fallbackCounts": {
+          "absentFeatureGeometry": 0,
+          "partialFeatureGeometry": 0,
+          "unsupportedFeatureGeometry": 1
+        }
+      },
+      "featureQualitySummary": {
+        "sampleCount": 113,
+        "hitCount": 113,
+        "missCount": 0,
+        "maxErrorMeters": 0.105897,
+        "meanErrorMeters": 0.008864,
+        "p95ErrorMeters": 0.043512,
+        "withinLocalTolerancePercent": 77.876106,
+        "localToleranceRangeMeters": {
+          "min": 0.005,
+          "max": 0.01
+        },
+        "status": "captured",
+        "baseToleranceMeters": 0.01,
+        "families": {
+          "survey_control": {
+            "sampleCount": 15,
+            "hitCount": 15,
+            "missCount": 0,
+            "maxErrorMeters": 0.005283,
+            "meanErrorMeters": 0.002156,
+            "p95ErrorMeters": 0.005283,
+            "withinLocalTolerancePercent": 93.333333,
+            "localToleranceRangeMeters": {
+              "min": 0.005,
+              "max": 0.005
+            }
+          },
+          "target_region": {
+            "sampleCount": 14,
+            "hitCount": 14,
+            "missCount": 0,
+            "maxErrorMeters": 0.004969,
+            "meanErrorMeters": 0.002402,
+            "p95ErrorMeters": 0.004969,
+            "withinLocalTolerancePercent": 100.0,
+            "localToleranceRangeMeters": {
+              "min": 0.01,
+              "max": 0.01
+            }
+          },
+          "linear_corridor": {
+            "sampleCount": 70,
+            "hitCount": 70,
+            "missCount": 0,
+            "maxErrorMeters": 0.105897,
+            "meanErrorMeters": 0.012869,
+            "p95ErrorMeters": 0.067175,
+            "withinLocalTolerancePercent": 65.714286,
+            "localToleranceRangeMeters": {
+              "min": 0.005,
+              "max": 0.005
+            }
+          },
+          "planar_region": {
+            "sampleCount": 14,
+            "hitCount": 14,
+            "missCount": 0,
+            "maxErrorMeters": 0.004815,
+            "meanErrorMeters": 0.002487,
+            "p95ErrorMeters": 0.004815,
+            "withinLocalTolerancePercent": 100.0,
+            "localToleranceRangeMeters": {
+              "min": 0.005,
+              "max": 0.005
+            }
+          }
+        },
+        "roleSummaries": {
+          "survey_anchor": {
+            "sampleCount": 15,
+            "hitCount": 15,
+            "missCount": 0,
+            "maxErrorMeters": 0.005283,
+            "meanErrorMeters": 0.002156,
+            "p95ErrorMeters": 0.005283,
+            "withinLocalTolerancePercent": 93.333333,
+            "localToleranceRangeMeters": {
+              "min": 0.005,
+              "max": 0.005
+            }
+          },
+          "target_support": {
+            "sampleCount": 14,
+            "hitCount": 14,
+            "missCount": 0,
+            "maxErrorMeters": 0.004969,
+            "meanErrorMeters": 0.002402,
+            "p95ErrorMeters": 0.004969,
+            "withinLocalTolerancePercent": 100.0,
+            "localToleranceRangeMeters": {
+              "min": 0.01,
+              "max": 0.01
+            }
+          },
+          "centerline": {
+            "sampleCount": 14,
+            "hitCount": 14,
+            "missCount": 0,
+            "maxErrorMeters": 0.004,
+            "meanErrorMeters": 0.001973,
+            "p95ErrorMeters": 0.004,
+            "withinLocalTolerancePercent": 100.0,
+            "localToleranceRangeMeters": {
+              "min": 0.005,
+              "max": 0.005
+            }
+          },
+          "endpoint_cap": {
+            "sampleCount": 28,
+            "hitCount": 28,
+            "missCount": 0,
+            "maxErrorMeters": 0.105897,
+            "meanErrorMeters": 0.028241,
+            "p95ErrorMeters": 0.073003,
+            "withinLocalTolerancePercent": 25.0,
+            "localToleranceRangeMeters": {
+              "min": 0.005,
+              "max": 0.005
+            }
+          },
+          "side_transition": {
+            "sampleCount": 28,
+            "hitCount": 28,
+            "missCount": 0,
+            "maxErrorMeters": 0.010859,
+            "meanErrorMeters": 0.002946,
+            "p95ErrorMeters": 0.008011,
+            "withinLocalTolerancePercent": 89.285714,
+            "localToleranceRangeMeters": {
+              "min": 0.005,
+              "max": 0.005
+            }
+          },
+          "support": {
+            "sampleCount": 14,
+            "hitCount": 14,
+            "missCount": 0,
+            "maxErrorMeters": 0.004815,
+            "meanErrorMeters": 0.002487,
+            "p95ErrorMeters": 0.004815,
+            "withinLocalTolerancePercent": 100.0,
+            "localToleranceRangeMeters": {
+              "min": 0.005,
+              "max": 0.005
+            }
+          }
+        }
+      },
+      "harnessQualitySeconds": 2.60591,
+      "simplificationTolerance": 0.01,
+      "maxSimplificationError": 0.009999999999999995,
+      "dirtyWindow": {
+        "minColumn": 13,
+        "minRow": 17,
+        "maxColumn": 188,
+        "maxRow": 177,
+        "columns": 176,
+        "rows": 161
+      },
+      "patchScope": {
+        "affectedPatchCount": 132,
+        "replacementPatchCount": 169,
+        "conformanceRing": 1
+      }
+    },
+    {
+      "rowId": "large-varied-fairing-envelope-timing",
+      "sourceElementId": "feature-aware-baseline-terrain-large-timing",
+      "commandKind": "edit",
+      "featureContextClass": "large_varied_fairing_region",
+      "seconds": 14.806189499999164,
+      "timingBuckets": {
+        "commandOutputPlanning": 4.112492899999779,
+        "featureSelectionDiagnostics": 0.0023449000000255182,
+        "dirtyWindowMapping": 0.0032073000038508326,
+        "adaptivePlanning": 1.2049006999950507,
+        "mutation": 4.6277645000009215,
+        "total": 14.806189499999164
+      },
+      "outcome": "edited",
+      "meshType": "adaptive_tin",
+      "faceCount": 57773,
+      "vertexCount": 29214,
+      "adaptivePolicySummary": {
+        "policyFingerprint": "13d8e5817200c65aa4d7cc23cbf9602e05ae6fa8722760a7c9755d6f09d598e3",
+        "featureGeometryDigest": "c40a8894d3a36120f61cc0750147ab421f97f4b4bff77482f82ed2bc9f46eb14",
+        "toleranceRange": {
+          "min": 0.005,
+          "max": 0.005
+        },
+        "hardProtectedToleranceHitCount": 0,
+        "densityHitCount": 7573,
+        "forcedSubdivisionSummary": {
+          "supportedInputCounts": {
+            "anchor": 1,
+            "corridor_detail": 4
+          },
+          "skippedInputCounts": {
+            "broad_corridor_pressure": 1,
+            "unsupported_reference_role": 1
+          },
+          "hitCount": 299
+        },
+        "fallbackCounts": {
+          "absentFeatureGeometry": 0,
+          "partialFeatureGeometry": 0,
+          "unsupportedFeatureGeometry": 1
+        }
+      },
+      "featureQualitySummary": {
+        "sampleCount": 109,
+        "hitCount": 109,
+        "missCount": 0,
+        "maxErrorMeters": 0.090561,
+        "meanErrorMeters": 0.00896,
+        "p95ErrorMeters": 0.050561,
+        "withinLocalTolerancePercent": 79.816514,
+        "localToleranceRangeMeters": {
+          "min": 0.005,
+          "max": 0.01
+        },
+        "status": "captured",
+        "baseToleranceMeters": 0.01,
+        "families": {
+          "fairing_region": {
+            "sampleCount": 12,
+            "hitCount": 12,
+            "missCount": 0,
+            "maxErrorMeters": 0.006841,
+            "meanErrorMeters": 0.003601,
+            "p95ErrorMeters": 0.006841,
+            "withinLocalTolerancePercent": 100.0,
+            "localToleranceRangeMeters": {
+              "min": 0.01,
+              "max": 0.01
+            }
+          },
+          "survey_control": {
+            "sampleCount": 13,
+            "hitCount": 13,
+            "missCount": 0,
+            "maxErrorMeters": 0.005122,
+            "meanErrorMeters": 0.002605,
+            "p95ErrorMeters": 0.005122,
+            "withinLocalTolerancePercent": 92.307692,
+            "localToleranceRangeMeters": {
+              "min": 0.005,
+              "max": 0.005
+            }
+          },
+          "target_region": {
+            "sampleCount": 12,
+            "hitCount": 12,
+            "missCount": 0,
+            "maxErrorMeters": 0.004736,
+            "meanErrorMeters": 0.002544,
+            "p95ErrorMeters": 0.004736,
+            "withinLocalTolerancePercent": 100.0,
+            "localToleranceRangeMeters": {
+              "min": 0.01,
+              "max": 0.01
+            }
+          },
+          "linear_corridor": {
+            "sampleCount": 60,
+            "hitCount": 60,
+            "missCount": 0,
+            "maxErrorMeters": 0.090561,
+            "meanErrorMeters": 0.01399,
+            "p95ErrorMeters": 0.060975,
+            "withinLocalTolerancePercent": 65.0,
+            "localToleranceRangeMeters": {
+              "min": 0.005,
+              "max": 0.005
+            }
+          },
+          "planar_region": {
+            "sampleCount": 12,
+            "hitCount": 12,
+            "missCount": 0,
+            "maxErrorMeters": 0.004815,
+            "meanErrorMeters": 0.002469,
+            "p95ErrorMeters": 0.004815,
+            "withinLocalTolerancePercent": 100.0,
+            "localToleranceRangeMeters": {
+              "min": 0.005,
+              "max": 0.005
+            }
+          }
+        },
+        "roleSummaries": {
+          "fairing_support": {
+            "sampleCount": 12,
+            "hitCount": 12,
+            "missCount": 0,
+            "maxErrorMeters": 0.006841,
+            "meanErrorMeters": 0.003601,
+            "p95ErrorMeters": 0.006841,
+            "withinLocalTolerancePercent": 100.0,
+            "localToleranceRangeMeters": {
+              "min": 0.01,
+              "max": 0.01
+            }
+          },
+          "survey_anchor": {
+            "sampleCount": 13,
+            "hitCount": 13,
+            "missCount": 0,
+            "maxErrorMeters": 0.005122,
+            "meanErrorMeters": 0.002605,
+            "p95ErrorMeters": 0.005122,
+            "withinLocalTolerancePercent": 92.307692,
+            "localToleranceRangeMeters": {
+              "min": 0.005,
+              "max": 0.005
+            }
+          },
+          "target_support": {
+            "sampleCount": 12,
+            "hitCount": 12,
+            "missCount": 0,
+            "maxErrorMeters": 0.004736,
+            "meanErrorMeters": 0.002544,
+            "p95ErrorMeters": 0.004736,
+            "withinLocalTolerancePercent": 100.0,
+            "localToleranceRangeMeters": {
+              "min": 0.01,
+              "max": 0.01
+            }
+          },
+          "centerline": {
+            "sampleCount": 12,
+            "hitCount": 12,
+            "missCount": 0,
+            "maxErrorMeters": 0.005441,
+            "meanErrorMeters": 0.003289,
+            "p95ErrorMeters": 0.005441,
+            "withinLocalTolerancePercent": 91.666667,
+            "localToleranceRangeMeters": {
+              "min": 0.005,
+              "max": 0.005
+            }
+          },
+          "endpoint_cap": {
+            "sampleCount": 24,
+            "hitCount": 24,
+            "missCount": 0,
+            "maxErrorMeters": 0.090561,
+            "meanErrorMeters": 0.030888,
+            "p95ErrorMeters": 0.071986,
+            "withinLocalTolerancePercent": 25.0,
+            "localToleranceRangeMeters": {
+              "min": 0.005,
+              "max": 0.005
+            }
+          },
+          "side_transition": {
+            "sampleCount": 24,
+            "hitCount": 24,
+            "missCount": 0,
+            "maxErrorMeters": 0.005965,
+            "meanErrorMeters": 0.002441,
+            "p95ErrorMeters": 0.005146,
+            "withinLocalTolerancePercent": 91.666667,
+            "localToleranceRangeMeters": {
+              "min": 0.005,
+              "max": 0.005
+            }
+          },
+          "support": {
+            "sampleCount": 12,
+            "hitCount": 12,
+            "missCount": 0,
+            "maxErrorMeters": 0.004815,
+            "meanErrorMeters": 0.002469,
+            "p95ErrorMeters": 0.004815,
+            "withinLocalTolerancePercent": 100.0,
+            "localToleranceRangeMeters": {
+              "min": 0.005,
+              "max": 0.005
+            }
+          }
+        }
+      },
+      "harnessQualitySeconds": 2.420519,
+      "simplificationTolerance": 0.01,
+      "maxSimplificationError": 0.009999999999999898,
+      "dirtyWindow": {
+        "minColumn": 13,
+        "minRow": 14,
+        "maxColumn": 209,
+        "maxRow": 209,
+        "columns": 197,
+        "rows": 196
+      },
+      "patchScope": {
+        "affectedPatchCount": 196,
+        "replacementPatchCount": 196,
+        "conformanceRing": 1
+      }
+    },
+    {
+      "rowId": "feature-aware-baseline-terrain-wide-timing-create",
+      "sourceElementId": "feature-aware-baseline-terrain-wide-timing",
+      "commandKind": "create",
+      "featureContextClass": "timing_terrain_create",
+      "seconds": 3.6343146999934106,
+      "timingBuckets": {
+        "commandOutputPlanning": 1.7906442999956198,
+        "featureSelectionDiagnostics": 0.03330640000058338,
+        "dirtyWindowMapping": 0.000429300001997035,
+        "adaptivePlanning": 0.5082718000048772,
+        "mutation": 1.1490623999998206,
+        "total": 3.6343146999934106
+      },
+      "outcome": "created",
+      "meshType": "adaptive_tin",
+      "faceCount": 31734,
+      "vertexCount": 16065,
+      "adaptivePolicySummary": {
+        "policyFingerprint": "13d8e5817200c65aa4d7cc23cbf9602e05ae6fa8722760a7c9755d6f09d598e3",
+        "featureGeometryDigest": "587de4ecbaeaa2c143d951f85c070860517493478957e31872af0d415e9740fd",
+        "hardProtectedToleranceHitCount": 0,
+        "densityHitCount": 0,
+        "forcedSubdivisionSummary": {
+          "supportedInputCounts": {
+          },
+          "skippedInputCounts": {
+          },
+          "hitCount": 0
+        },
+        "fallbackCounts": {
+          "absentFeatureGeometry": 0,
+          "partialFeatureGeometry": 0,
+          "unsupportedFeatureGeometry": 0
+        }
+      },
+      "featureQualitySummary": {
+        "status": "not_applicable",
+        "reason": "no_feature_regions",
+        "sampleCount": 0
+      },
+      "harnessQualitySeconds": 0.117449,
+      "simplificationTolerance": 0.01,
+      "maxSimplificationError": 0.009999999999999981,
+      "dirtyWindow": {
+        "minColumn": 0,
+        "minRow": 0,
+        "maxColumn": 191,
+        "maxRow": 191,
+        "columns": 192,
+        "rows": 192
+      },
+      "patchScope": {
+        "affectedPatchCount": 144,
+        "replacementPatchCount": 144,
+        "conformanceRing": 1
+      }
+    },
+    {
+      "rowId": "wide-varied-local-target-timing",
+      "sourceElementId": "feature-aware-baseline-terrain-wide-timing",
+      "commandKind": "edit",
+      "featureContextClass": "wide_varied_local_target",
+      "seconds": 1.4566914000024553,
+      "timingBuckets": {
+        "commandOutputPlanning": 0.2837610999995377,
+        "featureSelectionDiagnostics": 0.0006309000018518418,
+        "dirtyWindowMapping": 0.00010740000288933516,
+        "adaptivePlanning": 0.02469780000683386,
+        "mutation": 0.467683400005626,
+        "total": 1.4566914000024553
+      },
+      "outcome": "edited",
+      "meshType": "adaptive_tin",
+      "faceCount": 8367,
+      "vertexCount": 4316,
+      "adaptivePolicySummary": {
+        "policyFingerprint": "13d8e5817200c65aa4d7cc23cbf9602e05ae6fa8722760a7c9755d6f09d598e3",
+        "featureGeometryDigest": "d3076903e41f2ef0cf80da6affa76a53646e7a14a886f335bcd5fd124d1277cb",
+        "hardProtectedToleranceHitCount": 0,
+        "densityHitCount": 113,
+        "forcedSubdivisionSummary": {
+          "supportedInputCounts": {
+          },
+          "skippedInputCounts": {
+          },
+          "hitCount": 0
+        },
+        "fallbackCounts": {
+          "absentFeatureGeometry": 0,
+          "partialFeatureGeometry": 0,
+          "unsupportedFeatureGeometry": 0
+        }
+      },
+      "featureQualitySummary": {
+        "sampleCount": 128,
+        "hitCount": 128,
+        "missCount": 0,
+        "maxErrorMeters": 0.0,
+        "meanErrorMeters": 0.0,
+        "p95ErrorMeters": 0.0,
+        "withinLocalTolerancePercent": 100.0,
+        "localToleranceRangeMeters": {
+          "min": 0.01,
+          "max": 0.01
+        },
+        "status": "captured",
+        "baseToleranceMeters": 0.01,
+        "families": {
+          "target_region": {
+            "sampleCount": 128,
+            "hitCount": 128,
+            "missCount": 0,
+            "maxErrorMeters": 0.0,
+            "meanErrorMeters": 0.0,
+            "p95ErrorMeters": 0.0,
+            "withinLocalTolerancePercent": 100.0,
+            "localToleranceRangeMeters": {
+              "min": 0.01,
+              "max": 0.01
+            }
+          }
+        },
+        "roleSummaries": {
+          "target_support": {
+            "sampleCount": 128,
+            "hitCount": 128,
+            "missCount": 0,
+            "maxErrorMeters": 0.0,
+            "meanErrorMeters": 0.0,
+            "p95ErrorMeters": 0.0,
+            "withinLocalTolerancePercent": 100.0,
+            "localToleranceRangeMeters": {
+              "min": 0.01,
+              "max": 0.01
+            }
+          }
+        }
+      },
+      "harnessQualitySeconds": 1.28363,
+      "simplificationTolerance": 0.01,
+      "maxSimplificationError": 0.009975000000000012,
+      "dirtyWindow": {
+        "minColumn": 39,
+        "minRow": 39,
+        "maxColumn": 61,
+        "maxRow": 61,
+        "columns": 23,
+        "rows": 23
+      },
+      "patchScope": {
+        "affectedPatchCount": 4,
+        "replacementPatchCount": 16,
+        "conformanceRing": 1
+      }
+    },
+    {
+      "rowId": "wide-varied-half-corridor-timing",
+      "sourceElementId": "feature-aware-baseline-terrain-wide-timing",
+      "commandKind": "edit",
+      "featureContextClass": "wide_varied_half_terrain_corridor",
+      "seconds": 6.350836300000083,
+      "timingBuckets": {
+        "commandOutputPlanning": 1.8032130999999936,
+        "featureSelectionDiagnostics": 0.0010994999975082465,
+        "dirtyWindowMapping": 0.0017985999947995879,
+        "adaptivePlanning": 0.5093718999996781,
+        "mutation": 2.269094800001767,
+        "total": 6.350836300000083
+      },
+      "outcome": "edited",
+      "meshType": "adaptive_tin",
+      "faceCount": 31677,
+      "vertexCount": 16103,
+      "adaptivePolicySummary": {
+        "policyFingerprint": "13d8e5817200c65aa4d7cc23cbf9602e05ae6fa8722760a7c9755d6f09d598e3",
+        "featureGeometryDigest": "c8f3657b1108116b2562683c73cfd9c0dbd6958d3cbe977ae486a8321c966534",
+        "hardProtectedToleranceHitCount": 0,
+        "densityHitCount": 97,
+        "forcedSubdivisionSummary": {
+          "supportedInputCounts": {
+            "corridor_detail": 4
+          },
+          "skippedInputCounts": {
+            "broad_corridor_pressure": 1,
+            "unsupported_reference_role": 1
+          },
+          "hitCount": 268
+        },
+        "fallbackCounts": {
+          "absentFeatureGeometry": 0,
+          "partialFeatureGeometry": 0,
+          "unsupportedFeatureGeometry": 1
+        }
+      },
+      "featureQualitySummary": {
+        "sampleCount": 126,
+        "hitCount": 126,
+        "missCount": 0,
+        "maxErrorMeters": 0.227219,
+        "meanErrorMeters": 0.015661,
+        "p95ErrorMeters": 0.086176,
+        "withinLocalTolerancePercent": 70.634921,
+        "localToleranceRangeMeters": {
+          "min": 0.005,
+          "max": 0.01
+        },
+        "status": "captured",
+        "baseToleranceMeters": 0.01,
+        "families": {
+          "target_region": {
+            "sampleCount": 21,
+            "hitCount": 21,
+            "missCount": 0,
+            "maxErrorMeters": 0.005076,
+            "meanErrorMeters": 0.002732,
+            "p95ErrorMeters": 0.0045,
+            "withinLocalTolerancePercent": 100.0,
+            "localToleranceRangeMeters": {
+              "min": 0.01,
+              "max": 0.01
+            }
+          },
+          "linear_corridor": {
+            "sampleCount": 105,
+            "hitCount": 105,
+            "missCount": 0,
+            "maxErrorMeters": 0.227219,
+            "meanErrorMeters": 0.018247,
+            "p95ErrorMeters": 0.101455,
+            "withinLocalTolerancePercent": 64.761905,
+            "localToleranceRangeMeters": {
+              "min": 0.005,
+              "max": 0.005
+            }
+          }
+        },
+        "roleSummaries": {
+          "target_support": {
+            "sampleCount": 21,
+            "hitCount": 21,
+            "missCount": 0,
+            "maxErrorMeters": 0.005076,
+            "meanErrorMeters": 0.002732,
+            "p95ErrorMeters": 0.0045,
+            "withinLocalTolerancePercent": 100.0,
+            "localToleranceRangeMeters": {
+              "min": 0.01,
+              "max": 0.01
+            }
+          },
+          "centerline": {
+            "sampleCount": 21,
+            "hitCount": 21,
+            "missCount": 0,
+            "maxErrorMeters": 0.004545,
+            "meanErrorMeters": 0.002597,
+            "p95ErrorMeters": 0.004545,
+            "withinLocalTolerancePercent": 100.0,
+            "localToleranceRangeMeters": {
+              "min": 0.005,
+              "max": 0.005
+            }
+          },
+          "endpoint_cap": {
+            "sampleCount": 42,
+            "hitCount": 42,
+            "missCount": 0,
+            "maxErrorMeters": 0.227219,
+            "meanErrorMeters": 0.041418,
+            "p95ErrorMeters": 0.174043,
+            "withinLocalTolerancePercent": 23.809524,
+            "localToleranceRangeMeters": {
+              "min": 0.005,
+              "max": 0.005
+            }
+          },
+          "side_transition": {
+            "sampleCount": 42,
+            "hitCount": 42,
+            "missCount": 0,
+            "maxErrorMeters": 0.010432,
+            "meanErrorMeters": 0.0029,
+            "p95ErrorMeters": 0.006768,
+            "withinLocalTolerancePercent": 88.095238,
+            "localToleranceRangeMeters": {
+              "min": 0.005,
+              "max": 0.005
+            }
+          }
+        }
+      },
+      "harnessQualitySeconds": 1.399047,
+      "simplificationTolerance": 0.01,
+      "maxSimplificationError": 0.009999999999999981,
+      "dirtyWindow": {
+        "minColumn": 9,
+        "minRow": 16,
+        "maxColumn": 174,
+        "maxRow": 159,
+        "columns": 166,
+        "rows": 144
+      },
+      "patchScope": {
+        "affectedPatchCount": 110,
+        "replacementPatchCount": 132,
+        "conformanceRing": 1
+      }
+    },
+    {
+      "rowId": "wide-varied-fairing-large-timing",
+      "sourceElementId": "feature-aware-baseline-terrain-wide-timing",
+      "commandKind": "edit",
+      "featureContextClass": "wide_varied_fairing_large_region",
+      "seconds": 7.5955141999947955,
+      "timingBuckets": {
+        "commandOutputPlanning": 1.3972506999998586,
+        "featureSelectionDiagnostics": 0.0013875000004190952,
+        "dirtyWindowMapping": 0.0028730999983963557,
+        "adaptivePlanning": 0.4166022999997949,
+        "mutation": 1.9670727999982773,
+        "total": 7.5955141999947955
+      },
+      "outcome": "edited",
+      "meshType": "adaptive_tin",
+      "faceCount": 24366,
+      "vertexCount": 12381,
+      "adaptivePolicySummary": {
+        "policyFingerprint": "13d8e5817200c65aa4d7cc23cbf9602e05ae6fa8722760a7c9755d6f09d598e3",
+        "featureGeometryDigest": "249ff054e126ce840b86730d65187e0217d1160fbc845d6ea1fcce149a249b0c",
+        "hardProtectedToleranceHitCount": 0,
+        "densityHitCount": 6053,
+        "forcedSubdivisionSummary": {
+          "supportedInputCounts": {
+            "corridor_detail": 4
+          },
+          "skippedInputCounts": {
+            "broad_corridor_pressure": 1,
+            "unsupported_reference_role": 1
+          },
+          "hitCount": 268
+        },
+        "fallbackCounts": {
+          "absentFeatureGeometry": 0,
+          "partialFeatureGeometry": 0,
+          "unsupportedFeatureGeometry": 1
+        }
+      },
+      "featureQualitySummary": {
+        "sampleCount": 126,
+        "hitCount": 126,
+        "missCount": 0,
+        "maxErrorMeters": 0.127886,
+        "meanErrorMeters": 0.009984,
+        "p95ErrorMeters": 0.051204,
+        "withinLocalTolerancePercent": 76.984127,
+        "localToleranceRangeMeters": {
+          "min": 0.005,
+          "max": 0.01
+        },
+        "status": "captured",
+        "baseToleranceMeters": 0.01,
+        "families": {
+          "fairing_region": {
+            "sampleCount": 18,
+            "hitCount": 18,
+            "missCount": 0,
+            "maxErrorMeters": 0.008093,
+            "meanErrorMeters": 0.003539,
+            "p95ErrorMeters": 0.008093,
+            "withinLocalTolerancePercent": 100.0,
+            "localToleranceRangeMeters": {
+              "min": 0.01,
+              "max": 0.01
+            }
+          },
+          "target_region": {
+            "sampleCount": 18,
+            "hitCount": 18,
+            "missCount": 0,
+            "maxErrorMeters": 0.005807,
+            "meanErrorMeters": 0.002975,
+            "p95ErrorMeters": 0.005807,
+            "withinLocalTolerancePercent": 100.0,
+            "localToleranceRangeMeters": {
+              "min": 0.01,
+              "max": 0.01
+            }
+          },
+          "linear_corridor": {
+            "sampleCount": 90,
+            "hitCount": 90,
+            "missCount": 0,
+            "maxErrorMeters": 0.127886,
+            "meanErrorMeters": 0.012675,
+            "p95ErrorMeters": 0.063878,
+            "withinLocalTolerancePercent": 67.777778,
+            "localToleranceRangeMeters": {
+              "min": 0.005,
+              "max": 0.005
+            }
+          }
+        },
+        "roleSummaries": {
+          "fairing_support": {
+            "sampleCount": 18,
+            "hitCount": 18,
+            "missCount": 0,
+            "maxErrorMeters": 0.008093,
+            "meanErrorMeters": 0.003539,
+            "p95ErrorMeters": 0.008093,
+            "withinLocalTolerancePercent": 100.0,
+            "localToleranceRangeMeters": {
+              "min": 0.01,
+              "max": 0.01
+            }
+          },
+          "target_support": {
+            "sampleCount": 18,
+            "hitCount": 18,
+            "missCount": 0,
+            "maxErrorMeters": 0.005807,
+            "meanErrorMeters": 0.002975,
+            "p95ErrorMeters": 0.005807,
+            "withinLocalTolerancePercent": 100.0,
+            "localToleranceRangeMeters": {
+              "min": 0.01,
+              "max": 0.01
+            }
+          },
+          "centerline": {
+            "sampleCount": 18,
+            "hitCount": 18,
+            "missCount": 0,
+            "maxErrorMeters": 0.004738,
+            "meanErrorMeters": 0.002598,
+            "p95ErrorMeters": 0.004738,
+            "withinLocalTolerancePercent": 100.0,
+            "localToleranceRangeMeters": {
+              "min": 0.005,
+              "max": 0.005
+            }
+          },
+          "endpoint_cap": {
+            "sampleCount": 36,
+            "hitCount": 36,
+            "missCount": 0,
+            "maxErrorMeters": 0.127886,
+            "meanErrorMeters": 0.027737,
+            "p95ErrorMeters": 0.097699,
+            "withinLocalTolerancePercent": 33.333333,
+            "localToleranceRangeMeters": {
+              "min": 0.005,
+              "max": 0.005
+            }
+          },
+          "side_transition": {
+            "sampleCount": 36,
+            "hitCount": 36,
+            "missCount": 0,
+            "maxErrorMeters": 0.005888,
+            "meanErrorMeters": 0.002651,
+            "p95ErrorMeters": 0.005657,
+            "withinLocalTolerancePercent": 86.111111,
+            "localToleranceRangeMeters": {
+              "min": 0.005,
+              "max": 0.005
+            }
+          }
+        }
+      },
+      "harnessQualitySeconds": 0.955998,
+      "simplificationTolerance": 0.01,
+      "maxSimplificationError": 0.009998197959533606,
+      "dirtyWindow": {
+        "minColumn": 3,
+        "minRow": 2,
+        "maxColumn": 188,
+        "maxRow": 188,
+        "columns": 186,
+        "rows": 187
+      },
+      "patchScope": {
+        "affectedPatchCount": 144,
+        "replacementPatchCount": 144,
+        "conformanceRing": 1
+      }
+    }
+  ],
+  "liveGeometryAfterRun": {
+    "feature-aware-baseline-terrain": {
+      "found": true,
+      "entityId": 53282909,
+      "faces": 1789,
+      "edges": 2728
+    },
+    "feature-aware-baseline-terrain-large-timing": {
+      "found": true,
+      "entityId": 53426542,
+      "faces": 57773,
+      "edges": 87003
+    },
+    "feature-aware-baseline-terrain-wide-timing": {
+      "found": true,
+      "entityId": 57319779,
+      "faces": 24366,
+      "edges": 36746
+    }
+  },
+  "notes": [
+    "Captured with real hosted command geometry through TerrainSurfaceCommands.",
+    "Timing rows are opt-in; this result records the requested capture pass.",
+    "Feature quality sampling is harness-only and timed outside command seconds.",
+    "Entity ids are scene-instance evidence, not stable replay inputs."
+  ]
+}
