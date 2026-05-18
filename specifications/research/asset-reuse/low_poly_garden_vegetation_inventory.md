@@ -4,6 +4,18 @@ Purpose: generate clean **2D reference images first**, then use those images in 
 
 **Height convention:** the heights below are **intended SketchUp design-component heights**, not botanical maximum mature heights. For clipped hedges, front-of-border shrubs, groundcovers, and repeated drifts, the useful model height is deliberately lower than the species could theoretically reach. Use the default height for first placement, then scale individual components in SketchUp when the planting role changes.
 
+## Confirmed additions: Sedum, Aquilegia, Lupinus
+
+These three confirmed plants fit inside the existing model inventory. The intent is **not** to increase the required model count from 22. Treat them as **species assignments and optional prompt/material variants**, not mandatory new meshes.
+
+| Plant                         | Existing category                                                |            Required new mesh? | Recommended handling                                                                                                                                  |
+| ----------------------------- | ---------------------------------------------------------------- | ----------------------------: | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Sedum acre**                | **13. Low Groundcover / Terrain Patch Family**                   | **No, optional variant only** | Use the existing low groundcover patch system. If Sedum is visually important in dry/rocky areas, use the optional stonecrop prompt/material variant. |
+| **Aquilegia color varieties** | **18. Upright Flowering Perennial Spike / Airy Flowering Clump** |  **Maybe, only if prominent** | If only symbolic, reuse Model 18 with lighter stems and color changes. If prominent, use the optional airy branching prompt variant.                  |
+| **Lupinus color varieties**   | **18. Upright Flowering Perennial Spike / Airy Flowering Clump** |                        **No** | Reuse Model 18. Scale taller, make flower spikes thicker/conical, and vary flower colors.                                                             |
+
+Decision: **no new top-level items 23–25**. The base inventory remains the same. Optional sub-prompts are provided only to improve generation if these plants become visually important.
+
 ## Image-first rules
 
 Use these prompts one model at a time.
@@ -38,10 +50,10 @@ Create a clean low-poly 3D game asset render of a single clipped rectangular hed
 
 **Represents:**
 
-- Taxus × media 'Groenland'
-- Carpinus betulus, when clipped
-- Euonymus fortunei, when clipped
-- Lonicera nitida
+* Taxus × media 'Groenland'
+* Carpinus betulus, when clipped
+* Euonymus fortunei, when clipped
+* Lonicera nitida
 
 **Use / generation notes:**
 
@@ -63,10 +75,10 @@ Create a clean low-poly 3D game asset render of a single tall clipped hedge scre
 
 **Represents:**
 
-- Carpinus betulus
-- Taxus × media 'Groenland'
-- Tall clipped Prunus laurocerasus
-- Tall clipped Prunus lusitanica
+* Carpinus betulus
+* Taxus × media 'Groenland'
+* Tall clipped Prunus laurocerasus
+* Tall clipped Prunus lusitanica
 
 **Use / generation notes:**
 
@@ -88,10 +100,10 @@ Create a clean low-poly 3D game asset render of a single dense broadleaf evergre
 
 **Represents:**
 
-- Prunus laurocerasus
-- Prunus lusitanica
-- Osmanthus × burkwoodii
-- Euonymus japonicus
+* Prunus laurocerasus
+* Prunus lusitanica
+* Osmanthus × burkwoodii
+* Euonymus japonicus
 
 **Use / generation notes:**
 
@@ -113,10 +125,10 @@ Create a clean low-poly 3D game asset render of a single rounded evergreen shrub
 
 **Represents:**
 
-- Mahonia
-- Euonymus fortunei, shrub form
-- Euonymus japonicus, smaller form
-- Osmanthus × burkwoodii, smaller form
+* Mahonia
+* Euonymus fortunei, shrub form
+* Euonymus japonicus, smaller form
+* Osmanthus × burkwoodii, smaller form
 
 **Use / generation notes:**
 
@@ -138,7 +150,7 @@ Create a clean low-poly 3D game asset render of a single low conifer mound. The 
 
 **Represents:**
 
-- Pinus mugo
+* Pinus mugo
 
 **Use / generation notes:**
 
@@ -160,7 +172,7 @@ Create a clean low-poly 3D game asset render of a single upright juniper conifer
 
 **Represents:**
 
-- Juniperus chinensis
+* Juniperus chinensis
 
 **Use / generation notes:**
 
@@ -182,13 +194,13 @@ Create a clean low-poly 3D game asset render of a single loose deciduous boundar
 
 **Represents:**
 
-- Cornus mas
-- Physocarpus
-- Hardy Viburnum
-- Viburnum carlesii, non-flowering phase
-- Philadelphus, non-flowering phase
-- Weigela florida, non-flowering phase
-- Hamamelis × intermedia
+* Cornus mas
+* Physocarpus
+* Hardy Viburnum
+* Viburnum carlesii, non-flowering phase
+* Philadelphus, non-flowering phase
+* Weigela florida, non-flowering phase
+* Hamamelis × intermedia
 
 **Use / generation notes:**
 
@@ -210,12 +222,12 @@ Create a clean low-poly 3D game asset render of a single arching flowering shrub
 
 **Represents:**
 
-- Spiraea × cinerea 'Grefsheim'
-- Deutzia gracilis
-- Kerria japonica
-- Philadelphus
-- Weigela florida
-- Ribes, informal flowering form
+* Spiraea × cinerea 'Grefsheim'
+* Deutzia gracilis
+* Kerria japonica
+* Philadelphus
+* Weigela florida
+* Ribes, informal flowering form
 
 **Use / generation notes:**
 
@@ -237,9 +249,9 @@ Create a clean low-poly 3D game asset render of a single large rounded flowering
 
 **Represents:**
 
-- Hydrangea paniculata
-- Viburnum carlesii
-- Hardy Viburnum, flowering phase
+* Hydrangea paniculata
+* Viburnum carlesii
+* Hardy Viburnum, flowering phase
 
 **Use / generation notes:**
 
@@ -261,10 +273,10 @@ Create a clean low-poly 3D game asset render of a single low flowering shrub mou
 
 **Represents:**
 
-- Chaenomeles japonica
-- Aronia
-- Ribes
-- Small Spiraea / Deutzia placements
+* Chaenomeles japonica
+* Aronia
+* Ribes
+* Small Spiraea / Deutzia placements
 
 **Use / generation notes:**
 
@@ -286,10 +298,10 @@ Create a clean low-poly 3D game asset render of a single thin climbing vine foli
 
 **Represents:**
 
-- Hedera helix
-- Parthenocissus
-- Clematis viticella
-- Jasminum nudiflorum
+* Hedera helix
+* Parthenocissus
+* Clematis viticella
+* Jasminum nudiflorum
 
 **Use / generation notes:**
 
@@ -311,7 +323,7 @@ Create a clean low-poly 3D game asset render of a single bamboo screen clump. Th
 
 **Represents:**
 
-- Phyllostachys bissetii
+* Phyllostachys bissetii
 
 **Use / generation notes:**
 
@@ -319,27 +331,73 @@ Thin stems can fail in Image-to-3D, so the prompt asks for slightly thick canes.
 
 ---
 
-## 13. Low Groundcover Carpet Patch
+## 13. Low Groundcover / Terrain Patch Family
 
-**Short description:** Very low spreading oval patch.
+**Short description:** Very low, feathered terrain vegetation used as scattered patches rather than strict tiles.
 
-**Approximate SketchUp height:** 0.08–0.20 m for foliage carpet; use ~0.12 m as the default component height. Flowering stems can be scaled up to ~0.30–0.35 m if needed.
-
-**Nano Banana image prompt:**
-
-```text
-Create a clean low-poly 3D game asset render of a single low groundcover carpet patch. The object is a very shallow oval mat with an uneven organic edge, made from many broad simple polygon leaves lying close to the ground. Use medium green and yellow-green matte colors, flat faceted shapes, centered full object, orthographic three-quarter view, plain light gray background, no labels, no text, no tall stems, no pot, no soil scene.
-```
+**Approximate SketchUp height:** 0.05–0.20 m for foliage-only groundcover; use ~0.10–0.12 m as the default for leafy carpet patches. Flowering or sedum variants can reach ~0.15–0.25 m if needed.
 
 **Represents:**
 
-- Geranium macrorrhizum
-- Waldsteinia ternata
-- Vinca minor
+* Geranium macrorrhizum
+* Waldsteinia ternata
+* Vinca minor
+* Sedum acre
+* Low spreading groundcover masses
 
 **Use / generation notes:**
 
-Use as a repeated low carpet. Keep it almost flat. In SketchUp, scale and overlap copies to create drifts.
+Do not make this a square tile or a solid green platform. For sloped terrain, use scattered irregular components with empty gaps between leaves, random yaw rotation, slight scale variation, and alignment to averaged terrain normals. The continuous visual carpet should come from the underlying terrain/bed material; the meshes only add visible low-poly leaf structure.
+
+### 13A. Low Groundcover Leaf Cluster
+
+**Purpose:** main repeated green groundcover asset.
+
+**Nano Banana / Tripo-oriented prompt:**
+
+```text
+Clean low-poly 3D game asset render of one loose groundcover leaf cluster made only from separate simple polygon leaves and short thin stems. The leaves spread outward in an irregular oval footprint, denser near the center and sparse at the edges, with empty background clearly visible between many leaves. Leaves lie close to the ground, slightly tilted at different angles, with thin faceted leaf surfaces. No mound, no platform, no base, no soil, no ground plane, no continuous green surface. Medium green and yellow-green matte colors, centered full object, viewed from above at a 45 degree three-quarter angle, plain light gray background, no labels, no text.
+```
+
+**Best for:** Geranium macrorrhizum, Waldsteinia ternata, Vinca minor foliage-only massing.
+
+### 13B. Flowering Groundcover Accent Patch
+
+**Purpose:** occasional flowering overlay/variant, not the main carpet.
+
+**Nano Banana / Tripo-oriented prompt:**
+
+```text
+Clean low-poly 3D game asset render of one loose flowering groundcover cluster made only from separate simple polygon leaves, short thin stems, and a few tiny flowers. The leaves spread outward in an irregular oval footprint, denser near the center and sparse at the feathered edges, with empty background visible between leaves. Add a few small purple, pink, white, or yellow flower dots on very short stems attached among the leaves. No mound, no platform, no base, no soil, no ground plane, no continuous green surface. Matte green and yellow-green foliage, simple faceted low-poly style, centered full object, viewed from above at a 45 degree three-quarter angle, plain light gray background, no labels, no text.
+```
+
+**Best for:** Vinca minor flowers, Geranium macrorrhizum flowers, Waldsteinia flowers, small seasonal flowering hints inside groundcover zones.
+
+### 13C. Sparse Edge Filler Leaf Fragment
+
+**Purpose:** small broken fragments for hiding gaps at paths, rocks, bed edges, slope transitions, and between larger patches.
+
+**Nano Banana / Tripo-oriented prompt:**
+
+```text
+Clean low-poly 3D game asset render of one sparse groundcover edge filler fragment made only from 8 to 15 separate simple polygon leaves and a few short thin stems. The shape is a broken irregular crescent with large gaps and feathered edges, not a solid patch. Leaves are unevenly spaced, close to the ground, slightly tilted in different directions, with empty background visible between them. No mound, no platform, no base, no soil, no ground plane, no continuous green surface. Medium green and yellow-green matte colors, faceted low-poly style, centered full object, viewed from above at a 45 degree three-quarter angle, plain light gray background, no labels, no text.
+```
+
+**Best for:** irregular seams, edges, and terrain patch blending.
+
+### 13D. Optional Succulent Stonecrop Mat Variant
+
+**Purpose:** optional Sedum acre / dry low succulent groundcover prompt/material variant. This is **not required as a separate mesh** unless Sedum becomes visually prominent in the model. For a lighter inventory, reuse 13A or 13B with brighter yellow-green material and small yellow flower dots.
+
+**Nano Banana / Tripo-oriented prompt:**
+
+```text
+Clean low-poly 3D game asset render of one loose succulent stonecrop groundcover cluster made only from many tiny separate star-like rosettes, short bead-like stems, and small thick polygon leaves close to the ground. The cluster has an irregular broken oval footprint, denser near the center and sparse at the edges, with empty background visible between groups. Add a few tiny yellow star flower dots on very short stems. No mound, no platform, no base, no soil, no ground plane, no continuous green surface. Bright yellow-green and medium green matte colors, simple faceted low-poly style, centered full object, viewed from above at a 45 degree three-quarter angle, plain light gray background, no labels, no text.
+```
+
+**Best for:** Sedum acre in dry raised beds, cracks, edges, sunny low groundcover, and rock-adjacent planting.
+
+**Reasoning notes:** Sedum acre is visually closer to a very low succulent mat than to broad leafy groundcover. It does not warrant a new top-level model, but it does warrant this 13D variant if it appears noticeably in the design.
 
 ---
 
@@ -357,11 +415,11 @@ Create a clean low-poly 3D game asset render of a single broad-leaf shade plant 
 
 **Represents:**
 
-- Hosta
-- Brunnera macrophylla
-- Heuchera
-- Helleborus × hybridus
-- Tiarella, foliage form
+* Hosta
+* Brunnera macrophylla
+* Heuchera
+* Helleborus × hybridus
+* Tiarella, foliage form
 
 **Use / generation notes:**
 
@@ -383,8 +441,8 @@ Create a clean low-poly 3D game asset render of a single fern clump. The plant h
 
 **Represents:**
 
-- Dryopteris
-- Matteuccia
+* Dryopteris
+* Matteuccia
 
 **Use / generation notes:**
 
@@ -406,7 +464,7 @@ Create a clean low-poly 3D game asset render of a single low cascading ornamenta
 
 **Represents:**
 
-- Hakonechloa macra
+* Hakonechloa macra
 
 **Use / generation notes:**
 
@@ -428,8 +486,8 @@ Create a clean low-poly 3D game asset render of a single tall ornamental grass c
 
 **Represents:**
 
-- Molinia caerulea 'Transparent'
-- Miscanthus sinensis 'Gracillimus'
+* Molinia caerulea 'Transparent'
+* Miscanthus sinensis 'Gracillimus'
 
 **Use / generation notes:**
 
@@ -437,28 +495,49 @@ Use for vertical grassy texture and late-season movement. Molinia should be airi
 
 ---
 
-## 18. Upright Flowering Perennial Spike Clump
+## 18. Upright Flowering Perennial Spike / Airy Flowering Clump
 
-**Short description:** Low foliage base with purple/blue vertical flower spikes.
+**Short description:** Low foliage base with upright flowering stems. Covers both dense spike-form perennials and airier branching flower clumps.
 
-**Approximate SketchUp height:** 0.45–0.85 m for most upright perennial drifts; use ~0.6 m as the default component height. Use ~0.9–1.1 m only for Salvia yangii / Russian sage style variants.
+**Approximate SketchUp height:** 0.45–0.85 m for most upright perennial drifts; use ~0.6 m as the default component height. Use ~0.8–1.1 m for Lupinus or Salvia yangii / Russian sage style variants.
+
+**Represents:**
+
+* Salvia nemorosa
+* Nepeta × faassenii
+* Salvia yangii
+* Astilbe, if using plume color variants
+* Lupinus color varieties
+* Aquilegia color varieties
+* Upright flowering perennial drifts
+
+### 18A. Dense Upright Flower Spike Clump
+
+**Purpose:** the main existing Model 18 mesh: repeated drift plant with clear vertical color rhythm.
 
 **Nano Banana image prompt:**
 
 ```text
-Create a clean low-poly 3D game asset render of a single upright flowering perennial clump. The plant has a compact green leafy base and several thick vertical purple-blue flower spikes rising above it. The flower spikes are simple geometric bead-like columns, not tiny individual flowers. Use matte green, violet, and blue-purple colors, centered full object, orthographic three-quarter view, plain light gray background, no labels, no text, no pot, no soil scene.
+Create a clean low-poly 3D game asset render of a single upright flowering perennial clump. The plant has a compact green leafy base and several thick vertical flower spikes rising above it. The flower spikes are simple geometric bead-like columns, not tiny individual flowers. Use matte green foliage and one strong flower color such as violet, blue-purple, pink, white, yellow, or red. Centered full object, orthographic three-quarter view, plain light gray background, no labels, no text, no pot, no soil scene.
 ```
 
-**Represents:**
+**Best for:** Salvia nemorosa, Nepeta × faassenii, Astilbe plume variant, Lupinus color varieties.
 
-- Salvia nemorosa
-- Nepeta × faassenii
-- Salvia yangii
-- Astilbe, if using plume color variants
+**Lupinus-specific note:** Use the upper height range. Make the flower spikes thicker, taller, and more conical than Salvia. Add a broader palmate-looking leafy base if the model generator handles it cleanly.
 
-**Use / generation notes:**
+### 18B. Optional Airy Branching Flowering Perennial Variant
 
-Use in repeated drifts for color rhythm and upright texture. For Astilbe, use pink/white plume material and slightly softer spikes.
+**Purpose:** optional Aquilegia-oriented prompt/material variant. This is **not required as a separate mesh** unless Aquilegia is visually prominent. For a lighter inventory, reuse Model 18 with fewer/thinner stems, more spacing, and mixed flower colors.
+
+**Nano Banana image prompt:**
+
+```text
+Create a clean low-poly 3D game asset render of a single airy branching flowering perennial clump. The plant has a small rounded green leafy base, several thin branching stems, and a few simple open star-shaped flowers held above the foliage. The silhouette is light and transparent, with visible gaps between stems and flowers. Use matte green foliage and mixed flower colors such as purple, pink, blue, white, yellow, or red. Centered full object, orthographic three-quarter view, plain light gray background, no labels, no text, no pot, no soil scene.
+```
+
+**Best for:** Aquilegia color varieties and other light cottage-garden flowering perennials.
+
+**Reasoning notes:** Aquilegia does not fit the dense spike model well, but it can live inside Model 18 as an airy branching variant. Lupinus fits the spike model very well and only needs color/height/material variants. Neither requires a separate top-level model unless these plants become major hero features in the SketchUp scene.
 
 ---
 
@@ -476,9 +555,9 @@ Create a clean low-poly 3D game asset render of a single structural perennial mo
 
 **Represents:**
 
-- Phlomis russeliana
-- Hylotelephium 'Matrona'
-- Tiarella, flowering form
+* Phlomis russeliana
+* Hylotelephium 'Matrona'
+* Tiarella, flowering form
 
 **Use / generation notes:**
 
@@ -500,11 +579,11 @@ Create a clean low-poly 3D game asset render of a single tiny spring bulb flower
 
 **Represents:**
 
-- Galanthus
-- Eranthis hyemalis
-- Crocus
-- Muscari
-- Narcissus
+* Galanthus
+* Eranthis hyemalis
+* Crocus
+* Muscari
+* Narcissus
 
 **Use / generation notes:**
 
@@ -526,7 +605,7 @@ Create a clean low-poly 3D game asset render of a single lavender mound. The pla
 
 **Represents:**
 
-- Lavandula angustifolia
+* Lavandula angustifolia
 
 **Use / generation notes:**
 
@@ -548,7 +627,7 @@ Create a clean low-poly 3D game asset render of a single iris clump. The plant h
 
 **Represents:**
 
-- Iris germanica
+* Iris germanica
 
 **Use / generation notes:**
 
@@ -588,4 +667,3 @@ After generating the Nano Banana image:
 4. If using multi-view, use different views of the same object, not different plants.
 5. After generation, use low-poly/remesh/export settings and do final cleanup in Blender or SketchUp.
 6. For SketchUp, prioritize silhouette and scale over texture detail.
-

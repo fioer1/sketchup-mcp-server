@@ -113,6 +113,7 @@ The current task order proves terrain authoring through concrete, testable incre
 42. [MTA-42 Upgrade Adaptive Seam Contracts For Feature-Driven Splits](MTA-42-upgrade-adaptive-seam-contracts-for-feature-driven-splits/task.md)
 43. [MTA-43 Add Patch Component Planner For Cross-Patch Features](MTA-43-add-patch-component-planner-for-cross-patch-features/task.md)
 44. [MTA-44 Add Sparse Local Detail Tiles And Composed Height Oracle](MTA-44-add-sparse-local-detail-tiles-and-composed-height-oracle/task.md)
+45. [MTA-45 Reduce Unnecessary Planar Region Output Tessellation](MTA-45-reduce-unnecessary-planar-region-output-tessellation/task.md)
 
 ## Deferred Follow-Ons
 
@@ -146,6 +147,9 @@ Deferred work is not promoted into active task folders in this iteration:
 - visual smoothing/fairing over derived output. Smoothing must remain deferred until hard
   constraints, protected boundaries, and patch seams are stable enough that smoothing cannot weaken
   them.
+- planar-region interior compaction beyond the MTA-40 forced-mask fix. `MTA-45` addresses the
+  remaining unnecessary planar interior tessellation while preserving stitched boundaries, falloff
+  edge detail, and newer features over planar edits.
 
 ## Notes
 
