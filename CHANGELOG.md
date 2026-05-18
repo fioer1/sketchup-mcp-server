@@ -2,6 +2,24 @@
 
 <!-- version list -->
 
+## v1.11.0 (2026-05-18)
+
+### Documentation
+
+- **MTA-45**: Planar region
+  ([`191a047`](https://github.com/SidhNor/sketchup-mcp-server/commit/191a047df84d461e2e5717c20dbb3813722d147d))
+
+### Features
+
+- **MTA-40**: Forced terrain subdivision for features
+  ([`6d9802d`](https://github.com/SidhNor/sketchup-mcp-server/commit/6d9802d7a845cc14a05752e82be36cd8b1adc8c1))
+
+### Performance Improvements
+
+- **STI-04**: Optimization of scene queries
+  ([`52981cc`](https://github.com/SidhNor/sketchup-mcp-server/commit/52981cc1c096b53b999cca208b305444b816a887))
+
+
 ## v1.10.0 (2026-05-16)
 
 ### Documentation
