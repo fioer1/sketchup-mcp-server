@@ -67,14 +67,14 @@ class TargetReferenceResolverTest < Minitest::Test
     assert_equal([[:find_entity_by_persistent_id, '8813']], adapter.calls)
   end
 
-  def test_uses_recursive_metadata_lookup_for_source_element_id
+  def test_verifies_unique_container_source_element_id_with_recursive_scan
     adapter = FastLookupAdapter.new(entity_by_source_element_id: @model.entities.last)
     resolver = SU_MCP::TargetReferenceResolver.new(adapter: adapter)
 
     result = resolver.resolve('sourceElementId' => 'duplicate-managed-001')
 
     assert_equal('unique', result[:resolution])
-    assert_equal([:all_entities_recursive], adapter.calls)
+    assert_equal(%i[group_component_entities_recursive all_entities_recursive], adapter.calls)
   end
 
   def test_returns_none_when_no_entity_matches
@@ -129,6 +129,11 @@ class TargetReferenceResolverTest < Minitest::Test
 
     def all_entities_recursive
       @calls << :all_entities_recursive
+      [@entity_by_source_element_id].compact
+    end
+
+    def group_component_entities_recursive
+      @calls << :group_component_entities_recursive
       [@entity_by_source_element_id].compact
     end
   end

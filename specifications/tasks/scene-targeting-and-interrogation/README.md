@@ -16,6 +16,7 @@ The current task order intentionally keeps targeting and interrogation bounded t
 - `find_entities` MVP
 - `sample_surface_z`
 - profile or section sampling as a host-targeted extension of `sample_surface_z`
+- target-resolution hardening needed for large-scene performance and shared direct-reference consumers
 
 The wider capability remains acknowledged, but deferred work is not promoted into active task folders for this iteration.
 
@@ -24,6 +25,7 @@ The wider capability remains acknowledged, but deferred work is not promoted int
 1. [STI-01 Targeting MVP and `find_entities`](STI-01-targeting-mvp-and-find-entities/task.md)
 2. [STI-02 Explicit Surface Interrogation via `sample_surface_z`](STI-02-explicit-surface-interrogation-via-sample-surface-z/task.md)
 3. [STI-03 Extend `sample_surface_z` With Profile and Section Sampling](STI-03-extend-sample-surface-z-with-profile-and-section-sampling/task.md)
+4. [STI-04 Optimize Scene Target Resolution and Surface Profile Queries](STI-04-optimize-scene-target-resolution-and-surface-profile-queries/task.md)
 
 ## Deferred Follow-Ons
 

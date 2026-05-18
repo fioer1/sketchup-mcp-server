@@ -28,6 +28,13 @@ class SceneValidationCommandsTest < Minitest::Test
       @calls << :all_entities_recursive
       entities
     end
+
+    def group_component_entities_recursive
+      @calls << :group_component_entities_recursive
+      entities.select do |entity|
+        entity.is_a?(Sketchup::Group) || entity.is_a?(Sketchup::ComponentInstance)
+      end
+    end
   end
 
   class FakeTargetReferenceResolver
@@ -65,8 +72,26 @@ class SceneValidationCommandsTest < Minitest::Test
       @matches
     end
 
+    def filter_adapter(adapter, target_selector)
+      if source_element_id_only_selector?(target_selector) &&
+         adapter.respond_to?(:group_component_entities_recursive)
+        @filter_calls << [adapter.group_component_entities_recursive, target_selector]
+      end
+
+      filter(adapter.all_entities_recursive, target_selector)
+    end
+
     def resolution_for(_matches)
       @resolution
+    end
+
+    def source_element_id_only_identity?(identity_selector)
+      identity_selector&.keys == ['sourceElementId']
+    end
+
+    def source_element_id_only_selector?(target_selector)
+      target_selector.keys == ['identity'] &&
+        source_element_id_only_identity?(target_selector.fetch('identity'))
     end
   end
 
@@ -518,6 +543,27 @@ class SceneValidationCommandsTest < Minitest::Test
     assert_equal(1, result[:errors].length)
   end
 
+  def test_target_selector_source_element_id_uses_container_candidate_enumeration
+    targeting_query = FakeTargetingQuery.new(
+      normalized_selector: { 'identity' => { 'sourceElementId' => 'path-main' } },
+      matches: [@group],
+      resolution: 'unique'
+    )
+    commands = build_commands(targeting_query: targeting_query, adapter_entities: [@group])
+
+    result = commands.validate_scene_update(
+      'expectations' => {
+        'mustExist' => [
+          { 'targetSelector' => { 'identity' => { 'sourceElementId' => 'path-main' } } }
+        ]
+      }
+    )
+
+    assert_equal('passed', result[:outcome])
+    assert_includes(commands_adapter(commands).calls, :group_component_entities_recursive)
+    assert_includes(commands_adapter(commands).calls, :all_entities_recursive)
+  end
+
   def test_must_exist_passes_for_a_uniquely_resolved_target
     commands = build_commands(
       target_reference_resolver: FakeTargetReferenceResolver.new(
@@ -875,6 +921,10 @@ class SceneValidationCommandsTest < Minitest::Test
   end
 
   private
+
+  def commands_adapter(commands)
+    commands.instance_variable_get(:@adapter)
+  end
 
   def build_commands(target_reference_resolver: nil, targeting_query: nil, serializer: nil,
                      geometry_health: nil, adapter_entities: nil, sample_surface_query: nil)

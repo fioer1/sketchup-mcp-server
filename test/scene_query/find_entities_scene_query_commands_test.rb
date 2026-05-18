@@ -42,6 +42,18 @@ class FindEntitiesSceneQueryCommandsTest < Minitest::Test
     assert_equal(expected_tree_match, result[:matches].first)
   end
 
+  def test_source_element_id_filter_only_serializes_final_matches
+    serializer = CountingTargetMatchSerializer.new
+    commands = SU_MCP::SceneQueryCommands.new(serializer: serializer)
+
+    result = commands.find_entities(
+      'targetSelector' => { 'identity' => { 'sourceElementId' => 'tree-001' } }
+    )
+
+    assert_equal('unique', result[:resolution])
+    assert_equal(1, serializer.serialize_target_match_calls)
+  end
+
   def test_resolves_unique_match_by_persistent_id
     result = @commands.find_entities(
       'targetSelector' => { 'identity' => { 'persistentId' => '1002' } }
@@ -116,6 +128,33 @@ class FindEntitiesSceneQueryCommandsTest < Minitest::Test
     assert_equal('unique', result[:resolution])
     assert_equal('105', result.dig(:matches, 0, :entityId))
     assert_equal('Nested Arbor', result.dig(:matches, 0, :name))
+  end
+
+  def test_source_element_id_lookup_falls_back_to_nested_lower_level_entities
+    driveway = Sketchup.active_model.entities.find { |entity| entity.entityID == 103 }
+    driveway.set_attribute('su_mcp', 'sourceElementId', 'driveway-face-001')
+
+    result = @commands.find_entities(
+      'targetSelector' => { 'identity' => { 'sourceElementId' => 'driveway-face-001' } }
+    )
+
+    assert_equal('unique', result[:resolution])
+    assert_equal('103', result.dig(:matches, 0, :entityId))
+    assert_equal('face', result.dig(:matches, 0, :type))
+  end
+
+  def test_source_element_id_lookup_preserves_ambiguity_for_container_and_lower_level_duplicate
+    container = Sketchup.active_model.entities.find { |entity| entity.entityID == 101 }
+    lower_level = Sketchup.active_model.entities.find { |entity| entity.entityID == 103 }
+    container.set_attribute('su_mcp', 'sourceElementId', 'duplicate-source-id')
+    lower_level.set_attribute('su_mcp', 'sourceElementId', 'duplicate-source-id')
+
+    result = @commands.find_entities(
+      'targetSelector' => { 'identity' => { 'sourceElementId' => 'duplicate-source-id' } }
+    )
+
+    assert_equal('ambiguous', result[:resolution])
+    assert_equal(%w[101 103], result[:matches].map { |match| match[:entityId] }.sort)
   end
 
   def test_supports_matching_unmanaged_entities_by_false_managed_scene_object_flag
@@ -196,5 +235,19 @@ class FindEntitiesSceneQueryCommandsTest < Minitest::Test
       status: 'existing',
       state: 'existing'
     }
+  end
+
+  class CountingTargetMatchSerializer < SU_MCP::SceneQuerySerializer
+    attr_reader :serialize_target_match_calls
+
+    def initialize
+      super
+      @serialize_target_match_calls = 0
+    end
+
+    def serialize_target_match(entity)
+      @serialize_target_match_calls += 1
+      super
+    end
   end
 end

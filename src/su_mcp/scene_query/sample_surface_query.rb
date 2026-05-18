@@ -399,6 +399,9 @@ module SU_MCP
     end
 
     def target_reference_matches?(entity, query)
+      return serializer.target_reference_match?(entity, query) \
+        if serializer.respond_to?(:target_reference_match?)
+
       summary = serializer.serialize_target_match(entity)
       query.all? { |key, value| summary[key.to_sym] == value }
     end

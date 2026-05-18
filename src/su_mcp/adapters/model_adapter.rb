@@ -70,6 +70,10 @@ module SU_MCP
         collect_entities(active_model!.entities.to_a)
       end
 
+      def group_component_entities_recursive
+        collect_group_component_entities(active_model!.entities.to_a)
+      end
+
       def all_entity_paths_recursive
         collect_entity_paths(active_model!.entities.to_a, ancestors: [])
       end
@@ -105,6 +109,21 @@ module SU_MCP
           collect_entities(entity.definition.entities.to_a)
         else
           []
+        end
+      end
+
+      def collect_group_component_entities(entities)
+        Array(entities).flat_map do |entity|
+          next [] unless entity
+          next [] unless entity.respond_to?(:entityID)
+
+          if entity.is_a?(Sketchup::Group)
+            [entity] + collect_group_component_entities(entity.entities.to_a)
+          elsif entity.is_a?(Sketchup::ComponentInstance)
+            [entity] + collect_group_component_entities(entity.definition.entities.to_a)
+          else
+            []
+          end
         end
       end
 

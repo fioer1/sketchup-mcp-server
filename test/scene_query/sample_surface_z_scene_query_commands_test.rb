@@ -142,6 +142,20 @@ class SampleSurfaceZSceneQueryCommandsTest < Minitest::Test
     end
   end
 
+  class CountingTargetMatchSerializer < SU_MCP::SceneQuerySerializer
+    attr_reader :serialize_target_match_calls
+
+    def initialize
+      super
+      @serialize_target_match_calls = 0
+    end
+
+    def serialize_target_match(entity)
+      @serialize_target_match_calls += 1
+      super
+    end
+  end
+
   def setup
     install_runtime_geometry_stubs
     @commands = SU_MCP::SceneQueryCommands.new
@@ -178,6 +192,25 @@ class SampleSurfaceZSceneQueryCommandsTest < Minitest::Test
     assert_refusal(result, 'target_resolution_failed')
     assert_equal('target', result.dig(:refusal, :details, :field))
     assert_equal('none', result.dig(:refusal, :details, :resolution))
+  end
+
+  def test_target_resolution_uses_field_reader_without_full_match_serialization
+    adapter = SU_MCP::Adapters::ModelAdapter.new
+    serializer = CountingTargetMatchSerializer.new
+    query = MeterIdentitySampleSurfaceQuery.new(serializer: serializer)
+
+    result = query.execute(
+      entities: adapter.all_entities_recursive,
+      entity_entries: adapter.all_entity_paths_recursive,
+      scene_entities: adapter.queryable_entities,
+      params: points_request(
+        target: { 'sourceElementId' => 'surface-face-001' },
+        points: [{ 'x' => 1.0, 'y' => 1.0 }]
+      )
+    )
+
+    assert_equal(true, result[:success])
+    assert_equal(0, serializer.serialize_target_match_calls)
   end
 
   def test_refuses_unsupported_target_host_type

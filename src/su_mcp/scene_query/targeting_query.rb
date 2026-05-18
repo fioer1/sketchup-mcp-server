@@ -49,6 +49,14 @@ module SU_MCP
       end
     end
 
+    def filter_adapter(adapter, target_selector)
+      if source_element_id_only_selector?(target_selector)
+        return source_element_id_matches(adapter, target_selector)
+      end
+
+      filter(adapter.all_entities_recursive, target_selector)
+    end
+
     def resolution_for(matches)
       return 'none' if matches.empty?
       return 'unique' if matches.length == 1
@@ -56,9 +64,38 @@ module SU_MCP
       'ambiguous'
     end
 
+    def source_element_id_only_identity?(identity_selector)
+      identity_selector&.keys == ['sourceElementId']
+    end
+
+    def source_element_id_only_selector?(target_selector)
+      target_selector.keys == ['identity'] &&
+        source_element_id_only_identity?(target_selector.fetch('identity'))
+    end
+
     private
 
     attr_reader :serializer
+
+    def source_element_id_matches(adapter, target_selector)
+      expected_value = target_selector.fetch('identity').fetch('sourceElementId')
+      container_matches = source_element_id_container_matches(adapter, expected_value)
+      return container_matches if container_matches.length > 1
+
+      filter_source_element_id(adapter.all_entities_recursive, expected_value)
+    end
+
+    def source_element_id_container_matches(adapter, expected_value)
+      return [] unless adapter.respond_to?(:group_component_entities_recursive)
+
+      filter_source_element_id(adapter.group_component_entities_recursive, expected_value)
+    end
+
+    def filter_source_element_id(entities, expected_value)
+      entities.select do |entity|
+        serializer.target_source_element_id?(entity, expected_value)
+      end
+    end
 
     def normalized_section(raw_section, supported_keys:, section_name:)
       return nil if raw_section.nil?
@@ -111,22 +148,25 @@ module SU_MCP
     def matches_identity?(entity, identity_selector)
       return true unless identity_selector
 
-      summary = serializer.serialize_target_match(entity)
-      identity_selector.all? { |key, value| summary[key.to_sym] == value }
+      identity_selector.all? do |key, value|
+        serializer.target_identity_value(entity, key) == value
+      end
     end
 
     def matches_attributes?(entity, attributes_selector)
       return true unless attributes_selector
 
-      summary = serializer.serialize_target_match(entity)
-      attributes_selector.all? { |key, value| summary[key.to_sym] == value }
+      attributes_selector.all? do |key, value|
+        serializer.target_attribute_value(entity, key) == value
+      end
     end
 
     def matches_metadata?(entity, metadata_selector)
       return true unless metadata_selector
 
-      metadata_summary = serializer.serialize_target_metadata(entity)
-      metadata_selector.all? { |key, value| metadata_summary[key.to_sym] == value }
+      metadata_selector.all? do |key, value|
+        serializer.target_metadata_value(entity, key) == value
+      end
     end
   end
 end

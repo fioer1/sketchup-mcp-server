@@ -17,7 +17,8 @@ class SceneQueryCommandsAdapterTest < Minitest::Test
       entity:,
       queryable_entities:,
       all_entities_recursive:,
-      all_entity_paths_recursive:
+      all_entity_paths_recursive:,
+      group_component_entities_recursive: nil
     )
       @model = model
       @top_level_entities = top_level_entities
@@ -25,6 +26,8 @@ class SceneQueryCommandsAdapterTest < Minitest::Test
       @entity = entity
       @queryable_entities = queryable_entities
       @all_entities_recursive = all_entities_recursive
+      @group_component_entities_recursive =
+        group_component_entities_recursive || all_entities_recursive
       @all_entity_paths_recursive = all_entity_paths_recursive
       @calls = []
     end
@@ -64,6 +67,11 @@ class SceneQueryCommandsAdapterTest < Minitest::Test
       @all_entities_recursive
     end
 
+    def group_component_entities_recursive
+      @calls << :group_component_entities_recursive
+      @group_component_entities_recursive
+    end
+
     def all_entity_paths_recursive
       @calls << :all_entity_paths_recursive
       @all_entity_paths_recursive
@@ -80,6 +88,7 @@ class SceneQueryCommandsAdapterTest < Minitest::Test
       entity: @group,
       queryable_entities: @model.entities,
       all_entities_recursive: @model.entities + @group.entities,
+      group_component_entities_recursive: [@group],
       all_entity_paths_recursive: (@model.entities + @group.entities).map do |entity|
         { entity: entity, ancestors: [] }
       end
@@ -136,6 +145,18 @@ class SceneQueryCommandsAdapterTest < Minitest::Test
     assert_includes(@adapter.calls, :all_entities_recursive)
   end
 
+  def test_find_entities_verifies_unique_container_source_element_id_with_recursive_scan
+    commands = SU_MCP::SceneQueryCommands.new(adapter: @adapter)
+    @group.set_attribute('su_mcp', 'sourceElementId', 'scene-query-001')
+
+    commands.find_entities(
+      'targetSelector' => { 'identity' => { 'sourceElementId' => 'scene-query-001' } }
+    )
+
+    assert_includes(@adapter.calls, :group_component_entities_recursive)
+    assert_includes(@adapter.calls, :all_entities_recursive)
+  end
+
   def test_sample_surface_z_uses_recursive_entities_for_nested_targets
     commands = SU_MCP::SceneQueryCommands.new(adapter: @adapter)
 
@@ -147,8 +168,8 @@ class SceneQueryCommandsAdapterTest < Minitest::Test
       }
     )
 
-    assert_includes(@adapter.calls, :all_entities_recursive)
     assert_includes(@adapter.calls, :all_entity_paths_recursive)
     assert_includes(@adapter.calls, :queryable_entities)
+    refute_includes(@adapter.calls, :all_entities_recursive)
   end
 end

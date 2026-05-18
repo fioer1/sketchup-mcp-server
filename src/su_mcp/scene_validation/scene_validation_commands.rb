@@ -329,7 +329,9 @@ module SU_MCP
                      selector = targeting_query.normalized_target_selector(
                        expectation['targetSelector']
                      )
-                     matches = targeting_query.filter(public_candidate_entities, selector)
+                     matches = targeting_query
+                               .filter_adapter(adapter, selector)
+                               .select { |entity| public_surface_entity?(entity) }
                      {
                        resolution: targeting_query.resolution_for(matches),
                        entity: matches.first
@@ -340,10 +342,6 @@ module SU_MCP
       return resolution if public_surface_entity?(resolution[:entity])
 
       { resolution: 'none' }
-    end
-
-    def public_candidate_entities
-      adapter.all_entities_recursive.select { |entity| public_surface_entity?(entity) }
     end
 
     def public_surface_entity?(entity)

@@ -94,14 +94,7 @@ module SU_MCP
         return [entity].compact
       end
 
-      adapter.all_entities_recursive.select do |entity|
-        target_reference_matches?(entity, target_reference)
-      end
-    end
-
-    def target_reference_matches?(entity, target_reference)
-      summary = serializer.serialize_target_match(entity)
-      target_reference.all? { |key, value| summary[key.to_sym] == value }
+      targeting_query.filter_adapter(adapter, 'identity' => target_reference)
     end
   end
 end

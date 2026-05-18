@@ -49,13 +49,13 @@ module SU_MCP
 
     def serialize_target_match(entity)
       {
-        sourceElementId: source_element_id_for(entity),
-        persistentId: stringify_identifier(persistent_id_for(entity)),
-        entityId: stringify_identifier(entity.entityID),
+        sourceElementId: target_identity_value(entity, 'sourceElementId'),
+        persistentId: target_identity_value(entity, 'persistentId'),
+        entityId: target_identity_value(entity, 'entityId'),
         type: entity_type_key(entity),
-        name: entity_name(entity),
-        tag: layer_name(entity),
-        material: material_name_for(entity)
+        name: target_attribute_value(entity, 'name'),
+        tag: target_attribute_value(entity, 'tag'),
+        material: target_attribute_value(entity, 'material')
       }.merge(
         serialize_target_metadata(entity).reject { |key, _| key == :managedSceneObject }
       ).compact
@@ -63,14 +63,56 @@ module SU_MCP
 
     def serialize_target_metadata(entity)
       metadata = {
-        managedSceneObject: managed_scene_object?(entity),
-        semanticType: metadata_value(entity, 'semanticType'),
-        status: metadata_value(entity, 'status'),
-        state: metadata_value(entity, 'state'),
-        structureCategory: metadata_value(entity, 'structureCategory')
+        managedSceneObject: target_metadata_value(entity, 'managedSceneObject'),
+        semanticType: target_metadata_value(entity, 'semanticType'),
+        status: target_metadata_value(entity, 'status'),
+        state: target_metadata_value(entity, 'state'),
+        structureCategory: target_metadata_value(entity, 'structureCategory')
       }
       metadata.delete_if { |_key, value| value.nil? }
       metadata
+    end
+
+    def target_identity_value(entity, key)
+      case key
+      when 'sourceElementId'
+        source_element_id_for(entity)
+      when 'persistentId'
+        stringify_identifier(persistent_id_for(entity))
+      when 'entityId'
+        stringify_identifier(entity.entityID)
+      end
+    end
+
+    def target_source_element_id?(entity, expected_value)
+      source_element_id_for(entity) == expected_value
+    end
+
+    def target_reference_match?(entity, query)
+      return target_source_element_id?(entity, query.fetch('sourceElementId')) \
+        if query.keys == ['sourceElementId']
+
+      query.all? { |key, value| target_identity_value(entity, key) == value }
+    end
+
+    def target_attribute_value(entity, key)
+      case key
+      when 'name'
+        entity_name(entity)
+      when 'tag'
+        layer_name(entity)
+      when 'material'
+        material_name_for(entity)
+      end
+    end
+
+    def target_metadata_value(entity, key)
+      case key
+      when 'managedSceneObject'
+        managed_scene_object?(entity)
+      else
+        metadata_value(entity, key)
+      end
     end
 
     def serialize_xy_sample_point(x_value, y_value)
