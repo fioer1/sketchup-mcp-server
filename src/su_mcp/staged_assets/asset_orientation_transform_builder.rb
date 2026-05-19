@@ -57,11 +57,10 @@ module SU_MCP
       end
 
       def upright_matrix(source_matrix, orientation)
-        heading = orientation[:yawDegrees] || source_heading_degrees(source_matrix)
-        apply_axis_scales(
-          yaw_matrix(heading.to_f),
-          source_axis_lengths(source_matrix)
-        )
+        return source_matrix.dup if orientation[:yawDegrees].nil?
+
+        yaw_delta = orientation.fetch(:yawDegrees).to_f - source_heading_degrees(source_matrix)
+        multiply_axes(yaw_matrix(yaw_delta), source_matrix)
       end
 
       def surface_aligned_matrix(source_matrix, orientation)

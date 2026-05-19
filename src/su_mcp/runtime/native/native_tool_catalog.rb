@@ -634,8 +634,9 @@ module SU_MCP
         properties: {
           mode: described_schema(
             enum_schema('upright', 'surface_aligned'),
-            'Optional orientation mode. Use upright to keep model-vertical up; use ' \
-            'surface_aligned to derive local up from placement.orientation.surfaceReference.'
+            'Optional orientation mode. Use upright to preserve the source asset local-axis ' \
+            'correction while applying any yaw around model up; use surface_aligned to ' \
+            'derive local up from placement.orientation.surfaceReference.'
           ),
           yawDegrees: described_schema(
             number_schema,

@@ -282,7 +282,8 @@ fitting and does not consume category-specific height metadata.
 
 `placement.orientation` is optional. Omit it to preserve the source asset heading. Supported
 orientation modes are `upright` and `surface_aligned`; `yawDegrees` is an optional finite yaw
-override. `upright` applies yaw around model vertical. `surface_aligned` requires
+override. `upright` preserves the source asset's authored local-axis correction and applies
+explicit yaw as a delta around model vertical. `surface_aligned` requires
 `placement.orientation.surfaceReference`, derives the hit Z and local up from that explicit
 surface at `placement.position` XY, and refuses missing, unresolved, unsupported, missed, or
 ambiguous frames before mutation. Surface-aligned success evidence includes compact

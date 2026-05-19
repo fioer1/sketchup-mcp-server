@@ -164,13 +164,13 @@
 |---|---:|---|
 | Functional Scope | 2 | Added bounded orientation behavior to one existing staged asset instantiation flow without scatter, offsets, replacement, or metadata policy. |
 | Technical Change Surface | 3 | Touched native schema, command preflight, creator transform composition, surface-frame resolution, serializer evidence, contract fixtures, docs, and tests. |
-| Actual Implementation Friction | 3 | Transform semantics required review-driven fixes for live-face sampling, surface-aligned source heading, source axis scale, and explicit upright model-vertical behavior. |
+| Actual Implementation Friction | 3 | Transform semantics required review-driven fixes for live-face sampling, surface-aligned source heading/scale, and upright source-basis preservation for asset-local axis corrections. |
 | Actual Validation Burden | 3 | Exceeded baseline because hosted visual smoke found one material surface-aligned groundcover defect that required a fix/reload/retest loop. |
 | Actual Dependency Drag | 2 | Relied on existing SAR-01/SAR-02 staged asset seams and scene-query surface support; final hosted proof was blocked by lack of a live SketchUp host in this session. |
 | Actual Discovery Encountered | 3 | Review exposed that fake-surface tests did not prove runtime face sampling and that source heading/scale semantics needed additional transform coverage. |
 | Actual Scope Volatility | 1 | Public scope stayed stable; changes stayed within `placement.orientation` and did not reopen offsets, scatter, replacement, or metadata vetoes. |
 | Actual Rework | 2 | Revisited the transform slice after review/live evidence, but the correction was localized and did not replace the approach or change the public contract. |
-| Final Confidence in Completeness | 3 | Fixed surface-aligned behavior is live-verified, explicit upright behavior was accepted in live review, undo uses the shared operation wrapper, and post-fix CI is green. |
+| Final Confidence in Completeness | 3 | Fixed surface-aligned and upright source-basis behavior are live-verified, undo uses the shared operation wrapper, and focused post-upright validation is green. |
 
 ### Actual Signals
 - `summary.md` records additive `placement.orientation` support with strict validation, compact response evidence, schema/docs/fixtures parity, and no metadata veto behavior.
@@ -178,7 +178,7 @@
 - Hosted visual review found a further surface-aligned source-basis defect: asset `13` could stand perpendicular to terrain until the builder was changed to rotate the existing source transform from model up to surface up.
 - Full CI passed before the hosted transform-basis fix: RuboCop 360 files clean, Ruby tests `1444 runs, 17386 assertions`, and package verification produced `dist/su_mcp-1.8.0.rbz`.
 - Post-fix focused validation passed for the transform builder, staged-assets suite, and runtime suite; post-fix full CI is green.
-- Hosted SketchUp fixed-surface smoke passed after the additional transform fix; explicit upright was accepted in live review, and undo is covered by the unchanged shared operation wrapper.
+- Hosted SketchUp fixed-surface smoke passed after the surface-aligned transform fix; terrain-bound live checks then verified upright assets `7`, `8`, and `10` plus surface-aligned `13` and `13c` on the managed terrain, and undo is covered by the unchanged shared operation wrapper.
 
 ### Actual Notes
 - Dominant actual failure mode: local doubles and fake surfaces did not fully exercise live SketchUp face sampling or source-transform composition semantics.
@@ -204,21 +204,25 @@
   - Transform builder test: `7 runs, 30 assertions, 0 failures, 0 errors, 0 skips`.
   - Staged assets suite: `65 runs, 214 assertions, 0 failures, 0 errors, 0 skips`.
   - Runtime suite: `167 runs, 750 assertions, 0 failures, 0 errors, 36 skips`.
-- Post-fix full `bundle exec rake ci` passed:
+- Post-surface-fix full `bundle exec rake ci` passed:
   - RuboCop: 360 files inspected, no offenses.
   - Ruby tests: `1445 runs, 17389 assertions, 0 failures, 0 errors, 41 skips`.
   - Package verification produced `dist/su_mcp-1.8.0.rbz`.
+- Post-upright-source-basis focused validation passed:
+  - Transform builder test: `8 runs, 33 assertions, 0 failures, 0 errors, 0 skips`.
+  - Staged assets suite: `66 runs, 217 assertions, 0 failures, 0 errors, 0 skips`.
+  - Runtime suite: `167 runs, 750 assertions, 0 failures, 0 errors, 36 skips`.
 - PAL code review ran with `model: "gpt-5.4"` and review follow-up changes were incorporated before final CI.
 
 ### Hosted / Manual Validation
 - Initial hosted smoke found invalid visual evidence: a broad/flat-enough terrain reference and clipped hedge probes placed at explicit `z: 1.0`.
-- Hosted visual review also found a real `surface_aligned` transform bug where groundcover asset `13` could stand perpendicular to terrain.
+- Hosted visual review also found real transform bugs where groundcover asset `13` could stand perpendicular to terrain and upright vegetation exemplars could lose their asset-local axis correction.
 - After deploying and reloading the transform fix, a first-class `su-ruby` smoke passed on `sar05-live-steep-surface-001`:
   - `sample_surface_z` confirmed a clear sloped test surface with center hit `z = 0.6`.
   - `instantiate_staged_asset` created `sar05-live-surface-aligned-fixed-001` with `placement.position = [33.0, 57.0, 0.6]` and `slopeDegrees = 30.963756532`.
   - `validate_scene_update` passed for the test surface, created instance, and instance metadata.
   - Missing `surfaceReference` refused with no created `sar05-live-surface-refusal-fixed-001` entity.
-- Explicit upright visual behavior was accepted in live review.
+- Terrain-bound hosted checks placed upright assets `7`, `8`, and `10` at sampled terrain elevations and placed surface-aligned assets `13` and `13c` against the managed terrain surface reference.
 - Undo is not a separate SAR-05 hosted gate because the command continues to use the shared SketchUp operation wrapper.
 
 ### Performance Validation

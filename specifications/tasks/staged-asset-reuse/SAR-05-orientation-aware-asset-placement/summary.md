@@ -10,8 +10,8 @@
 - Added strict staged-assets request normalization for `upright` and `surface_aligned` modes, optional finite `yawDegrees`, required `surfaceReference` for `surface_aligned`, and misplaced top-level `orientation` refusal.
 - Added orientation-aware transform construction:
   - omitted orientation preserves SAR-02 source transform compatibility
-  - explicit `upright` normalizes up to model vertical and applies yaw around model vertical
-  - `surface_aligned` derives local up from the resolved surface frame
+  - explicit `upright` preserves the source asset local-axis correction and applies yaw as a delta around model vertical
+  - `surface_aligned` derives local up from the resolved surface frame while preserving source asset local-axis correction
   - omitted yaw preserves source heading
   - source axis scale is retained for orientation transforms
 - Added staged-assets surface-frame resolution from an explicit `placement.orientation.surfaceReference` and request `placement.position` XY.
@@ -23,7 +23,7 @@
 
 - The public request shape stays under the existing top-level sections: `targetReference`, `placement`, `metadata`, and `outputOptions`.
 - `placement.orientation` is optional. Omitting it keeps SAR-02-compatible source transform behavior.
-- Explicit `placement.orientation.mode = "upright"` keeps the applied up axis model-vertical; yaw, when present, is around model vertical.
+- Explicit `placement.orientation.mode = "upright"` preserves the source asset local-axis correction; yaw, when present, is applied as a delta around model vertical.
 - Explicit `placement.orientation.mode = "surface_aligned"` requires `placement.orientation.surfaceReference`; the command samples that referenced surface at request `placement.position` XY and uses the hit Z as the applied position.
 - Surface-aligned response evidence is compact and JSON-safe; raw SketchUp geometry is not exposed.
 - Staged asset metadata remains a JSON-safe property bag for discoverability and cannot veto explicit SAR-05 placement intent.
@@ -31,7 +31,7 @@
 ## Tests Added
 
 - Orientation request normalizer tests for defaults, explicit upright yaw, invalid mode, non-finite yaw, missing surface reference, and accepted direct surface references.
-- Orientation transform builder tests for SAR-02-compatible omitted orientation, explicit upright yaw, explicit upright model-vertical normalization, surface-aligned local up, source-heading preservation without yaw, and source axis scale preservation.
+- Orientation transform builder tests for SAR-02-compatible omitted orientation, explicit upright yaw, upright source-axis correction preservation, surface-aligned local up, source-heading preservation without yaw, and source axis scale preservation.
 - Surface frame resolver tests for fake surfaces, transformed fake surfaces, miss, ambiguity, and runtime face-plane sampling.
 - Command tests for upright yaw evidence, omitted orientation evidence, misplaced top-level orientation refusal, missing surface reference refusal, surface-aligned success evidence, and surface refusal without mutation.
 - Serializer tests for compact orientation evidence.
@@ -64,10 +64,11 @@
   - implemented runtime face-plane sampling instead of leaving the live-face path as a placeholder
   - fixed surface-aligned omitted yaw so source heading is preserved
   - fixed surface-aligned transforms so source axis scale is preserved
-  - fixed explicit upright transforms so the up axis is model-vertical rather than preserving source tilt
+  - fixed the first explicit upright transform path before hosted asset-local correction evidence showed the correct behavior must preserve the source asset basis
   - updated tool description and neutralized reused missing-target refusal wording
   - simplified serializer input to consume explicit compact surface evidence
 - Hosted visual follow-up found one additional issue: `surface_aligned` replaced the source asset basis with a generic surface frame, which could stand asset `13` groundcover on edge. Fixed the transform builder to rotate the existing source transform from model up to surface up, preserving definition-axis correction and source scale.
+- Hosted upright vegetation follow-up found that several exemplar definitions carry asset-local up-axis correction. Fixed `upright` mode to preserve the source asset basis when yaw is omitted and to apply explicit yaw as a model-vertical delta against that basis.
 
 ## Live SketchUp Verification
 
@@ -81,7 +82,14 @@
   - response evidence reported `placement.position = [33.0, 57.0, 0.6]` and `slopeDegrees = 30.963756532`
   - `validate_scene_update` passed for the test surface, created instance, and instance metadata
   - missing `surfaceReference` refusal returned `missing_surface_reference`, and `find_entities` confirmed no `sar05-live-surface-refusal-fixed-001` was created
-- Explicit upright visual behavior was reviewed live and accepted.
+- Upright vegetation behavior was rechecked live after the source-basis fix:
+  - placed assets `7`, `8`, and `10` on the managed terrain using sampled terrain elevations, not world zero
+  - placed an additional arching flowering shrub as `sar05-live-terrain-upright-08-002` at terrain sample `[34.65, 53.35, -0.95]`
+  - verified the upright bounds minima match the sampled terrain Z values for the terrain-bound shrub placements
+  - identified the `07` mega-low-poly variant as a separate bad-origin/source-definition issue rather than a generic orientation failure
+- Terrain-hugging groundcover behavior was rechecked live on the managed terrain:
+  - placed asset `13` as `sar05-live-terrain-surface-13-001` with `surface_aligned` placement at a terrain hit `z = -1.053101429` and `slopeDegrees = 10.510099264`
+  - placed asset `13c` as `sar05-live-terrain-surface-13c-001` with `surface_aligned` placement at a terrain hit `z = -1.276018254` and `slopeDegrees = 6.758038265`
 - Undo does not need a SAR-05-specific hosted check because the command remains wrapped in the shared SketchUp operation path.
 - Temporary failed probes were deleted. The fixed steep-surface probe and fixed groundcover instance were left in the scene for visual inspection.
 

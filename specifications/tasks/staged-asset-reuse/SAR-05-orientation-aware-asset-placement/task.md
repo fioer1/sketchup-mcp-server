@@ -52,7 +52,7 @@ The SketchUp MCP staged-asset workflow needs the same conceptual separation for 
 1. `instantiate_staged_asset` accepts an optional orientation request without changing existing required parameters.
 2. Orientation input supports optional yaw rotation in degrees.
 3. Orientation input supports a finite mode set:
-   - `upright`: keep the asset's up axis aligned to model vertical and apply any requested yaw around model vertical.
+   - `upright`: keep the asset visually upright by preserving the source asset's local-axis correction and apply any requested yaw around model vertical.
    - `surface_aligned`: align the asset to the local frame derived from `placement.orientation.surfaceReference` at the request `placement.position` XY, then apply any requested yaw around that local up axis.
 4. Optional staged asset metadata may carry orientation hints in the existing JSON-safe property bag, but SAR-05 placement behavior is driven by explicit `placement.orientation` input rather than by metadata policy.
 5. When yaw is omitted, instantiation preserves the source asset heading rather than forcing an arbitrary rotation.
@@ -81,7 +81,7 @@ The SketchUp MCP staged-asset workflow needs the same conceptual separation for 
 
 **Given** a curated staged asset
 **When** `instantiate_staged_asset` is called with `placement.orientation.mode = "upright"` and `placement.orientation.yawDegrees = 45`
-**Then** the created Asset Instance is rotated around model vertical by 45 degrees
+**Then** the created Asset Instance applies the requested 45 degree yaw around model vertical while preserving the source asset's local-axis correction
 **And** the response reports `placement.orientation.mode = "upright"` and `placement.orientation.yawDegrees = 45`.
 
 ### Scenario 2: Omitted Yaw Preserves Source Heading
