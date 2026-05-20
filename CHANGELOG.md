@@ -2,6 +2,19 @@
 
 <!-- version list -->
 
+## v1.12.0 (2026-05-20)
+
+### Bug Fixes
+
+- **SAR-05**: Upright placement position yaw fix
+  ([`0439713`](https://github.com/SidhNor/sketchup-mcp-server/commit/043971371488b785781e30f8ee054653f56a366d))
+
+### Features
+
+- **MTA-45**: Local planar simplification geometry/n
+  ([`01f7533`](https://github.com/SidhNor/sketchup-mcp-server/commit/01f7533547f48bc55ec0d7cca3156c217401846c))
+
+
 ## v1.11.0 (2026-05-18)
 
 ### Documentation
