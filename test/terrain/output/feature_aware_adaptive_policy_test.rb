@@ -1,10 +1,19 @@
 # frozen_string_literal: true
 
 require_relative '../../test_helper'
+require_relative '../../../src/su_mcp/terrain/features/terrain_feature_geometry_builder'
 require_relative '../../../src/su_mcp/terrain/features/terrain_feature_geometry'
+require_relative '../../../src/su_mcp/terrain/state/tiled_heightmap_state'
 require_relative '../../../src/su_mcp/terrain/output/feature_aware_adaptive_policy'
 
 class FeatureAwareAdaptivePolicyTest < Minitest::Test
+  BASIS = {
+    'xAxis' => [1.0, 0.0, 0.0],
+    'yAxis' => [0.0, 1.0, 0.0],
+    'zAxis' => [0.0, 0.0, 1.0],
+    'vertical' => 'z_up'
+  }.freeze
+
   def test_missing_feature_geometry_uses_baseline_policy_with_fallback_summary
     policy = build_policy(feature_geometry: nil)
 
@@ -209,6 +218,88 @@ class FeatureAwareAdaptivePolicyTest < Minitest::Test
     )
   end
 
+  def test_clipped_feature_geometry_removes_older_planar_interior_density_pressure
+    policy = build_policy(
+      feature_geometry: feature_geometry_for([
+                                               fairing_feature(
+                                                 'fairing-crossing',
+                                                 region: rectangle_region(
+                                                   min: [0.0, 0.0],
+                                                   max: [6.0, 5.0]
+                                                 )
+                                               ),
+                                               planar_feature('planar-overwrite', revision: 2)
+                                             ])
+    )
+
+    inside = policy.split_pressure_for(bounds(2, 2, 3, 3), column_span: 4, row_span: 4)
+    outside = policy.split_pressure_for(bounds(0, 2, 1, 3), column_span: 4, row_span: 4)
+
+    assert_nil(inside.fetch(:target_cell_size))
+    assert_equal(false, inside.fetch(:density_split))
+    assert_equal(4, outside.fetch(:target_cell_size))
+    assert_equal(false, outside.fetch(:density_split))
+  end
+
+  def test_clipped_feature_geometry_removes_older_planar_interior_circle_pressure
+    policy = build_policy(
+      feature_geometry: feature_geometry_for([
+                                               target_feature('target-crossing', radius: 2.0),
+                                               planar_feature('planar-overwrite', revision: 2)
+                                             ])
+    )
+
+    inside = policy.split_pressure_for(bounds(2, 2, 3, 3), column_span: 4, row_span: 4)
+    outside = policy.split_pressure_for(bounds(4, 2, 5, 3), column_span: 4, row_span: 4)
+
+    assert_nil(inside.fetch(:target_cell_size))
+    assert_equal(false, inside.fetch(:density_split))
+    assert_equal(4, outside.fetch(:target_cell_size))
+    assert_equal(false, outside.fetch(:density_split))
+  end
+
+  def test_clipped_feature_geometry_removes_older_planar_interior_forced_corridor_detail
+    policy = build_policy(
+      feature_geometry: feature_geometry_for([
+                                               corridor_feature(
+                                                 'corridor-crossing',
+                                                 width: 1.0,
+                                                 side_blend: {
+                                                   'distance' => 0.0,
+                                                   'falloff' => 'none'
+                                                 },
+                                                 start_point: [0.0, 2.5],
+                                                 end_point: [6.0, 2.5]
+                                               ),
+                                               planar_feature('planar-overwrite', revision: 2)
+                                             ])
+    )
+
+    inside = policy.split_pressure_for(bounds(2, 2, 3, 3), column_span: 4, row_span: 4)
+    outside = policy.split_pressure_for(bounds(0, 2, 1, 3), column_span: 4, row_span: 4)
+
+    assert_equal(false, inside.fetch(:forced_split))
+    assert_equal(true, outside.fetch(:forced_split))
+  end
+
+  def test_clipped_feature_geometry_preserves_newer_overlay_pressure_inside_planar_region
+    policy = build_policy(
+      feature_geometry: feature_geometry_for([
+                                               planar_feature('planar-base', revision: 1),
+                                               target_feature(
+                                                 'target-over-planar',
+                                                 radius: 1.0,
+                                                 revision: 2
+                                               )
+                                             ])
+    )
+
+    inside = policy.split_pressure_for(bounds(2, 2, 3, 3), column_span: 4, row_span: 4)
+
+    assert_equal(4, inside.fetch(:target_cell_size))
+    assert_equal(false, inside.fetch(:density_split))
+  end
+
   private
 
   def build_policy(feature_geometry:)
@@ -216,6 +307,12 @@ class FeatureAwareAdaptivePolicyTest < Minitest::Test
       feature_geometry: feature_geometry,
       state: state,
       base_tolerance: 0.01
+    )
+  end
+
+  def feature_geometry_for(features)
+    SU_MCP::Terrain::TerrainFeatureGeometryBuilder.new.build(
+      state: state_with_features(features)
     )
   end
 
@@ -278,5 +375,94 @@ class FeatureAwareAdaptivePolicyTest < Minitest::Test
       { 'x' => 0.0, 'y' => 0.0 },
       { 'x' => 1.0, 'y' => 1.0 }
     )
+  end
+
+  def state_with_features(features)
+    SU_MCP::Terrain::TiledHeightmapState.new(
+      basis: BASIS,
+      origin: { 'x' => 0.0, 'y' => 0.0, 'z' => 0.0 },
+      spacing: { 'x' => 1.0, 'y' => 1.0 },
+      dimensions: { 'columns' => 8, 'rows' => 6 },
+      elevations: Array.new(48, 1.0),
+      revision: 1,
+      state_id: 'mta45-policy-state',
+      feature_intent: {
+        'schemaVersion' => 3,
+        'revision' => 1,
+        'generation' => SU_MCP::Terrain::FeatureIntentSet::DEFAULT_GENERATION,
+        'features' => features
+      }
+    )
+  end
+
+  def feature(id:, kind:, roles:, payload:, revision: 1)
+    {
+      'id' => id,
+      'kind' => kind,
+      'sourceMode' => 'explicit_edit',
+      'roles' => roles,
+      'priority' => 1,
+      'payload' => payload,
+      'provenance' => { 'originClass' => 'test', 'originOperation' => kind,
+                        'createdAtRevision' => revision, 'updatedAtRevision' => revision }
+    }
+  end
+
+  def corridor_feature(id, width:, side_blend:, start_point:, end_point:, revision: 1)
+    feature(id: id, kind: 'linear_corridor',
+            roles: %w[centerline side_transition endpoint_cap control],
+            payload: {
+              'startControl' => {
+                'point' => { 'x' => start_point.fetch(0), 'y' => start_point.fetch(1) },
+                'elevation' => 1.0
+              },
+              'endControl' => {
+                'point' => { 'x' => end_point.fetch(0), 'y' => end_point.fetch(1) },
+                'elevation' => 2.0
+              },
+              'width' => width,
+              'sideBlend' => side_blend
+            },
+            revision: revision)
+  end
+
+  def planar_feature(id, revision: 1)
+    feature(id: id, kind: 'planar_region', roles: %w[support boundary],
+            payload: {
+              'region' => rectangle_region(min: [1.0, 1.0], max: [4.0, 4.0])
+            },
+            revision: revision)
+  end
+
+  def target_feature(id, radius:, revision: 1)
+    feature(id: id, kind: 'target_region', roles: %w[support falloff],
+            payload: { 'region' => circle_region(center: [3.0, 3.0], radius: radius) },
+            revision: revision)
+  end
+
+  def fairing_feature(id, region:, revision: 1)
+    feature(id: id, kind: 'fairing_region', roles: %w[support],
+            payload: { 'region' => region },
+            revision: revision)
+  end
+
+  def rectangle_region(min:, max:)
+    {
+      'type' => 'rectangle',
+      'bounds' => {
+        'minX' => min.fetch(0),
+        'minY' => min.fetch(1),
+        'maxX' => max.fetch(0),
+        'maxY' => max.fetch(1)
+      }
+    }
+  end
+
+  def circle_region(center:, radius:)
+    {
+      'type' => 'circle',
+      'center' => { 'x' => center.fetch(0), 'y' => center.fetch(1) },
+      'radius' => radius
+    }
   end
 end

@@ -1,0 +1,2682 @@
+{
+  "schemaVersion": 1,
+  "summaryKind": "mta45_three_run_performance_summary",
+  "taskId": "MTA-45",
+  "generatedAt": "2026-05-20T16:38:38+03:00",
+  "baselinePerformanceSummaryPath": "test/terrain/replay/feature_aware_adaptive_baseline_results_mta40_perf_summary.json",
+  "sourceRunPaths": [
+
+  ],
+  "runCount": 3,
+  "rowCount": 18,
+  "aggregate": {
+    "totalCommandSeconds": {
+      "mean": 78.4496,
+      "min": 77.7084,
+      "max": 79.114,
+      "stdev": 0.5764,
+      "runs": [
+        77.7084,
+        78.5265,
+        79.114
+      ],
+      "baselineMta40Mean": 92.1928,
+      "meanDeltaPercentVsMta40": -14.9
+    },
+    "totalHarnessQualitySeconds": {
+      "mean": 15.5895,
+      "min": 15.5474,
+      "max": 15.6419,
+      "stdev": 0.0393,
+      "runs": [
+        15.6419,
+        15.5791,
+        15.5474
+      ],
+      "baselineMta40Mean": 17.5708,
+      "meanDeltaPercentVsMta40": -11.3
+    }
+  },
+  "comparison": {
+    "rowTimingThresholdPercent": 25.0,
+    "rowsOverTimingThresholdVsMta40": [
+
+    ],
+    "geometryStability": {
+      "stableFaceCountRows": 18,
+      "stableVertexCountRows": 18,
+      "rowCount": 18
+    },
+    "comparisonKind": "mta40_final_performance_summary"
+  },
+  "rows": [
+    {
+      "rowId": "create-baseline",
+      "outcomes": [
+        "created"
+      ],
+      "faceCounts": [
+        1173
+      ],
+      "vertexCounts": [
+        626
+      ],
+      "seconds": {
+        "mean": 0.065295,
+        "min": 0.063828,
+        "max": 0.067997,
+        "stdev": 0.001913,
+        "runs": [
+          0.067997,
+          0.063828,
+          0.06406
+        ],
+        "baselineMta40Mean": 0.087105,
+        "meanDeltaPercentVsMta40": -25.0
+      },
+      "commandOutputPlanning": {
+        "mean": 0.025315,
+        "min": 0.024914,
+        "max": 0.026096,
+        "stdev": 0.000552,
+        "runs": [
+          0.026096,
+          0.024935,
+          0.024914
+        ],
+        "baselineMta40Mean": 0.026961,
+        "meanDeltaPercentVsMta40": -6.1
+      },
+      "adaptivePlanning": {
+        "mean": 0.004307,
+        "min": 0.004267,
+        "max": 0.004329,
+        "stdev": 2.8e-05,
+        "runs": [
+          0.004329,
+          0.004325,
+          0.004267
+        ]
+      },
+      "mutation": {
+        "mean": 0.025266,
+        "min": 0.024475,
+        "max": 0.025815,
+        "stdev": 0.000573,
+        "runs": [
+          0.024475,
+          0.025507,
+          0.025815
+        ]
+      },
+      "densityHitCounts": [
+        0
+      ],
+      "qualityStatuses": [
+        "not_applicable"
+      ]
+    },
+    {
+      "rowId": "target-local-center",
+      "outcomes": [
+        "edited"
+      ],
+      "faceCounts": [
+        1257
+      ],
+      "vertexCounts": [
+        680
+      ],
+      "seconds": {
+        "mean": 0.128943,
+        "min": 0.125691,
+        "max": 0.132007,
+        "stdev": 0.002582,
+        "runs": [
+          0.125691,
+          0.129133,
+          0.132007
+        ],
+        "baselineMta40Mean": 0.16559,
+        "meanDeltaPercentVsMta40": -22.1
+      },
+      "commandOutputPlanning": {
+        "mean": 0.029371,
+        "min": 0.026884,
+        "max": 0.030869,
+        "stdev": 0.001771,
+        "runs": [
+          0.026884,
+          0.030869,
+          0.030362
+        ],
+        "baselineMta40Mean": 0.027164,
+        "meanDeltaPercentVsMta40": 8.1
+      },
+      "adaptivePlanning": {
+        "mean": 0.004579,
+        "min": 0.004561,
+        "max": 0.004616,
+        "stdev": 2.6e-05,
+        "runs": [
+          0.004561,
+          0.004562,
+          0.004616
+        ]
+      },
+      "mutation": {
+        "mean": 0.051097,
+        "min": 0.05016,
+        "max": 0.05285,
+        "stdev": 0.00124,
+        "runs": [
+          0.050282,
+          0.05016,
+          0.05285
+        ]
+      },
+      "densityHitCounts": [
+        41
+      ],
+      "qualityStatuses": [
+        "captured"
+      ]
+    },
+    {
+      "rowId": "target-adjacent-east",
+      "outcomes": [
+        "edited"
+      ],
+      "faceCounts": [
+        1331
+      ],
+      "vertexCounts": [
+        727
+      ],
+      "seconds": {
+        "mean": 0.146318,
+        "min": 0.143578,
+        "max": 0.150159,
+        "stdev": 0.002797,
+        "runs": [
+          0.145216,
+          0.143578,
+          0.150159
+        ],
+        "baselineMta40Mean": 0.183201,
+        "meanDeltaPercentVsMta40": -20.1
+      },
+      "commandOutputPlanning": {
+        "mean": 0.030389,
+        "min": 0.029129,
+        "max": 0.03206,
+        "stdev": 0.001232,
+        "runs": [
+          0.029129,
+          0.029977,
+          0.03206
+        ],
+        "baselineMta40Mean": 0.032697,
+        "meanDeltaPercentVsMta40": -7.1
+      },
+      "adaptivePlanning": {
+        "mean": 0.004794,
+        "min": 0.004764,
+        "max": 0.004821,
+        "stdev": 2.3e-05,
+        "runs": [
+          0.004764,
+          0.004821,
+          0.004798
+        ]
+      },
+      "mutation": {
+        "mean": 0.054368,
+        "min": 0.05358,
+        "max": 0.054876,
+        "stdev": 0.000565,
+        "runs": [
+          0.05358,
+          0.054647,
+          0.054876
+        ]
+      },
+      "densityHitCounts": [
+        68
+      ],
+      "qualityStatuses": [
+        "captured"
+      ]
+    },
+    {
+      "rowId": "target-repeat-center",
+      "outcomes": [
+        "edited"
+      ],
+      "faceCounts": [
+        1331
+      ],
+      "vertexCounts": [
+        727
+      ],
+      "seconds": {
+        "mean": 0.151693,
+        "min": 0.139307,
+        "max": 0.166532,
+        "stdev": 0.011249,
+        "runs": [
+          0.139307,
+          0.166532,
+          0.14924
+        ],
+        "baselineMta40Mean": 0.182639,
+        "meanDeltaPercentVsMta40": -16.9
+      },
+      "commandOutputPlanning": {
+        "mean": 0.029799,
+        "min": 0.028351,
+        "max": 0.031635,
+        "stdev": 0.001368,
+        "runs": [
+          0.028351,
+          0.029411,
+          0.031635
+        ],
+        "baselineMta40Mean": 0.029094,
+        "meanDeltaPercentVsMta40": 2.4
+      },
+      "adaptivePlanning": {
+        "mean": 0.004918,
+        "min": 0.004867,
+        "max": 0.004988,
+        "stdev": 5.1e-05,
+        "runs": [
+          0.004867,
+          0.004988,
+          0.004898
+        ]
+      },
+      "mutation": {
+        "mean": 0.063128,
+        "min": 0.05485,
+        "max": 0.076739,
+        "stdev": 0.009699,
+        "runs": [
+          0.05485,
+          0.076739,
+          0.057794
+        ]
+      },
+      "densityHitCounts": [
+        68
+      ],
+      "qualityStatuses": [
+        "captured"
+      ]
+    },
+    {
+      "rowId": "corridor-diagonal-intersect",
+      "outcomes": [
+        "edited"
+      ],
+      "faceCounts": [
+        1689
+      ],
+      "vertexCounts": [
+        911
+      ],
+      "seconds": {
+        "mean": 0.167964,
+        "min": 0.162,
+        "max": 0.172155,
+        "stdev": 0.004331,
+        "runs": [
+          0.162,
+          0.172155,
+          0.169738
+        ],
+        "baselineMta40Mean": 0.21293,
+        "meanDeltaPercentVsMta40": -21.1
+      },
+      "commandOutputPlanning": {
+        "mean": 0.043541,
+        "min": 0.042753,
+        "max": 0.044562,
+        "stdev": 0.000757,
+        "runs": [
+          0.043308,
+          0.044562,
+          0.042753
+        ],
+        "baselineMta40Mean": 0.045701,
+        "meanDeltaPercentVsMta40": -4.7
+      },
+      "adaptivePlanning": {
+        "mean": 0.006283,
+        "min": 0.006139,
+        "max": 0.006406,
+        "stdev": 0.00011,
+        "runs": [
+          0.006139,
+          0.006305,
+          0.006406
+        ]
+      },
+      "mutation": {
+        "mean": 0.065086,
+        "min": 0.062826,
+        "max": 0.066802,
+        "stdev": 0.001668,
+        "runs": [
+          0.062826,
+          0.065631,
+          0.066802
+        ]
+      },
+      "densityHitCounts": [
+        88
+      ],
+      "qualityStatuses": [
+        "captured"
+      ]
+    },
+    {
+      "rowId": "planar-pad-intersect",
+      "outcomes": [
+        "edited"
+      ],
+      "faceCounts": [
+        1549
+      ],
+      "vertexCounts": [
+        844
+      ],
+      "seconds": {
+        "mean": 0.176874,
+        "min": 0.172775,
+        "max": 0.179773,
+        "stdev": 0.00298,
+        "runs": [
+          0.172775,
+          0.178075,
+          0.179773
+        ],
+        "baselineMta40Mean": 0.239492,
+        "meanDeltaPercentVsMta40": -26.1
+      },
+      "commandOutputPlanning": {
+        "mean": 0.037889,
+        "min": 0.037638,
+        "max": 0.038287,
+        "stdev": 0.000285,
+        "runs": [
+          0.037741,
+          0.038287,
+          0.037638
+        ],
+        "baselineMta40Mean": 0.044368,
+        "meanDeltaPercentVsMta40": -14.6
+      },
+      "adaptivePlanning": {
+        "mean": 0.005731,
+        "min": 0.005605,
+        "max": 0.005851,
+        "stdev": 0.000101,
+        "runs": [
+          0.005605,
+          0.005851,
+          0.005737
+        ]
+      },
+      "mutation": {
+        "mean": 0.068677,
+        "min": 0.06625,
+        "max": 0.070202,
+        "stdev": 0.001735,
+        "runs": [
+          0.06625,
+          0.069581,
+          0.070202
+        ]
+      },
+      "densityHitCounts": [
+        44
+      ],
+      "planarInteriorCellCounts": [
+        16
+      ],
+      "planarInteriorFaceCounts": [
+        32
+      ],
+      "qualityStatuses": [
+        "captured"
+      ]
+    },
+    {
+      "rowId": "survey-control-intersect",
+      "outcomes": [
+        "edited"
+      ],
+      "faceCounts": [
+        1611
+      ],
+      "vertexCounts": [
+        867
+      ],
+      "seconds": {
+        "mean": 0.211201,
+        "min": 0.208839,
+        "max": 0.212906,
+        "stdev": 0.001724,
+        "runs": [
+          0.208839,
+          0.211858,
+          0.212906
+        ],
+        "baselineMta40Mean": 0.266593,
+        "meanDeltaPercentVsMta40": -20.8
+      },
+      "commandOutputPlanning": {
+        "mean": 0.04106,
+        "min": 0.040567,
+        "max": 0.041384,
+        "stdev": 0.000354,
+        "runs": [
+          0.041384,
+          0.041229,
+          0.040567
+        ],
+        "baselineMta40Mean": 0.042731,
+        "meanDeltaPercentVsMta40": -3.9
+      },
+      "adaptivePlanning": {
+        "mean": 0.005924,
+        "min": 0.005803,
+        "max": 0.005991,
+        "stdev": 8.6e-05,
+        "runs": [
+          0.005803,
+          0.005977,
+          0.005991
+        ]
+      },
+      "mutation": {
+        "mean": 0.068858,
+        "min": 0.066452,
+        "max": 0.071171,
+        "stdev": 0.001928,
+        "runs": [
+          0.066452,
+          0.06895,
+          0.071171
+        ]
+      },
+      "densityHitCounts": [
+        99
+      ],
+      "planarInteriorCellCounts": [
+        35
+      ],
+      "planarInteriorFaceCounts": [
+        70
+      ],
+      "qualityStatuses": [
+        "captured"
+      ]
+    },
+    {
+      "rowId": "fairing-envelope-intersect",
+      "outcomes": [
+        "edited"
+      ],
+      "faceCounts": [
+        1745
+      ],
+      "vertexCounts": [
+        913
+      ],
+      "seconds": {
+        "mean": 0.197155,
+        "min": 0.195551,
+        "max": 0.198262,
+        "stdev": 0.001162,
+        "runs": [
+          0.195551,
+          0.197654,
+          0.198262
+        ],
+        "baselineMta40Mean": 0.249066,
+        "meanDeltaPercentVsMta40": -20.8
+      },
+      "commandOutputPlanning": {
+        "mean": 0.043046,
+        "min": 0.041261,
+        "max": 0.04585,
+        "stdev": 0.002007,
+        "runs": [
+          0.042027,
+          0.04585,
+          0.041261
+        ],
+        "baselineMta40Mean": 0.048608,
+        "meanDeltaPercentVsMta40": -11.4
+      },
+      "adaptivePlanning": {
+        "mean": 0.007216,
+        "min": 0.00634,
+        "max": 0.008127,
+        "stdev": 0.00073,
+        "runs": [
+          0.00634,
+          0.00718,
+          0.008127
+        ]
+      },
+      "mutation": {
+        "mean": 0.074251,
+        "min": 0.07088,
+        "max": 0.077144,
+        "stdev": 0.00258,
+        "runs": [
+          0.07088,
+          0.074729,
+          0.077144
+        ]
+      },
+      "densityHitCounts": [
+        148
+      ],
+      "planarInteriorCellCounts": [
+        39
+      ],
+      "planarInteriorFaceCounts": [
+        78
+      ],
+      "qualityStatuses": [
+        "captured"
+      ]
+    },
+    {
+      "rowId": "feature-aware-baseline-terrain-large-timing-create",
+      "outcomes": [
+        "created"
+      ],
+      "faceCounts": [
+        76191
+      ],
+      "vertexCounts": [
+        38416
+      ],
+      "seconds": {
+        "mean": 8.611205,
+        "min": 8.566916,
+        "max": 8.656643,
+        "stdev": 0.03664,
+        "runs": [
+          8.566916,
+          8.610057,
+          8.656643
+        ],
+        "baselineMta40Mean": 10.048468,
+        "meanDeltaPercentVsMta40": -14.3
+      },
+      "commandOutputPlanning": {
+        "mean": 4.961939,
+        "min": 4.941034,
+        "max": 4.97405,
+        "stdev": 0.014844,
+        "runs": [
+          4.941034,
+          4.97405,
+          4.970733
+        ],
+        "baselineMta40Mean": 5.26535,
+        "meanDeltaPercentVsMta40": -5.8
+      },
+      "adaptivePlanning": {
+        "mean": 1.40655,
+        "min": 1.383089,
+        "max": 1.418561,
+        "stdev": 0.016591,
+        "runs": [
+          1.418561,
+          1.418002,
+          1.383089
+        ]
+      },
+      "mutation": {
+        "mean": 1.994478,
+        "min": 1.959931,
+        "max": 2.048947,
+        "stdev": 0.038976,
+        "runs": [
+          1.959931,
+          1.974557,
+          2.048947
+        ]
+      },
+      "densityHitCounts": [
+        0
+      ],
+      "qualityStatuses": [
+        "not_applicable"
+      ]
+    },
+    {
+      "rowId": "large-varied-local-target-timing",
+      "outcomes": [
+        "edited"
+      ],
+      "faceCounts": [
+        18770
+      ],
+      "vertexCounts": [
+        9575
+      ],
+      "seconds": {
+        "mean": 2.79889,
+        "min": 2.759999,
+        "max": 2.861597,
+        "stdev": 0.044765,
+        "runs": [
+          2.759999,
+          2.775075,
+          2.861597
+        ],
+        "baselineMta40Mean": 3.354762,
+        "meanDeltaPercentVsMta40": -16.6
+      },
+      "commandOutputPlanning": {
+        "mean": 0.714497,
+        "min": 0.704276,
+        "max": 0.728657,
+        "stdev": 0.010336,
+        "runs": [
+          0.710559,
+          0.728657,
+          0.704276
+        ],
+        "baselineMta40Mean": 0.755315,
+        "meanDeltaPercentVsMta40": -5.4
+      },
+      "adaptivePlanning": {
+        "mean": 0.065349,
+        "min": 0.063962,
+        "max": 0.066626,
+        "stdev": 0.00109,
+        "runs": [
+          0.06546,
+          0.063962,
+          0.066626
+        ]
+      },
+      "mutation": {
+        "mean": 0.862681,
+        "min": 0.847872,
+        "max": 0.872826,
+        "stdev": 0.010708,
+        "runs": [
+          0.872826,
+          0.847872,
+          0.867343
+        ]
+      },
+      "densityHitCounts": [
+        143
+      ],
+      "qualityStatuses": [
+        "captured"
+      ]
+    },
+    {
+      "rowId": "large-varied-corridor-diagonal-timing",
+      "outcomes": [
+        "edited"
+      ],
+      "faceCounts": [
+        71925
+      ],
+      "vertexCounts": [
+        36372
+      ],
+      "seconds": {
+        "mean": 12.636712,
+        "min": 12.369371,
+        "max": 12.859539,
+        "stdev": 0.202571,
+        "runs": [
+          12.369371,
+          12.681225,
+          12.859539
+        ],
+        "baselineMta40Mean": 14.592174,
+        "meanDeltaPercentVsMta40": -13.4
+      },
+      "commandOutputPlanning": {
+        "mean": 5.109867,
+        "min": 5.01919,
+        "max": 5.17013,
+        "stdev": 0.065266,
+        "runs": [
+          5.01919,
+          5.140282,
+          5.17013
+        ],
+        "baselineMta40Mean": 5.263503,
+        "meanDeltaPercentVsMta40": -2.9
+      },
+      "adaptivePlanning": {
+        "mean": 1.18547,
+        "min": 1.175301,
+        "max": 1.192234,
+        "stdev": 0.00732,
+        "runs": [
+          1.175301,
+          1.188876,
+          1.192234
+        ]
+      },
+      "mutation": {
+        "mean": 3.674088,
+        "min": 3.538343,
+        "max": 3.802487,
+        "stdev": 0.107961,
+        "runs": [
+          3.538343,
+          3.681435,
+          3.802487
+        ]
+      },
+      "densityHitCounts": [
+        128
+      ],
+      "qualityStatuses": [
+        "captured"
+      ]
+    },
+    {
+      "rowId": "large-varied-planar-pad-timing",
+      "outcomes": [
+        "edited"
+      ],
+      "faceCounts": [
+        66523
+      ],
+      "vertexCounts": [
+        33777
+      ],
+      "seconds": {
+        "mean": 11.460067,
+        "min": 11.33468,
+        "max": 11.552747,
+        "stdev": 0.091981,
+        "runs": [
+          11.33468,
+          11.552747,
+          11.492776
+        ],
+        "baselineMta40Mean": 13.616156,
+        "meanDeltaPercentVsMta40": -15.8
+      },
+      "commandOutputPlanning": {
+        "mean": 4.396836,
+        "min": 4.330397,
+        "max": 4.446981,
+        "stdev": 0.04897,
+        "runs": [
+          4.330397,
+          4.446981,
+          4.413131
+        ],
+        "baselineMta40Mean": 4.89003,
+        "meanDeltaPercentVsMta40": -10.1
+      },
+      "adaptivePlanning": {
+        "mean": 1.092224,
+        "min": 1.09162,
+        "max": 1.093246,
+        "stdev": 0.000726,
+        "runs": [
+          1.093246,
+          1.09162,
+          1.091807
+        ]
+      },
+      "mutation": {
+        "mean": 3.379735,
+        "min": 3.288199,
+        "max": 3.438738,
+        "stdev": 0.065622,
+        "runs": [
+          3.288199,
+          3.412268,
+          3.438738
+        ]
+      },
+      "densityHitCounts": [
+        0
+      ],
+      "planarInteriorCellCounts": [
+        106
+      ],
+      "planarInteriorFaceCounts": [
+        212
+      ],
+      "qualityStatuses": [
+        "captured"
+      ]
+    },
+    {
+      "rowId": "large-varied-survey-control-timing",
+      "outcomes": [
+        "edited"
+      ],
+      "faceCounts": [
+        70073
+      ],
+      "vertexCounts": [
+        35544
+      ],
+      "seconds": {
+        "mean": 12.785612,
+        "min": 12.716392,
+        "max": 12.846434,
+        "stdev": 0.053421,
+        "runs": [
+          12.716392,
+          12.794009,
+          12.846434
+        ],
+        "baselineMta40Mean": 15.237779,
+        "meanDeltaPercentVsMta40": -16.1
+      },
+      "commandOutputPlanning": {
+        "mean": 4.944037,
+        "min": 4.912157,
+        "max": 4.996377,
+        "stdev": 0.037302,
+        "runs": [
+          4.996377,
+          4.912157,
+          4.923578
+        ],
+        "baselineMta40Mean": 5.418496,
+        "meanDeltaPercentVsMta40": -8.8
+      },
+      "adaptivePlanning": {
+        "mean": 1.201131,
+        "min": 1.19147,
+        "max": 1.209486,
+        "stdev": 0.007412,
+        "runs": [
+          1.209486,
+          1.19147,
+          1.202436
+        ]
+      },
+      "mutation": {
+        "mean": 3.392585,
+        "min": 3.302916,
+        "max": 3.448679,
+        "stdev": 0.064069,
+        "runs": [
+          3.302916,
+          3.426161,
+          3.448679
+        ]
+      },
+      "densityHitCounts": [
+        2983
+      ],
+      "planarInteriorCellCounts": [
+        1211
+      ],
+      "planarInteriorFaceCounts": [
+        2422
+      ],
+      "qualityStatuses": [
+        "captured"
+      ]
+    },
+    {
+      "rowId": "large-varied-fairing-envelope-timing",
+      "outcomes": [
+        "edited"
+      ],
+      "faceCounts": [
+        56826
+      ],
+      "vertexCounts": [
+        28740
+      ],
+      "seconds": {
+        "mean": 12.524046,
+        "min": 12.34007,
+        "max": 12.807422,
+        "stdev": 0.20333,
+        "runs": [
+          12.34007,
+          12.424645,
+          12.807422
+        ],
+        "baselineMta40Mean": 14.929699,
+        "meanDeltaPercentVsMta40": -16.1
+      },
+      "commandOutputPlanning": {
+        "mean": 3.651203,
+        "min": 3.613066,
+        "max": 3.680629,
+        "stdev": 0.028261,
+        "runs": [
+          3.659913,
+          3.613066,
+          3.680629
+        ],
+        "baselineMta40Mean": 4.093857,
+        "meanDeltaPercentVsMta40": -10.8
+      },
+      "adaptivePlanning": {
+        "mean": 1.114943,
+        "min": 1.083489,
+        "max": 1.155814,
+        "stdev": 0.030268,
+        "runs": [
+          1.083489,
+          1.105527,
+          1.155814
+        ]
+      },
+      "mutation": {
+        "mean": 3.524074,
+        "min": 3.407843,
+        "max": 3.668497,
+        "stdev": 0.108262,
+        "runs": [
+          3.407843,
+          3.495883,
+          3.668497
+        ]
+      },
+      "densityHitCounts": [
+        7517
+      ],
+      "planarInteriorCellCounts": [
+        1318
+      ],
+      "planarInteriorFaceCounts": [
+        2636
+      ],
+      "qualityStatuses": [
+        "captured"
+      ]
+    },
+    {
+      "rowId": "feature-aware-baseline-terrain-wide-timing-create",
+      "outcomes": [
+        "created"
+      ],
+      "faceCounts": [
+        31734
+      ],
+      "vertexCounts": [
+        16065
+      ],
+      "seconds": {
+        "mean": 3.107029,
+        "min": 3.095102,
+        "max": 3.121288,
+        "stdev": 0.010817,
+        "runs": [
+          3.095102,
+          3.104698,
+          3.121288
+        ],
+        "baselineMta40Mean": 3.595931,
+        "meanDeltaPercentVsMta40": -13.6
+      },
+      "commandOutputPlanning": {
+        "mean": 1.651389,
+        "min": 1.635108,
+        "max": 1.668347,
+        "stdev": 0.013578,
+        "runs": [
+          1.668347,
+          1.650712,
+          1.635108
+        ],
+        "baselineMta40Mean": 1.718541,
+        "meanDeltaPercentVsMta40": -3.9
+      },
+      "adaptivePlanning": {
+        "mean": 0.486597,
+        "min": 0.461138,
+        "max": 0.501827,
+        "stdev": 0.018117,
+        "runs": [
+          0.461138,
+          0.496825,
+          0.501827
+        ]
+      },
+      "mutation": {
+        "mean": 0.825746,
+        "min": 0.815967,
+        "max": 0.839681,
+        "stdev": 0.010117,
+        "runs": [
+          0.821592,
+          0.815967,
+          0.839681
+        ]
+      },
+      "densityHitCounts": [
+        0
+      ],
+      "qualityStatuses": [
+        "not_applicable"
+      ]
+    },
+    {
+      "rowId": "wide-varied-local-target-timing",
+      "outcomes": [
+        "edited"
+      ],
+      "faceCounts": [
+        8367
+      ],
+      "vertexCounts": [
+        4316
+      ],
+      "seconds": {
+        "mean": 1.270055,
+        "min": 1.209327,
+        "max": 1.37111,
+        "stdev": 0.07194,
+        "runs": [
+          1.37111,
+          1.209327,
+          1.229729
+        ],
+        "baselineMta40Mean": 1.476044,
+        "meanDeltaPercentVsMta40": -14.0
+      },
+      "commandOutputPlanning": {
+        "mean": 0.270776,
+        "min": 0.251356,
+        "max": 0.306829,
+        "stdev": 0.025518,
+        "runs": [
+          0.306829,
+          0.251356,
+          0.254143
+        ],
+        "baselineMta40Mean": 0.276404,
+        "meanDeltaPercentVsMta40": -2.0
+      },
+      "adaptivePlanning": {
+        "mean": 0.023246,
+        "min": 0.023071,
+        "max": 0.023591,
+        "stdev": 0.000244,
+        "runs": [
+          0.023591,
+          0.023071,
+          0.023076
+        ]
+      },
+      "mutation": {
+        "mean": 0.3432,
+        "min": 0.333044,
+        "max": 0.354493,
+        "stdev": 0.008793,
+        "runs": [
+          0.342064,
+          0.333044,
+          0.354493
+        ]
+      },
+      "densityHitCounts": [
+        113
+      ],
+      "qualityStatuses": [
+        "captured"
+      ]
+    },
+    {
+      "rowId": "wide-varied-half-corridor-timing",
+      "outcomes": [
+        "edited"
+      ],
+      "faceCounts": [
+        31677
+      ],
+      "vertexCounts": [
+        16103
+      ],
+      "seconds": {
+        "mean": 5.492748,
+        "min": 5.427728,
+        "max": 5.582645,
+        "stdev": 0.065645,
+        "runs": [
+          5.582645,
+          5.427728,
+          5.467871
+        ],
+        "baselineMta40Mean": 6.288532,
+        "meanDeltaPercentVsMta40": -12.7
+      },
+      "commandOutputPlanning": {
+        "mean": 1.871002,
+        "min": 1.81582,
+        "max": 1.947684,
+        "stdev": 0.055938,
+        "runs": [
+          1.947684,
+          1.81582,
+          1.849503
+        ],
+        "baselineMta40Mean": 1.892232,
+        "meanDeltaPercentVsMta40": -1.1
+      },
+      "adaptivePlanning": {
+        "mean": 0.454076,
+        "min": 0.437038,
+        "max": 0.485497,
+        "stdev": 0.022245,
+        "runs": [
+          0.437038,
+          0.439692,
+          0.485497
+        ]
+      },
+      "mutation": {
+        "mean": 1.713984,
+        "min": 1.666635,
+        "max": 1.740469,
+        "stdev": 0.03356,
+        "runs": [
+          1.666635,
+          1.740469,
+          1.73485
+        ]
+      },
+      "densityHitCounts": [
+        97
+      ],
+      "qualityStatuses": [
+        "captured"
+      ]
+    },
+    {
+      "rowId": "wide-varied-fairing-large-timing",
+      "outcomes": [
+        "edited"
+      ],
+      "faceCounts": [
+        24366
+      ],
+      "vertexCounts": [
+        12381
+      ],
+      "seconds": {
+        "mean": 6.517837,
+        "min": 6.35472,
+        "max": 6.684209,
+        "stdev": 0.134533,
+        "runs": [
+          6.35472,
+          6.684209,
+          6.514581
+        ],
+        "baselineMta40Mean": 7.466601,
+        "meanDeltaPercentVsMta40": -12.7
+      },
+      "commandOutputPlanning": {
+        "mean": 1.364407,
+        "min": 1.332565,
+        "max": 1.395208,
+        "stdev": 0.025585,
+        "runs": [
+          1.395208,
+          1.365449,
+          1.332565
+        ],
+        "baselineMta40Mean": 1.420568,
+        "meanDeltaPercentVsMta40": -4.0
+      },
+      "adaptivePlanning": {
+        "mean": 0.379882,
+        "min": 0.364203,
+        "max": 0.403075,
+        "stdev": 0.016735,
+        "runs": [
+          0.364203,
+          0.403075,
+          0.372369
+        ]
+      },
+      "mutation": {
+        "mean": 1.517378,
+        "min": 1.429786,
+        "max": 1.592287,
+        "stdev": 0.066944,
+        "runs": [
+          1.429786,
+          1.592287,
+          1.530061
+        ]
+      },
+      "densityHitCounts": [
+        6053
+      ],
+      "qualityStatuses": [
+        "captured"
+      ]
+    }
+  ],
+  "sourceRunRetention": "Raw hosted run JSONs were used to generate this summary and then pruned; per-run timing values are embedded in aggregate and row fields.",
+  "originalBaselineComparison": {
+    "comparisonKind": "original_three_run_baseline_repeats",
+    "baselineRunPaths": [
+      "test/terrain/replay/feature_aware_adaptive_baseline_results_repeat_1.json",
+      "test/terrain/replay/feature_aware_adaptive_baseline_results_repeat_2.json",
+      "test/terrain/replay/feature_aware_adaptive_baseline_results_repeat_3.json"
+    ],
+    "currentRunRetention": "Raw MTA-45 run JSONs pruned after summary generation; current run values are embedded below.",
+    "baselineRunCount": 3,
+    "currentRunCount": 3,
+    "aggregate": {
+      "totalCommandSeconds": {
+        "baseline": {
+          "mean": 85.8953,
+          "min": 85.1113,
+          "max": 87.3607,
+          "stdev": 1.037,
+          "runs": [
+            85.1113,
+            85.214,
+            87.3607
+          ]
+        },
+        "current": {
+          "mean": 78.4496,
+          "min": 77.7084,
+          "max": 79.114,
+          "stdev": 0.5764,
+          "runs": [
+            77.7084,
+            78.5265,
+            79.114
+          ]
+        },
+        "meanDeltaPercentVsBaseline": -8.7
+      }
+    },
+    "comparison": {
+      "rowTimingThresholdPercent": 25.0,
+      "rowsOverTimingThresholdVsBaseline": [
+
+      ],
+      "geometryStability": {
+        "stableBaselineFaceCountRows": 18,
+        "stableCurrentFaceCountRows": 18,
+        "stableBaselineVertexCountRows": 18,
+        "stableCurrentVertexCountRows": 18,
+        "rowCount": 18
+      }
+    },
+    "rows": [
+      {
+        "rowId": "create-baseline",
+        "outcomes": [
+          "created"
+        ],
+        "baselineFaceCounts": [
+          1173
+        ],
+        "currentFaceCounts": [
+          1173
+        ],
+        "faceCountDeltaVsBaseline": 0,
+        "baselineVertexCounts": [
+          626
+        ],
+        "currentVertexCounts": [
+          626
+        ],
+        "vertexCountDeltaVsBaseline": 0,
+        "seconds": {
+          "baseline": {
+            "mean": 0.074658,
+            "min": 0.073444,
+            "max": 0.076815,
+            "stdev": 0.001529,
+            "runs": [
+              0.073715,
+              0.073444,
+              0.076815
+            ]
+          },
+          "current": {
+            "mean": 0.065295,
+            "min": 0.063828,
+            "max": 0.067997,
+            "stdev": 0.001913,
+            "runs": [
+              0.067997,
+              0.063828,
+              0.06406
+            ]
+          },
+          "meanDeltaPercentVsBaseline": -12.5
+        },
+        "commandOutputPlanning": {
+          "baseline": {
+            "mean": 0.022984,
+            "min": 0.022084,
+            "max": 0.023441,
+            "stdev": 0.000636,
+            "runs": [
+              0.022084,
+              0.023441,
+              0.023427
+            ]
+          },
+          "current": {
+            "mean": 0.025315,
+            "min": 0.024914,
+            "max": 0.026096,
+            "stdev": 0.000552,
+            "runs": [
+              0.026096,
+              0.024935,
+              0.024914
+            ]
+          },
+          "meanDeltaPercentVsBaseline": 10.1
+        },
+        "currentDensityHitCounts": [
+          0
+        ]
+      },
+      {
+        "rowId": "target-local-center",
+        "outcomes": [
+          "edited"
+        ],
+        "baselineFaceCounts": [
+          1289
+        ],
+        "currentFaceCounts": [
+          1257
+        ],
+        "faceCountDeltaVsBaseline": -32,
+        "baselineVertexCounts": [
+          684
+        ],
+        "currentVertexCounts": [
+          680
+        ],
+        "vertexCountDeltaVsBaseline": -4,
+        "seconds": {
+          "baseline": {
+            "mean": 0.15625,
+            "min": 0.148652,
+            "max": 0.16667,
+            "stdev": 0.007622,
+            "runs": [
+              0.153429,
+              0.148652,
+              0.16667
+            ]
+          },
+          "current": {
+            "mean": 0.128943,
+            "min": 0.125691,
+            "max": 0.132007,
+            "stdev": 0.002582,
+            "runs": [
+              0.125691,
+              0.129133,
+              0.132007
+            ]
+          },
+          "meanDeltaPercentVsBaseline": -17.5
+        },
+        "commandOutputPlanning": {
+          "baseline": {
+            "mean": 0.029527,
+            "min": 0.024276,
+            "max": 0.040022,
+            "stdev": 0.007421,
+            "runs": [
+              0.024276,
+              0.024281,
+              0.040022
+            ]
+          },
+          "current": {
+            "mean": 0.029371,
+            "min": 0.026884,
+            "max": 0.030869,
+            "stdev": 0.001771,
+            "runs": [
+              0.026884,
+              0.030869,
+              0.030362
+            ]
+          },
+          "meanDeltaPercentVsBaseline": -0.5
+        },
+        "currentDensityHitCounts": [
+          41
+        ]
+      },
+      {
+        "rowId": "target-adjacent-east",
+        "outcomes": [
+          "edited"
+        ],
+        "baselineFaceCounts": [
+          1395
+        ],
+        "currentFaceCounts": [
+          1331
+        ],
+        "faceCountDeltaVsBaseline": -64,
+        "baselineVertexCounts": [
+          737
+        ],
+        "currentVertexCounts": [
+          727
+        ],
+        "vertexCountDeltaVsBaseline": -10,
+        "seconds": {
+          "baseline": {
+            "mean": 0.189031,
+            "min": 0.16278,
+            "max": 0.224518,
+            "stdev": 0.026037,
+            "runs": [
+              0.16278,
+              0.179793,
+              0.224518
+            ]
+          },
+          "current": {
+            "mean": 0.146318,
+            "min": 0.143578,
+            "max": 0.150159,
+            "stdev": 0.002797,
+            "runs": [
+              0.145216,
+              0.143578,
+              0.150159
+            ]
+          },
+          "meanDeltaPercentVsBaseline": -22.6
+        },
+        "commandOutputPlanning": {
+          "baseline": {
+            "mean": 0.025398,
+            "min": 0.024754,
+            "max": 0.026312,
+            "stdev": 0.000664,
+            "runs": [
+              0.026312,
+              0.025129,
+              0.024754
+            ]
+          },
+          "current": {
+            "mean": 0.030389,
+            "min": 0.029129,
+            "max": 0.03206,
+            "stdev": 0.001232,
+            "runs": [
+              0.029129,
+              0.029977,
+              0.03206
+            ]
+          },
+          "meanDeltaPercentVsBaseline": 19.7
+        },
+        "currentDensityHitCounts": [
+          68
+        ]
+      },
+      {
+        "rowId": "target-repeat-center",
+        "outcomes": [
+          "edited"
+        ],
+        "baselineFaceCounts": [
+          1395
+        ],
+        "currentFaceCounts": [
+          1331
+        ],
+        "faceCountDeltaVsBaseline": -64,
+        "baselineVertexCounts": [
+          737
+        ],
+        "currentVertexCounts": [
+          727
+        ],
+        "vertexCountDeltaVsBaseline": -10,
+        "seconds": {
+          "baseline": {
+            "mean": 0.183293,
+            "min": 0.174714,
+            "max": 0.191178,
+            "stdev": 0.006739,
+            "runs": [
+              0.191178,
+              0.174714,
+              0.183986
+            ]
+          },
+          "current": {
+            "mean": 0.151693,
+            "min": 0.139307,
+            "max": 0.166532,
+            "stdev": 0.011249,
+            "runs": [
+              0.139307,
+              0.166532,
+              0.14924
+            ]
+          },
+          "meanDeltaPercentVsBaseline": -17.2
+        },
+        "commandOutputPlanning": {
+          "baseline": {
+            "mean": 0.025777,
+            "min": 0.023908,
+            "max": 0.027702,
+            "stdev": 0.00155,
+            "runs": [
+              0.025721,
+              0.027702,
+              0.023908
+            ]
+          },
+          "current": {
+            "mean": 0.029799,
+            "min": 0.028351,
+            "max": 0.031635,
+            "stdev": 0.001368,
+            "runs": [
+              0.028351,
+              0.029411,
+              0.031635
+            ]
+          },
+          "meanDeltaPercentVsBaseline": 15.6
+        },
+        "currentDensityHitCounts": [
+          68
+        ]
+      },
+      {
+        "rowId": "corridor-diagonal-intersect",
+        "outcomes": [
+          "edited"
+        ],
+        "baselineFaceCounts": [
+          1773
+        ],
+        "currentFaceCounts": [
+          1689
+        ],
+        "faceCountDeltaVsBaseline": -84,
+        "baselineVertexCounts": [
+          926
+        ],
+        "currentVertexCounts": [
+          911
+        ],
+        "vertexCountDeltaVsBaseline": -15,
+        "seconds": {
+          "baseline": {
+            "mean": 0.221833,
+            "min": 0.216487,
+            "max": 0.23128,
+            "stdev": 0.006699,
+            "runs": [
+              0.216487,
+              0.217732,
+              0.23128
+            ]
+          },
+          "current": {
+            "mean": 0.167964,
+            "min": 0.162,
+            "max": 0.172155,
+            "stdev": 0.004331,
+            "runs": [
+              0.162,
+              0.172155,
+              0.169738
+            ]
+          },
+          "meanDeltaPercentVsBaseline": -24.3
+        },
+        "commandOutputPlanning": {
+          "baseline": {
+            "mean": 0.035128,
+            "min": 0.033501,
+            "max": 0.036651,
+            "stdev": 0.001288,
+            "runs": [
+              0.036651,
+              0.03523,
+              0.033501
+            ]
+          },
+          "current": {
+            "mean": 0.043541,
+            "min": 0.042753,
+            "max": 0.044562,
+            "stdev": 0.000757,
+            "runs": [
+              0.043308,
+              0.044562,
+              0.042753
+            ]
+          },
+          "meanDeltaPercentVsBaseline": 23.9
+        },
+        "currentDensityHitCounts": [
+          88
+        ]
+      },
+      {
+        "rowId": "planar-pad-intersect",
+        "outcomes": [
+          "edited"
+        ],
+        "baselineFaceCounts": [
+          1675
+        ],
+        "currentFaceCounts": [
+          1549
+        ],
+        "faceCountDeltaVsBaseline": -126,
+        "baselineVertexCounts": [
+          877
+        ],
+        "currentVertexCounts": [
+          844
+        ],
+        "vertexCountDeltaVsBaseline": -33,
+        "seconds": {
+          "baseline": {
+            "mean": 0.213342,
+            "min": 0.201977,
+            "max": 0.23059,
+            "stdev": 0.0124,
+            "runs": [
+              0.201977,
+              0.23059,
+              0.207459
+            ]
+          },
+          "current": {
+            "mean": 0.176874,
+            "min": 0.172775,
+            "max": 0.179773,
+            "stdev": 0.00298,
+            "runs": [
+              0.172775,
+              0.178075,
+              0.179773
+            ]
+          },
+          "meanDeltaPercentVsBaseline": -17.1
+        },
+        "commandOutputPlanning": {
+          "baseline": {
+            "mean": 0.030857,
+            "min": 0.030586,
+            "max": 0.031024,
+            "stdev": 0.000193,
+            "runs": [
+              0.030586,
+              0.031024,
+              0.030961
+            ]
+          },
+          "current": {
+            "mean": 0.037889,
+            "min": 0.037638,
+            "max": 0.038287,
+            "stdev": 0.000285,
+            "runs": [
+              0.037741,
+              0.038287,
+              0.037638
+            ]
+          },
+          "meanDeltaPercentVsBaseline": 22.8
+        },
+        "currentDensityHitCounts": [
+          44
+        ],
+        "currentPlanarInteriorCellCounts": [
+          16
+        ],
+        "currentPlanarInteriorFaceCounts": [
+          32
+        ]
+      },
+      {
+        "rowId": "survey-control-intersect",
+        "outcomes": [
+          "edited"
+        ],
+        "baselineFaceCounts": [
+          1701
+        ],
+        "currentFaceCounts": [
+          1611
+        ],
+        "faceCountDeltaVsBaseline": -90,
+        "baselineVertexCounts": [
+          890
+        ],
+        "currentVertexCounts": [
+          867
+        ],
+        "vertexCountDeltaVsBaseline": -23,
+        "seconds": {
+          "baseline": {
+            "mean": 0.262099,
+            "min": 0.252157,
+            "max": 0.278829,
+            "stdev": 0.0119,
+            "runs": [
+              0.255312,
+              0.252157,
+              0.278829
+            ]
+          },
+          "current": {
+            "mean": 0.211201,
+            "min": 0.208839,
+            "max": 0.212906,
+            "stdev": 0.001724,
+            "runs": [
+              0.208839,
+              0.211858,
+              0.212906
+            ]
+          },
+          "meanDeltaPercentVsBaseline": -19.4
+        },
+        "commandOutputPlanning": {
+          "baseline": {
+            "mean": 0.03022,
+            "min": 0.029465,
+            "max": 0.030701,
+            "stdev": 0.000541,
+            "runs": [
+              0.029465,
+              0.030701,
+              0.030493
+            ]
+          },
+          "current": {
+            "mean": 0.04106,
+            "min": 0.040567,
+            "max": 0.041384,
+            "stdev": 0.000354,
+            "runs": [
+              0.041384,
+              0.041229,
+              0.040567
+            ]
+          },
+          "meanDeltaPercentVsBaseline": 35.9
+        },
+        "currentDensityHitCounts": [
+          99
+        ],
+        "currentPlanarInteriorCellCounts": [
+          35
+        ],
+        "currentPlanarInteriorFaceCounts": [
+          70
+        ]
+      },
+      {
+        "rowId": "fairing-envelope-intersect",
+        "outcomes": [
+          "edited"
+        ],
+        "baselineFaceCounts": [
+          1781
+        ],
+        "currentFaceCounts": [
+          1745
+        ],
+        "faceCountDeltaVsBaseline": -36,
+        "baselineVertexCounts": [
+          930
+        ],
+        "currentVertexCounts": [
+          913
+        ],
+        "vertexCountDeltaVsBaseline": -17,
+        "seconds": {
+          "baseline": {
+            "mean": 0.25049,
+            "min": 0.239848,
+            "max": 0.267407,
+            "stdev": 0.012094,
+            "runs": [
+              0.239848,
+              0.244217,
+              0.267407
+            ]
+          },
+          "current": {
+            "mean": 0.197155,
+            "min": 0.195551,
+            "max": 0.198262,
+            "stdev": 0.001162,
+            "runs": [
+              0.195551,
+              0.197654,
+              0.198262
+            ]
+          },
+          "meanDeltaPercentVsBaseline": -21.3
+        },
+        "commandOutputPlanning": {
+          "baseline": {
+            "mean": 0.034919,
+            "min": 0.034396,
+            "max": 0.035591,
+            "stdev": 0.000499,
+            "runs": [
+              0.034396,
+              0.035591,
+              0.034771
+            ]
+          },
+          "current": {
+            "mean": 0.043046,
+            "min": 0.041261,
+            "max": 0.04585,
+            "stdev": 0.002007,
+            "runs": [
+              0.042027,
+              0.04585,
+              0.041261
+            ]
+          },
+          "meanDeltaPercentVsBaseline": 23.3
+        },
+        "currentDensityHitCounts": [
+          148
+        ],
+        "currentPlanarInteriorCellCounts": [
+          39
+        ],
+        "currentPlanarInteriorFaceCounts": [
+          78
+        ]
+      },
+      {
+        "rowId": "feature-aware-baseline-terrain-large-timing-create",
+        "outcomes": [
+          "created"
+        ],
+        "baselineFaceCounts": [
+          76200
+        ],
+        "currentFaceCounts": [
+          76191
+        ],
+        "faceCountDeltaVsBaseline": -9,
+        "baselineVertexCounts": [
+          38419
+        ],
+        "currentVertexCounts": [
+          38416
+        ],
+        "vertexCountDeltaVsBaseline": -3,
+        "seconds": {
+          "baseline": {
+            "mean": 9.954709,
+            "min": 9.556302,
+            "max": 10.397099,
+            "stdev": 0.34466,
+            "runs": [
+              9.910727,
+              9.556302,
+              10.397099
+            ]
+          },
+          "current": {
+            "mean": 8.611205,
+            "min": 8.566916,
+            "max": 8.656643,
+            "stdev": 0.03664,
+            "runs": [
+              8.566916,
+              8.610057,
+              8.656643
+            ]
+          },
+          "meanDeltaPercentVsBaseline": -13.5
+        },
+        "commandOutputPlanning": {
+          "baseline": {
+            "mean": 5.119814,
+            "min": 5.105041,
+            "max": 5.13558,
+            "stdev": 0.012488,
+            "runs": [
+              5.118821,
+              5.13558,
+              5.105041
+            ]
+          },
+          "current": {
+            "mean": 4.961939,
+            "min": 4.941034,
+            "max": 4.97405,
+            "stdev": 0.014844,
+            "runs": [
+              4.941034,
+              4.97405,
+              4.970733
+            ]
+          },
+          "meanDeltaPercentVsBaseline": -3.1
+        },
+        "currentDensityHitCounts": [
+          0
+        ]
+      },
+      {
+        "rowId": "large-varied-local-target-timing",
+        "outcomes": [
+          "edited"
+        ],
+        "baselineFaceCounts": [
+          18878
+        ],
+        "currentFaceCounts": [
+          18770
+        ],
+        "faceCountDeltaVsBaseline": -108,
+        "baselineVertexCounts": [
+          9597
+        ],
+        "currentVertexCounts": [
+          9575
+        ],
+        "vertexCountDeltaVsBaseline": -22,
+        "seconds": {
+          "baseline": {
+            "mean": 3.118461,
+            "min": 3.021544,
+            "max": 3.27656,
+            "stdev": 0.112741,
+            "runs": [
+              3.021544,
+              3.057278,
+              3.27656
+            ]
+          },
+          "current": {
+            "mean": 2.79889,
+            "min": 2.759999,
+            "max": 2.861597,
+            "stdev": 0.044765,
+            "runs": [
+              2.759999,
+              2.775075,
+              2.861597
+            ]
+          },
+          "meanDeltaPercentVsBaseline": -10.2
+        },
+        "commandOutputPlanning": {
+          "baseline": {
+            "mean": 0.728658,
+            "min": 0.70864,
+            "max": 0.746842,
+            "stdev": 0.01565,
+            "runs": [
+              0.730493,
+              0.70864,
+              0.746842
+            ]
+          },
+          "current": {
+            "mean": 0.714497,
+            "min": 0.704276,
+            "max": 0.728657,
+            "stdev": 0.010336,
+            "runs": [
+              0.710559,
+              0.728657,
+              0.704276
+            ]
+          },
+          "meanDeltaPercentVsBaseline": -1.9
+        },
+        "currentDensityHitCounts": [
+          143
+        ]
+      },
+      {
+        "rowId": "large-varied-corridor-diagonal-timing",
+        "outcomes": [
+          "edited"
+        ],
+        "baselineFaceCounts": [
+          72240
+        ],
+        "currentFaceCounts": [
+          71925
+        ],
+        "faceCountDeltaVsBaseline": -315,
+        "baselineVertexCounts": [
+          36439
+        ],
+        "currentVertexCounts": [
+          36372
+        ],
+        "vertexCountDeltaVsBaseline": -67,
+        "seconds": {
+          "baseline": {
+            "mean": 13.845152,
+            "min": 13.655974,
+            "max": 14.019952,
+            "stdev": 0.148941,
+            "runs": [
+              13.859529,
+              13.655974,
+              14.019952
+            ]
+          },
+          "current": {
+            "mean": 12.636712,
+            "min": 12.369371,
+            "max": 12.859539,
+            "stdev": 0.202571,
+            "runs": [
+              12.369371,
+              12.681225,
+              12.859539
+            ]
+          },
+          "meanDeltaPercentVsBaseline": -8.7
+        },
+        "commandOutputPlanning": {
+          "baseline": {
+            "mean": 4.691161,
+            "min": 4.656645,
+            "max": 4.713408,
+            "stdev": 0.024744,
+            "runs": [
+              4.713408,
+              4.656645,
+              4.703431
+            ]
+          },
+          "current": {
+            "mean": 5.109867,
+            "min": 5.01919,
+            "max": 5.17013,
+            "stdev": 0.065266,
+            "runs": [
+              5.01919,
+              5.140282,
+              5.17013
+            ]
+          },
+          "meanDeltaPercentVsBaseline": 8.9
+        },
+        "currentDensityHitCounts": [
+          128
+        ]
+      },
+      {
+        "rowId": "large-varied-planar-pad-timing",
+        "outcomes": [
+          "edited"
+        ],
+        "baselineFaceCounts": [
+          67562
+        ],
+        "currentFaceCounts": [
+          66523
+        ],
+        "faceCountDeltaVsBaseline": -1039,
+        "baselineVertexCounts": [
+          34100
+        ],
+        "currentVertexCounts": [
+          33777
+        ],
+        "vertexCountDeltaVsBaseline": -323,
+        "seconds": {
+          "baseline": {
+            "mean": 13.017426,
+            "min": 12.741187,
+            "max": 13.510085,
+            "stdev": 0.349217,
+            "runs": [
+              12.741187,
+              13.510085,
+              12.801006
+            ]
+          },
+          "current": {
+            "mean": 11.460067,
+            "min": 11.33468,
+            "max": 11.552747,
+            "stdev": 0.091981,
+            "runs": [
+              11.33468,
+              11.552747,
+              11.492776
+            ]
+          },
+          "meanDeltaPercentVsBaseline": -12.0
+        },
+        "commandOutputPlanning": {
+          "baseline": {
+            "mean": 4.344953,
+            "min": 4.322945,
+            "max": 4.356738,
+            "stdev": 0.015575,
+            "runs": [
+              4.355175,
+              4.356738,
+              4.322945
+            ]
+          },
+          "current": {
+            "mean": 4.396836,
+            "min": 4.330397,
+            "max": 4.446981,
+            "stdev": 0.04897,
+            "runs": [
+              4.330397,
+              4.446981,
+              4.413131
+            ]
+          },
+          "meanDeltaPercentVsBaseline": 1.2
+        },
+        "currentDensityHitCounts": [
+          0
+        ],
+        "currentPlanarInteriorCellCounts": [
+          106
+        ],
+        "currentPlanarInteriorFaceCounts": [
+          212
+        ]
+      },
+      {
+        "rowId": "large-varied-survey-control-timing",
+        "outcomes": [
+          "edited"
+        ],
+        "baselineFaceCounts": [
+          67622
+        ],
+        "currentFaceCounts": [
+          70073
+        ],
+        "faceCountDeltaVsBaseline": 2451,
+        "baselineVertexCounts": [
+          34130
+        ],
+        "currentVertexCounts": [
+          35544
+        ],
+        "vertexCountDeltaVsBaseline": 1414,
+        "seconds": {
+          "baseline": {
+            "mean": 13.283212,
+            "min": 13.024692,
+            "max": 13.686346,
+            "stdev": 0.288827,
+            "runs": [
+              13.138598,
+              13.024692,
+              13.686346
+            ]
+          },
+          "current": {
+            "mean": 12.785612,
+            "min": 12.716392,
+            "max": 12.846434,
+            "stdev": 0.053421,
+            "runs": [
+              12.716392,
+              12.794009,
+              12.846434
+            ]
+          },
+          "meanDeltaPercentVsBaseline": -3.7
+        },
+        "commandOutputPlanning": {
+          "baseline": {
+            "mean": 4.174918,
+            "min": 4.065064,
+            "max": 4.365182,
+            "stdev": 0.135073,
+            "runs": [
+              4.094507,
+              4.065064,
+              4.365182
+            ]
+          },
+          "current": {
+            "mean": 4.944037,
+            "min": 4.912157,
+            "max": 4.996377,
+            "stdev": 0.037302,
+            "runs": [
+              4.996377,
+              4.912157,
+              4.923578
+            ]
+          },
+          "meanDeltaPercentVsBaseline": 18.4
+        },
+        "currentDensityHitCounts": [
+          2983
+        ],
+        "currentPlanarInteriorCellCounts": [
+          1211
+        ],
+        "currentPlanarInteriorFaceCounts": [
+          2422
+        ]
+      },
+      {
+        "rowId": "large-varied-fairing-envelope-timing",
+        "outcomes": [
+          "edited"
+        ],
+        "baselineFaceCounts": [
+          53648
+        ],
+        "currentFaceCounts": [
+          56826
+        ],
+        "faceCountDeltaVsBaseline": 3178,
+        "baselineVertexCounts": [
+          27143
+        ],
+        "currentVertexCounts": [
+          28740
+        ],
+        "vertexCountDeltaVsBaseline": 1597,
+        "seconds": {
+          "baseline": {
+            "mean": 13.237672,
+            "min": 12.897815,
+            "max": 13.685891,
+            "stdev": 0.330729,
+            "runs": [
+              13.12931,
+              12.897815,
+              13.685891
+            ]
+          },
+          "current": {
+            "mean": 12.524046,
+            "min": 12.34007,
+            "max": 12.807422,
+            "stdev": 0.20333,
+            "runs": [
+              12.34007,
+              12.424645,
+              12.807422
+            ]
+          },
+          "meanDeltaPercentVsBaseline": -5.4
+        },
+        "commandOutputPlanning": {
+          "baseline": {
+            "mean": 3.039986,
+            "min": 3.020508,
+            "max": 3.057772,
+            "stdev": 0.01526,
+            "runs": [
+              3.057772,
+              3.041678,
+              3.020508
+            ]
+          },
+          "current": {
+            "mean": 3.651203,
+            "min": 3.613066,
+            "max": 3.680629,
+            "stdev": 0.028261,
+            "runs": [
+              3.659913,
+              3.613066,
+              3.680629
+            ]
+          },
+          "meanDeltaPercentVsBaseline": 20.1
+        },
+        "currentDensityHitCounts": [
+          7517
+        ],
+        "currentPlanarInteriorCellCounts": [
+          1318
+        ],
+        "currentPlanarInteriorFaceCounts": [
+          2636
+        ]
+      },
+      {
+        "rowId": "feature-aware-baseline-terrain-wide-timing-create",
+        "outcomes": [
+          "created"
+        ],
+        "baselineFaceCounts": [
+          31734
+        ],
+        "currentFaceCounts": [
+          31734
+        ],
+        "faceCountDeltaVsBaseline": 0,
+        "baselineVertexCounts": [
+          16065
+        ],
+        "currentVertexCounts": [
+          16065
+        ],
+        "vertexCountDeltaVsBaseline": 0,
+        "seconds": {
+          "baseline": {
+            "mean": 3.410102,
+            "min": 3.324816,
+            "max": 3.535215,
+            "stdev": 0.090394,
+            "runs": [
+              3.324816,
+              3.370275,
+              3.535215
+            ]
+          },
+          "current": {
+            "mean": 3.107029,
+            "min": 3.095102,
+            "max": 3.121288,
+            "stdev": 0.010817,
+            "runs": [
+              3.095102,
+              3.104698,
+              3.121288
+            ]
+          },
+          "meanDeltaPercentVsBaseline": -8.9
+        },
+        "commandOutputPlanning": {
+          "baseline": {
+            "mean": 1.648836,
+            "min": 1.603795,
+            "max": 1.729733,
+            "stdev": 0.057326,
+            "runs": [
+              1.603795,
+              1.612979,
+              1.729733
+            ]
+          },
+          "current": {
+            "mean": 1.651389,
+            "min": 1.635108,
+            "max": 1.668347,
+            "stdev": 0.013578,
+            "runs": [
+              1.668347,
+              1.650712,
+              1.635108
+            ]
+          },
+          "meanDeltaPercentVsBaseline": 0.2
+        },
+        "currentDensityHitCounts": [
+          0
+        ]
+      },
+      {
+        "rowId": "wide-varied-local-target-timing",
+        "outcomes": [
+          "edited"
+        ],
+        "baselineFaceCounts": [
+          8437
+        ],
+        "currentFaceCounts": [
+          8367
+        ],
+        "faceCountDeltaVsBaseline": -70,
+        "baselineVertexCounts": [
+          4321
+        ],
+        "currentVertexCounts": [
+          4316
+        ],
+        "vertexCountDeltaVsBaseline": -5,
+        "seconds": {
+          "baseline": {
+            "mean": 1.417414,
+            "min": 1.399655,
+            "max": 1.432832,
+            "stdev": 0.013645,
+            "runs": [
+              1.419754,
+              1.432832,
+              1.399655
+            ]
+          },
+          "current": {
+            "mean": 1.270055,
+            "min": 1.209327,
+            "max": 1.37111,
+            "stdev": 0.07194,
+            "runs": [
+              1.37111,
+              1.209327,
+              1.229729
+            ]
+          },
+          "meanDeltaPercentVsBaseline": -10.4
+        },
+        "commandOutputPlanning": {
+          "baseline": {
+            "mean": 0.238019,
+            "min": 0.232371,
+            "max": 0.241356,
+            "stdev": 0.004016,
+            "runs": [
+              0.240332,
+              0.241356,
+              0.232371
+            ]
+          },
+          "current": {
+            "mean": 0.270776,
+            "min": 0.251356,
+            "max": 0.306829,
+            "stdev": 0.025518,
+            "runs": [
+              0.306829,
+              0.251356,
+              0.254143
+            ]
+          },
+          "meanDeltaPercentVsBaseline": 13.8
+        },
+        "currentDensityHitCounts": [
+          113
+        ]
+      },
+      {
+        "rowId": "wide-varied-half-corridor-timing",
+        "outcomes": [
+          "edited"
+        ],
+        "baselineFaceCounts": [
+          31914
+        ],
+        "currentFaceCounts": [
+          31677
+        ],
+        "faceCountDeltaVsBaseline": -237,
+        "baselineVertexCounts": [
+          16155
+        ],
+        "currentVertexCounts": [
+          16103
+        ],
+        "vertexCountDeltaVsBaseline": -52,
+        "seconds": {
+          "baseline": {
+            "mean": 5.777444,
+            "min": 5.701689,
+            "max": 5.831569,
+            "stdev": 0.055185,
+            "runs": [
+              5.701689,
+              5.831569,
+              5.799074
+            ]
+          },
+          "current": {
+            "mean": 5.492748,
+            "min": 5.427728,
+            "max": 5.582645,
+            "stdev": 0.065645,
+            "runs": [
+              5.582645,
+              5.427728,
+              5.467871
+            ]
+          },
+          "meanDeltaPercentVsBaseline": -4.9
+        },
+        "commandOutputPlanning": {
+          "baseline": {
+            "mean": 1.561941,
+            "min": 1.531651,
+            "max": 1.599042,
+            "stdev": 0.027931,
+            "runs": [
+              1.555131,
+              1.599042,
+              1.531651
+            ]
+          },
+          "current": {
+            "mean": 1.871002,
+            "min": 1.81582,
+            "max": 1.947684,
+            "stdev": 0.055938,
+            "runs": [
+              1.947684,
+              1.81582,
+              1.849503
+            ]
+          },
+          "meanDeltaPercentVsBaseline": 19.8
+        },
+        "currentDensityHitCounts": [
+          97
+        ]
+      },
+      {
+        "rowId": "wide-varied-fairing-large-timing",
+        "outcomes": [
+          "edited"
+        ],
+        "baselineFaceCounts": [
+          24326
+        ],
+        "currentFaceCounts": [
+          24366
+        ],
+        "faceCountDeltaVsBaseline": 40,
+        "baselineVertexCounts": [
+          12361
+        ],
+        "currentVertexCounts": [
+          12381
+        ],
+        "vertexCountDeltaVsBaseline": 20,
+        "seconds": {
+          "baseline": {
+            "mean": 7.282727,
+            "min": 7.122895,
+            "max": 7.369381,
+            "stdev": 0.113152,
+            "runs": [
+              7.369381,
+              7.355905,
+              7.122895
+            ]
+          },
+          "current": {
+            "mean": 6.517837,
+            "min": 6.35472,
+            "max": 6.684209,
+            "stdev": 0.134533,
+            "runs": [
+              6.35472,
+              6.684209,
+              6.514581
+            ]
+          },
+          "meanDeltaPercentVsBaseline": -10.5
+        },
+        "commandOutputPlanning": {
+          "baseline": {
+            "mean": 1.154606,
+            "min": 1.123065,
+            "max": 1.19998,
+            "stdev": 0.032889,
+            "runs": [
+              1.19998,
+              1.140773,
+              1.123065
+            ]
+          },
+          "current": {
+            "mean": 1.364407,
+            "min": 1.332565,
+            "max": 1.395208,
+            "stdev": 0.025585,
+            "runs": [
+              1.395208,
+              1.365449,
+              1.332565
+            ]
+          },
+          "meanDeltaPercentVsBaseline": 18.2
+        },
+        "currentDensityHitCounts": [
+          6053
+        ]
+      }
+    ]
+  }
+}

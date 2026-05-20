@@ -11,7 +11,7 @@ module SU_MCP
     class TerrainFeatureGeometry
       COLLECTION_KEYS = %w[
         outputAnchorCandidates protectedRegions pressureRegions referenceSegments affectedWindows
-        tolerances
+        tolerances planarRegions
       ].freeze
       OPTIONAL_KEYS = %w[failureCategory limitations].freeze
       SORT_KEYS = %w[id featureId role strength primitive source].freeze

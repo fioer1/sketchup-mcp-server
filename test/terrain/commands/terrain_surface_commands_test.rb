@@ -672,6 +672,29 @@ class TerrainSurfaceCommandsTest < Minitest::Test # rubocop:disable Metrics/Clas
     refute_feature_leak(result)
   end
 
+  def test_baseline_evidence_records_internal_planar_interior_planned_metrics
+    model = build_semantic_model
+    managed_terrain_owner(model)
+    commands = build_edit_commands(
+      model: model,
+      repository: EditRepository.new(tiled_state_20x20_with_planar_feature),
+      mesh_generator: RecordingRegeneratingMeshGenerator.new,
+      grade_editor: SU_MCP::Terrain::BoundedGradeEdit.new,
+      terrain_feature_intent_emitter: RecordingFeatureIntentEmitter.new,
+      terrain_feature_planner: ReplayLikeFeatureWindowPlanner.new
+    )
+
+    result = commands.edit_terrain_surface(edit_request)
+    metrics = commands.last_baseline_evidence.fetch(:planarInteriorMetrics)
+
+    assert_equal('edited', result.fetch(:outcome))
+    assert_equal('planned_cell_centroid', metrics.fetch(:metricKind))
+    assert_operator(metrics.fetch(:cellCount), :>, 0)
+    assert_operator(metrics.fetch(:faceCount), :>, 0)
+    assert_operator(metrics.fetch(:vertexCount), :>, 0)
+    refute_includes(JSON.generate(result), 'planned_cell_centroid')
+  end
+
   def test_non_cdt_adaptive_output_requests_selected_feature_geometry_for_policy
     model = build_semantic_model
     managed_terrain_owner(model)
@@ -1392,6 +1415,45 @@ class TerrainSurfaceCommandsTest < Minitest::Test # rubocop:disable Metrics/Clas
       elevations: Array.new(400, 1.0),
       revision: 1,
       state_id: 'tiled-state-20x20'
+    )
+  end
+
+  def tiled_state_20x20_with_planar_feature
+    SU_MCP::Terrain::TiledHeightmapState.new(
+      basis: {
+        'xAxis' => [1.0, 0.0, 0.0],
+        'yAxis' => [0.0, 1.0, 0.0],
+        'zAxis' => [0.0, 0.0, 1.0],
+        'vertical' => 'z_up'
+      },
+      origin: { 'x' => 0.0, 'y' => 0.0, 'z' => 0.0 },
+      spacing: { 'x' => 1.0, 'y' => 1.0 },
+      dimensions: { 'columns' => 20, 'rows' => 20 },
+      elevations: Array.new(400, 1.0),
+      revision: 1,
+      state_id: 'tiled-state-20x20-planar',
+      feature_intent: {
+        'schemaVersion' => 3,
+        'revision' => 1,
+        'generation' => SU_MCP::Terrain::FeatureIntentSet::DEFAULT_GENERATION,
+        'features' => [
+          {
+            'id' => 'feature:planar_region:explicit_edit:pad:aaaaaaaaaaaa',
+            'kind' => 'planar_region',
+            'sourceMode' => 'explicit_edit',
+            'roles' => %w[support boundary],
+            'priority' => 55,
+            'payload' => {
+              'region' => {
+                'type' => 'rectangle',
+                'bounds' => { 'minX' => 0.0, 'minY' => 0.0, 'maxX' => 4.0, 'maxY' => 4.0 }
+              }
+            },
+            'provenance' => { 'originClass' => 'test', 'originOperation' => 'planar_region_fit',
+                              'createdAtRevision' => 1, 'updatedAtRevision' => 1 }
+          }
+        ]
+      }
     )
   end
 

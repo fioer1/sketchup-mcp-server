@@ -39,6 +39,12 @@ module SU_MCP
         !!required
       end
 
+      def target_cell_size_for_owner(owner)
+        return nil unless aggregate_bounds_intersect?(owner)
+
+        target_cell_size(owner)
+      end
+
       def summary
         {
           supportedInputCounts: supported_input_counts,

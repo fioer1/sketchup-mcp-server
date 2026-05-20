@@ -88,11 +88,49 @@ class FeatureAwareAdaptiveBaselineResultClassifierTest < Minitest::Test
     refute(row.fetch('comparison').fetch('patchScopeChanged'))
   end
 
+  def test_compares_planar_interior_metrics_when_present_on_current_and_baseline_rows
+    row = classify(
+      current_row(
+        face_count: 90,
+        vertex_count: 45,
+        planar_interior_metrics: {
+          'faceCount' => 12,
+          'vertexCount' => 8,
+          'qualityStatus' => 'captured'
+        }
+      ),
+      baseline: current_row(
+        face_count: 100,
+        vertex_count: 50,
+        planar_interior_metrics: {
+          'faceCount' => 30,
+          'vertexCount' => 20,
+          'qualityStatus' => 'captured'
+        },
+        policy: nil
+      )
+    )
+
+    comparison = row.fetch('comparison')
+
+    assert_includes(comparison.keys, 'planarInterior')
+    assert_equal(
+      {
+        'baselineFaceCount' => 30,
+        'faceCountDelta' => -18,
+        'baselineVertexCount' => 20,
+        'vertexCountDelta' => -12,
+        'qualityStatus' => 'captured'
+      },
+      comparison.fetch('planarInterior')
+    )
+  end
+
   private
 
-  def classify(row)
+  def classify(row, baseline: baseline_row)
     document = SU_MCP::Terrain::FeatureAwareAdaptiveBaselineResultClassifier.annotate(
-      baseline_document: { 'rows' => [baseline_row] },
+      baseline_document: { 'rows' => [baseline] },
       current_document: { 'rows' => [row] }
     )
     document.fetch('rows').first
@@ -104,6 +142,7 @@ class FeatureAwareAdaptiveBaselineResultClassifierTest < Minitest::Test
 
   def current_row(
     face_count: 100,
+    vertex_count: 50,
     seconds: 0.1,
     outcome: 'edited',
     density_hits: 0,
@@ -111,13 +150,15 @@ class FeatureAwareAdaptiveBaselineResultClassifierTest < Minitest::Test
     policy: :default,
     quality_status: nil,
     forced_summary: nil,
-    quality_summary: nil
+    quality_summary: nil,
+    planar_interior_metrics: nil
   )
     {
       'rowId' => 'feature-row',
       'seconds' => seconds,
       'outcome' => outcome,
       'faceCount' => face_count,
+      'vertexCount' => vertex_count,
       'dirtyWindow' => { 'columns' => 9, 'rows' => 9 },
       'patchScope' => { 'affectedPatchCount' => 1, 'replacementPatchCount' => 9 },
       'adaptivePolicySummary' => policy_summary(
@@ -126,7 +167,8 @@ class FeatureAwareAdaptiveBaselineResultClassifierTest < Minitest::Test
         fallback_counts,
         forced_summary
       ),
-      'featureQualitySummary' => quality_payload(quality_summary, quality_status)
+      'featureQualitySummary' => quality_payload(quality_summary, quality_status),
+      'planarInteriorMetrics' => planar_interior_metrics
     }.compact
   end
 

@@ -15,9 +15,8 @@ module SU_MCP
         rowId sequenceId replaySpec commandKind sourceElementId featureContextClass accepted
         verdict outcome stateRevision featureViewDigest policyFingerprint featureContext dirtyWindow
         adaptivePolicySummary affectedPatchScope faceCount vertexCount meshType
-        simplificationTolerance
-        maxSimplificationError renderingSummary featureQualitySummary harnessQualitySeconds
-        timingBuckets
+        simplificationTolerance maxSimplificationError renderingSummary planarInteriorMetrics
+        featureQualitySummary harnessQualitySeconds timingBuckets
       ].freeze
 
       attr_reader :document
@@ -221,6 +220,7 @@ module SU_MCP
           dirtyWindow: evidence_value(baseline_evidence, :dirtyWindow) ||
             row['dirtyWindowExpectation'],
           affectedPatchScope: evidence_value(baseline_evidence, :affectedPatchScope),
+          planarInteriorMetrics: evidence_value(baseline_evidence, :planarInteriorMetrics),
           renderingSummary: evidence_value(baseline_evidence, :renderingSummary) ||
             { status: accepted_result?(result) ? 'captured' : 'not_captured' }
         }

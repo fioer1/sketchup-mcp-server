@@ -55,3 +55,14 @@ annotated = SU_MCP::Terrain::FeatureAwareAdaptiveBaselineResultClassifier.annota
 )
 File.write('test/terrain/replay/feature_aware_adaptive_baseline_results_mta39.json', "#{JSON.pretty_generate(annotated)}\n")
 ```
+
+Use the original `feature_aware_adaptive_baseline_results_repeat_1.json` through
+`feature_aware_adaptive_baseline_results_repeat_3.json` artifacts for direct
+three-run timing comparisons against the reusable baseline. Those repeat captures
+do not include harness quality sampling, so compare command timing, face counts,
+vertex counts, dirty-window shape, and patch scope there.
+
+Use `feature_aware_adaptive_baseline_results_mta39_quality.json` when a comparison
+needs quality-sampler evidence or classifier verdicts against a quality-enabled
+baseline. That artifact is not the original three-run timing baseline; it is the
+quality-bearing baseline row pack.

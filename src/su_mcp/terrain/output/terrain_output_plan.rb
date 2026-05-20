@@ -131,6 +131,12 @@ module SU_MCP
           intent: intent,
           cell_window: cell_window
         )
+        adaptive_cells = compact_planar_interior_cells(
+          state,
+          adaptive_cells,
+          feature_aware_adaptive_policy,
+          adaptive_patch_policy
+        )
         cells = AdaptiveOutputConformity.cells(
           adaptive_cells,
           state: state,
@@ -231,6 +237,95 @@ module SU_MCP
         )
       end
 
+      def self.compact_planar_interior_cells(state, cells, feature_policy, patch_policy)
+        return cells unless feature_policy
+        return cells unless feature_policy.respond_to?(:planar_compaction_candidate?)
+
+        candidates, retained = cells.partition do |cell|
+          planar_compaction_candidate?(feature_policy, cell)
+        end
+        return cells if candidates.empty?
+
+        compacted = merge_planar_candidate_cells(state, candidates, patch_policy)
+        (retained + compacted).sort_by do |cell|
+          [
+            cell.fetch(:min_row),
+            cell.fetch(:min_column),
+            cell.fetch(:max_row),
+            cell.fetch(:max_column)
+          ]
+        end
+      end
+
+      def self.planar_compaction_candidate?(feature_policy, cell)
+        feature_policy.planar_compaction_candidate?(
+          {
+            min_column: cell.fetch(:min_column),
+            min_row: cell.fetch(:min_row),
+            max_column: cell.fetch(:max_column),
+            max_row: cell.fetch(:max_row)
+          },
+          column_span: cell.fetch(:max_column) - cell.fetch(:min_column),
+          row_span: cell.fetch(:max_row) - cell.fetch(:min_row)
+        )
+      end
+
+      def self.merge_planar_candidate_cells(state, cells, patch_policy)
+        horizontal = merge_planar_cells_along(
+          cells.map { |cell| cell.merge(patch_key: patch_key_for_cell(cell, patch_policy)) },
+          fixed_keys: %i[patch_key min_row max_row],
+          min_key: :min_column,
+          max_key: :max_column
+        )
+        merge_planar_cells_along(
+          horizontal,
+          fixed_keys: %i[patch_key min_column max_column],
+          min_key: :min_row,
+          max_key: :max_row
+        ).map do |cell|
+          adaptive_cell(
+            cell.fetch(:min_column),
+            cell.fetch(:min_row),
+            cell.fetch(:max_column),
+            cell.fetch(:max_row),
+            max_cell_error(
+              state,
+              cell.fetch(:min_column),
+              cell.fetch(:min_row),
+              cell.fetch(:max_column),
+              cell.fetch(:max_row)
+            )
+          )
+        end
+      end
+
+      def self.merge_planar_cells_along(cells, fixed_keys:, min_key:, max_key:)
+        cells.group_by { |cell| fixed_keys.map { |key| cell.fetch(key) } }
+             .flat_map do |_fixed, group|
+          merge_sorted_planar_cells(group.sort_by { |cell| cell.fetch(min_key) }, min_key, max_key)
+        end
+      end
+
+      def self.merge_sorted_planar_cells(cells, min_key, max_key)
+        cells.each_with_object([]) do |cell, merged|
+          previous = merged.last
+          if previous && previous.fetch(max_key) == cell.fetch(min_key)
+            previous[max_key] = cell.fetch(max_key)
+          else
+            merged << cell.dup
+          end
+        end
+      end
+
+      def self.patch_key_for_cell(cell, patch_policy)
+        return 'global' unless patch_policy&.hard_patch_boundaries
+
+        patch_policy.patch_id_for(
+          column: cell.fetch(:min_column),
+          row: cell.fetch(:min_row)
+        )
+      end
+
       def self.expanded_patch_domains(policy, dimensions, patch_ids)
         max_bounds = policy.patch_grid_bounds(dimensions)
         coords = patch_ids.flat_map do |patch_id|
@@ -323,6 +418,13 @@ module SU_MCP
           max_column,
           max_row
         )
+        if split_pressure.fetch(:planar_interior, false) &&
+           !feature_split_required?(split_pressure)
+          return {
+            max_error: max_cell_error(state, min_column, min_row, max_column, max_row),
+            split: false
+          }
+        end
         probe = max_cell_error_probe(
           state,
           min_column,

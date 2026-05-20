@@ -4,6 +4,7 @@ require_relative '../../test_helper'
 require_relative '../../../src/su_mcp/terrain/features/terrain_feature_geometry_builder'
 require_relative '../../../src/su_mcp/terrain/state/tiled_heightmap_state'
 
+# rubocop:disable Metrics/ClassLength
 class TerrainFeatureGeometryBuilderTest < Minitest::Test
   BASIS = {
     'xAxis' => [1.0, 0.0, 0.0],
@@ -134,7 +135,7 @@ class TerrainFeatureGeometryBuilderTest < Minitest::Test
     assert_empty(geometry.pressure_regions)
   end
 
-  def test_later_absolute_planar_region_preserves_crossing_corridor_edge_detail
+  def test_later_absolute_planar_region_splits_older_crossing_corridor_detail_outside_footprint
     geometry = builder.build(
       state: state_with_features([
                                    corridor_feature('corridor-crossing'),
@@ -142,10 +143,73 @@ class TerrainFeatureGeometryBuilderTest < Minitest::Test
                                  ])
     )
 
-    roles = geometry.reference_segments.map { |segment| segment.fetch('role') }
+    assert_empty(geometry.limitations)
+    assert_equal(
+      [
+        ['corridor-crossing:centerline:0:outside-0', 'centerline', [0.0, 2.0], [1.0, 2.0]],
+        ['corridor-crossing:centerline:0:outside-1', 'centerline', [4.0, 2.0], [6.0, 2.0]],
+        ['corridor-crossing:endpoint_cap:3', 'endpoint_cap', [0.0, 4.0], [0.0, 0.0]],
+        ['corridor-crossing:endpoint_cap:4', 'endpoint_cap', [6.0, 4.0], [6.0, 0.0]],
+        ['corridor-crossing:side_transition:1:outside-0', 'side_transition', [0.0, 4.0],
+         [1.0, 4.0]],
+        ['corridor-crossing:side_transition:1:outside-1', 'side_transition', [4.0, 4.0],
+         [6.0, 4.0]],
+        ['corridor-crossing:side_transition:2', 'side_transition', [0.0, 0.0], [6.0, 0.0]]
+      ],
+      reference_segment_payloads(geometry)
+    )
+    geometry.reference_segments.each do |segment|
+      assert_equal('corridor-crossing', segment.fetch('featureId'))
+      assert_equal('firm', segment.fetch('strength'))
+      assert_includes([1, 2], segment.fetch('targetCellSize'))
+    end
+  end
 
-    assert_includes(roles, 'side_transition')
-    assert_includes(roles, 'endpoint_cap')
+  def test_later_absolute_planar_region_subtracts_older_rectangle_pressure_outside_footprint
+    geometry = builder.build(
+      state: state_with_features([
+                                   fairing_feature(
+                                     'fairing-crossing',
+                                     region: rectangle_region(min: [0.0, 0.0], max: [6.0, 5.0])
+                                   ),
+                                   planar_feature('planar-overwrite', revision: 2)
+                                 ])
+    )
+
+    assert_empty(geometry.limitations)
+    assert_equal(
+      [
+        ['fairing-crossing:fairing_support:outside-bottom', 'fairing_support', 'soft',
+         [[1.0, 0.0], [4.0, 1.0]], 4],
+        ['fairing-crossing:fairing_support:outside-left', 'fairing_support', 'soft',
+         [[0.0, 0.0], [1.0, 5.0]], 4],
+        ['fairing-crossing:fairing_support:outside-right', 'fairing_support', 'soft',
+         [[4.0, 0.0], [6.0, 5.0]], 4],
+        ['fairing-crossing:fairing_support:outside-top', 'fairing_support', 'soft',
+         [[1.0, 4.0], [4.0, 5.0]], 4]
+      ],
+      pressure_region_payloads(geometry)
+    )
+  end
+
+  def test_later_absolute_planar_region_clips_older_circle_pressure_by_effective_bounds
+    geometry = builder.build(
+      state: state_with_features([
+                                   target_feature('target-crossing', radius: 2.0),
+                                   planar_feature('planar-overwrite', revision: 2)
+                                 ])
+    )
+
+    assert_empty(geometry.limitations)
+    assert_equal(
+      [
+        ['target-crossing:target_support:outside-right', 'target_support', 'soft',
+         [[4.0, 1.0], [5.0, 5.0]], 4],
+        ['target-crossing:target_support:outside-top', 'target_support', 'soft',
+         [[1.0, 4.0], [4.0, 5.0]], 4]
+      ],
+      pressure_region_payloads(geometry)
+    )
   end
 
   def test_newer_corridor_on_top_of_absolute_planar_region_is_preserved
@@ -165,6 +229,60 @@ class TerrainFeatureGeometryBuilderTest < Minitest::Test
 
     assert_equal(5, geometry.reference_segments.length)
     assert_equal(['corridor'], geometry.pressure_regions.map { |region| region.fetch('primitive') })
+  end
+
+  def test_newer_survey_and_fairing_on_top_of_absolute_planar_region_are_preserved
+    geometry = builder.build(
+      state: state_with_features([
+                                   planar_feature('planar-base', revision: 1),
+                                   survey_feature('survey-over-planar', revision: 2),
+                                   fairing_feature('fairing-over-planar', revision: 2)
+                                 ])
+    )
+
+    assert_equal(['survey-over-planar'],
+                 geometry.output_anchor_candidates.map { |anchor| anchor.fetch('id') })
+    assert_equal(%w[fairing_support survey_anchor],
+                 geometry.pressure_regions.map { |region| region.fetch('role') }.sort)
+  end
+
+  def test_positive_falloff_planar_region_does_not_occlude_older_pressure
+    geometry = builder.build(
+      state: state_with_features([
+                                   target_feature('target-under-falloff-planar', radius: 1.0),
+                                   planar_feature(
+                                     'planar-with-falloff',
+                                     blend: { 'distance' => 1.0, 'falloff' => 'smooth' },
+                                     revision: 2
+                                   )
+                                 ])
+    )
+
+    assert_equal(['target_support'],
+                 geometry.pressure_regions.map { |region| region.fetch('role') })
+    assert_equal(%w[falloff falloff falloff falloff],
+                 geometry.reference_segments.map { |segment| segment.fetch('role') })
+  end
+
+  def test_partial_circular_planar_occluder_retains_older_pressure_with_limitation
+    geometry = builder.build(
+      state: state_with_features([
+                                   fairing_feature(
+                                     'fairing-crossing-circle-planar',
+                                     region: rectangle_region(min: [0.0, 0.0], max: [6.0, 5.0])
+                                   ),
+                                   planar_feature(
+                                     'circle-planar-overwrite',
+                                     region: circle_region(center: [3.0, 3.0], radius: 2.0),
+                                     revision: 2
+                                   )
+                                 ])
+    )
+
+    assert_equal(['fairing_support'],
+                 geometry.pressure_regions.map { |region| region.fetch('role') })
+    assert_includes(JSON.generate(geometry.limitations), 'circle-planar-overwrite')
+    assert_includes(JSON.generate(geometry.limitations), 'partial circular planar occlusion')
   end
 
   def test_later_absolute_planar_region_does_not_suppress_hard_protected_regions
@@ -295,6 +413,29 @@ class TerrainFeatureGeometryBuilderTest < Minitest::Test
     assert_equal(2, roles.count('endpoint_cap'))
   end
 
+  def reference_segment_payloads(geometry)
+    geometry.reference_segments.map do |segment|
+      [
+        segment.fetch('id'),
+        segment.fetch('role'),
+        segment.fetch('ownerLocalStart'),
+        segment.fetch('ownerLocalEnd')
+      ]
+    end
+  end
+
+  def pressure_region_payloads(geometry)
+    geometry.pressure_regions.map do |region|
+      [
+        region.fetch('id'),
+        region.fetch('role'),
+        region.fetch('strength'),
+        region.fetch('ownerLocalShape'),
+        region.fetch('targetCellSize')
+      ]
+    end
+  end
+
   def state_with_features(features)
     SU_MCP::Terrain::TiledHeightmapState.new(
       basis: BASIS,
@@ -365,37 +506,31 @@ class TerrainFeatureGeometryBuilderTest < Minitest::Test
             revision: revision)
   end
 
-  def survey_feature(id)
-    support_region = {
-      'type' => 'circle',
-      'center' => { 'x' => 3.0, 'y' => 3.0 },
-      'radius' => 1.5
-    }
+  def survey_feature(id, support_region: nil, revision: 1)
+    support_region ||= circle_region(center: [3.0, 3.0], radius: 1.5)
     feature(id: id, kind: 'survey_control', roles: %w[control support],
             payload: { 'control' => { 'id' => id, 'point' => { 'x' => 3.0, 'y' => 3.0 } },
-                       'supportRegion' => support_region })
+                       'supportRegion' => support_region },
+            revision: revision)
   end
 
-  def planar_feature(id, blend: nil, revision: 1)
-    region = { 'type' => 'rectangle', 'bounds' => bounds }
+  def planar_feature(id, blend: nil, revision: 1, region: nil)
+    region ||= { 'type' => 'rectangle', 'bounds' => bounds }
     region['blend'] = blend if blend
     feature(id: id, kind: 'planar_region', roles: %w[support boundary],
             payload: { 'region' => region }, revision: revision)
   end
 
-  def target_feature(id, radius: 2.0, revision: 1)
-    region = {
-      'type' => 'circle',
-      'center' => { 'x' => 3.0, 'y' => 3.0 },
-      'radius' => radius
-    }
+  def target_feature(id, radius: 2.0, revision: 1, region: nil)
+    region ||= circle_region(center: [3.0, 3.0], radius: radius)
     feature(id: id, kind: 'target_region', roles: %w[support falloff],
             payload: { 'region' => region }, revision: revision)
   end
 
-  def fairing_feature(id)
+  def fairing_feature(id, region: nil, revision: 1)
     feature(id: id, kind: 'fairing_region', roles: %w[support],
-            payload: { 'region' => { 'type' => 'rectangle', 'bounds' => bounds } })
+            payload: { 'region' => region || { 'type' => 'rectangle', 'bounds' => bounds } },
+            revision: revision)
   end
 
   def inferred_feature(id)
@@ -410,4 +545,25 @@ class TerrainFeatureGeometryBuilderTest < Minitest::Test
   def bounds
     { 'minX' => 1.0, 'minY' => 1.0, 'maxX' => 4.0, 'maxY' => 4.0 }
   end
+
+  def rectangle_region(min:, max:)
+    {
+      'type' => 'rectangle',
+      'bounds' => {
+        'minX' => min.fetch(0),
+        'minY' => min.fetch(1),
+        'maxX' => max.fetch(0),
+        'maxY' => max.fetch(1)
+      }
+    }
+  end
+
+  def circle_region(center:, radius:)
+    {
+      'type' => 'circle',
+      'center' => { 'x' => center.fetch(0), 'y' => center.fetch(1) },
+      'radius' => radius
+    }
+  end
 end
+# rubocop:enable Metrics/ClassLength

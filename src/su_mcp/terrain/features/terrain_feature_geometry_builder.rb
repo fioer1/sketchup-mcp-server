@@ -3,12 +3,12 @@
 require_relative '../regions/corridor_frame'
 require_relative 'effective_feature_view'
 require_relative 'feature_intent_set'
+require_relative 'planar_occlusion_clipper'
 require_relative 'terrain_feature_geometry'
 
 module SU_MCP
   module Terrain
     # Derives executable, SketchUp-free output constraints from durable feature intent.
-    # rubocop:disable Metrics/ClassLength
     class TerrainFeatureGeometryBuilder
       FEATURE_DERIVERS = {
         'preserve_region' => :derive_preserve,
@@ -29,6 +29,7 @@ module SU_MCP
         @reference_segments = []
         @affected_windows = []
         @tolerances = []
+        @planar_regions = []
         @limitations = []
         @failure_category = 'none'
 
@@ -50,6 +51,7 @@ module SU_MCP
           referenceSegments: @reference_segments,
           affectedWindows: @affected_windows,
           tolerances: @tolerances,
+          planarRegions: @planar_regions,
           failureCategory: @failure_category,
           limitations: @limitations
         )
@@ -165,6 +167,11 @@ module SU_MCP
 
       def derive_planar(feature)
         region = primitive_region(feature.dig('payload', 'region'))
+        @planar_regions << region.merge(
+          'id' => "#{feature.fetch('id')}:planar-interior",
+          'featureId' => feature.fetch('id'),
+          'role' => 'planar_interior'
+        )
         return unless positive_region_blend?(feature)
 
         add_region_boundary_segments(feature, region, role: 'falloff')
@@ -302,102 +309,19 @@ module SU_MCP
       def suppress_occluded_output_geometry
         return if @absolute_planar_regions.empty?
 
-        @anchors.reject! do |anchor|
-          anchor.fetch('strength') != 'hard' && occluded_point?(
-            anchor.fetch('featureId'),
-            anchor.fetch('ownerLocalPoint')
-          )
-        end
-        @pressure_regions.reject! do |region|
-          !region.fetch('role').to_s.include?('protected') && occluded_geometry?(region)
-        end
-        @reference_segments.reject! { |segment| occluded_geometry?(segment) }
-      end
-
-      def occluded_geometry?(entry)
-        @absolute_planar_regions.any? do |planar|
-          next false unless newer_planar_region?(planar, entry['featureId'])
-
-          entry_contained_by_region?(entry, planar.fetch(:region))
-        end
-      end
-
-      def newer_planar_region?(planar, feature_id)
-        planar.fetch(:revision) > @feature_revisions.fetch(feature_id, 0)
-      end
-
-      def occluded_point?(feature_id, point)
-        @absolute_planar_regions.any? do |planar|
-          next false unless planar.fetch(:revision) > @feature_revisions.fetch(feature_id, 0)
-
-          point_contained_by_region?(point, planar.fetch(:region))
-        end
-      end
-
-      def entry_contained_by_region?(entry, region)
-        if entry.key?('ownerLocalStart') && entry.key?('ownerLocalEnd')
-          return segment_contained_by_region?(entry, region)
-        end
-
-        shape = entry['ownerLocalShape'] || entry['ownerLocalBounds'] ||
-                entry['ownerLocalCenterRadius']
-        case entry['primitive']
-        when 'rectangle'
-          rectangle_contained_by_region?(shape, region)
-        when 'circle'
-          circle_contained_by_region?(shape, region)
-        when 'corridor'
-          segment_points_contained_by_region?(shape.fetch('centerline'), region)
-        else
-          false
-        end
-      rescue KeyError, TypeError, NoMethodError
-        false
-      end
-
-      def segment_contained_by_region?(segment, region)
-        segment_points_contained_by_region?(
-          [segment.fetch('ownerLocalStart'), segment.fetch('ownerLocalEnd')],
-          region
+        clipped = PlanarOcclusionClipper.new(
+          absolute_planar_regions: @absolute_planar_regions,
+          feature_revisions: @feature_revisions
+        ).clip(
+          anchors: @anchors,
+          pressure_regions: @pressure_regions,
+          reference_segments: @reference_segments,
+          limitations: @limitations
         )
-      end
-
-      def segment_points_contained_by_region?(points, region)
-        points.all? { |point| point_contained_by_region?(point, region) }
-      end
-
-      def rectangle_contained_by_region?(shape, region)
-        min, max = shape
-        [[min.fetch(0), min.fetch(1)], [min.fetch(0), max.fetch(1)],
-         [max.fetch(0), min.fetch(1)], [max.fetch(0), max.fetch(1)]].all? do |point|
-          point_contained_by_region?(point, region)
-        end
-      end
-
-      def circle_contained_by_region?(shape, region)
-        center_x, center_y, radius = shape
-        [[center_x - radius, center_y], [center_x + radius, center_y],
-         [center_x, center_y - radius], [center_x, center_y + radius]].all? do |point|
-          point_contained_by_region?(point, region)
-        end
-      end
-
-      def point_contained_by_region?(point, region)
-        case region.fetch('primitive')
-        when 'rectangle'
-          min, max = region.fetch('ownerLocalBounds')
-          point.fetch(0).between?(*[min.fetch(0), max.fetch(0)].minmax) &&
-            point.fetch(1).between?(*[min.fetch(1), max.fetch(1)].minmax)
-        when 'circle'
-          center_x, center_y, radius = region.fetch('ownerLocalCenterRadius')
-          dx = point.fetch(0) - center_x
-          dy = point.fetch(1) - center_y
-          ((dx * dx) + (dy * dy)) <= radius * radius
-        else
-          false
-        end
-      rescue KeyError, TypeError
-        false
+        @anchors = clipped.fetch(:anchors)
+        @pressure_regions = clipped.fetch(:pressure_regions)
+        @reference_segments = clipped.fetch(:reference_segments)
+        @limitations = clipped.fetch(:limitations)
       end
 
       def append_affected_window(feature)
@@ -463,6 +387,5 @@ module SU_MCP
         }
       end
     end
-    # rubocop:enable Metrics/ClassLength
   end
 end

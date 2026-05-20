@@ -2,13 +2,13 @@
 
 **Task ID**: MTA-45  
 **Title**: Reduce Unnecessary Planar Region Output Tessellation  
-**Status**: challenged  
+**Status**: calibrated
 **Created**: 2026-05-17  
-**Last Updated**: 2026-05-18  
+**Last Updated**: 2026-05-20
 
 **Related Task**: [task.md](./task.md)  
 **Related Plan**: [plan.md](./plan.md)  
-**Related Summary**: none yet  
+**Related Summary**: [summary.md](./summary.md)
 
 ---
 
@@ -184,7 +184,25 @@ fix/redeploy loops, or downstream compaction becomes required to satisfy the cor
 <!-- SIZE:DRIFT:START -->
 ## Drift Log
 
-No material drift recorded yet.
+### 2026-05-18 - Public Circle Pressure Clipping Scope Tightened
+
+- **Trigger**: Step 03 coverage review challenged the finalized plan's allowance for partial circle
+  pressure fallback.
+- **Evidence**: Public terrain edits support circle regions for `target_height`,
+  `survey_point_constraint`, and `local_fairing`; retaining an older partial circle pressure
+  primitive wholesale would keep older density/tolerance pressure active inside a later rectangular
+  no-falloff planar footprint, which violates the task's stack-order acceptance criteria.
+- **Plan Delta**: `plan.md` now requires rectangular planar occlusion over public circle-pressure
+  inputs to suppress planar-interior density/tolerance pressure while preserving outside influence.
+  Exact circular arc fragments are not required; clipping can use policy-effective outside rectangle
+  fragments because the current adaptive policy already consumes circle pressure via effective
+  bounds. Partial circular planar occluders remain conservative limitation cases.
+- **Affected Estimate Dimensions**: Functional Scope remains `3`, but Implementation Friction Risk
+  and Rework Risk trend higher within `3` because pressure clipping now includes circle-pressure
+  effective-bound subtraction, not only corridor/detail segments and rectangle pressure.
+- **Known Estimate Breaker Comparison**: This does not yet hit the broader-geometry-library or
+  downstream-topology-rewrite breaker; it will become material upward drift if public circle
+  pressure cannot be clipped with bounded geometry-builder logic.
 <!-- SIZE:DRIFT:END -->
 
 ---
@@ -192,7 +210,17 @@ No material drift recorded yet.
 <!-- SIZE:ACTUAL:START -->
 ## Actual Profile
 
-Not filled yet.
+| Dimension | Actual (0-4) | Evidence |
+|---|---:|---|
+| Functional Scope | 3 | Behavior-visible stack-order compaction across older corridor/reference pressure and public target/survey/fairing circle-pressure inputs under later absolute planar edits. |
+| Technical Change Surface | 3 | Layered change across feature geometry clipping, command-side internal evidence, replay row propagation, classifier comparison, and focused contract/regression tests. |
+| Actual Implementation Friction | 3 | The slice needed a material plan correction for public circle-pressure clipping plus bounded rectangle/segment subtraction helpers, but avoided a geometry-library or mesh-topology rewrite. |
+| Actual Validation Burden | 4 | Hosted validation materially changed the implementation: visual inspection exposed that pressure clipping still left a full-grid-looking planar interior, requiring another code slice, deployment, reload, replay, and targeted live visual probes. |
+| Actual Dependency Drag | 2 | The implementation depended on MTA-38/MTA-40 replay semantics, MTA-39 policy behavior, and MTA-36 lifecycle expectations; hosted SketchUp access remains the unclosed dependency. |
+| Actual Discovery Encountered | 3 | Discovery centered on the distinction between pressure suppression and actual emitted planar-core compaction. The missing layer was internal planar-region propagation plus adaptive-cell coalescing. |
+| Actual Scope Volatility | 2 | Scope tightened from allowing public circle-pressure fallback to requiring rectangular planar occlusion over public circle-pressure inputs, but the accepted outcome remained MTA-45 planar compaction. |
+| Actual Rework | 3 | A hosted pass after apparent local completion forced revisiting the implementation and plan interpretation; the fix touched feature geometry, adaptive policy, output planning, command evidence, tests, deployment, and hosted replay. |
+| Final Confidence in Completeness | 4 | Local validation, contract/lint/package checks, hosted replay, right-side scene placement proof, targeted circle no-falloff proof, replay-fixture planar falloff proof, and three-run hosted performance comparison are now complete. Residual risk is limited to further topology optimization beyond patch-local coalescing. |
 <!-- SIZE:ACTUAL:END -->
 
 ---
@@ -200,7 +228,51 @@ Not filled yet.
 <!-- SIZE:VALIDATION-EVIDENCE:START -->
 ## Validation Evidence Summary
 
-Not filled yet.
+### Classification
+
+- **Completed validation burden**: hosted-fix loop beyond baseline.
+- **Hosted status**: completed after one material implementation correction and redeploy/replay.
+- **Review status**: deterministic local review plus PAL `grok-4.3` review completed; no accepted
+  blocker remained.
+
+### Distinguishing Evidence
+
+- Initial TDD skeleton red baseline: `51 runs, 797 assertions, 10 failures`.
+- Focused mapped implementation batch: `110 runs, 7882 assertions, 0 failures`.
+- Full Ruby suite after hosted fix: `1483 runs, 17939 assertions, 0 failures, 41 skips`.
+- Full lint: `362 files inspected, no offenses`.
+- Package verification produced `dist/su_mcp-1.11.0.rbz`.
+- Contract stability passed: `16 runs, 6647 assertions, 0 failures`.
+- Security scan reported `0` findings.
+- Hosted MTA-38 replay against the MTA-40 final baseline captured `18` rows with `15 policy_applied`,
+  `3 neutral`, and `0 regressed` verdicts.
+- Final hosted replay artifacts are
+  `feature_aware_adaptive_baseline_results_mta45_coalesced.json` and
+  `feature_aware_adaptive_baseline_results_mta45_coalesced_annotated.json`.
+- Hosted performance recapture is retained in
+  `feature_aware_adaptive_baseline_results_mta45_perf_summary.json`. Raw per-run hosted JSONs were
+  pruned after summary generation; the summary embeds the per-run timing values.
+- Three-run hosted performance versus the MTA-40 final performance summary: command total runs were
+  `77.7084s`, `78.5265s`, and `79.1140s`; mean command total was `78.4496s`, `-14.9%` versus the
+  MTA-40 mean of `92.1928s`; mean harness quality total was `15.5895s`, `-11.3%` versus MTA-40; all
+  `18` rows had stable face/vertex counts and `0/18` rows exceeded the `25%` timing-regression
+  threshold.
+- The same retained performance summary also records direct three-run hosted performance versus the
+  original reusable baseline repeat captures. The original baseline command total runs were
+  `85.1113s`, `85.2140s`, and `87.3607s`; MTA-45 averaged `78.4496s` versus the original baseline
+  mean of `85.8953s`, a `-8.7%` change. `0/18` rows exceeded the `25%` threshold versus that
+  original baseline. The MTA-45 planar rows reduced faces and timing versus the original baseline.
+- Right-side scene placement passed: replay terrains remained at `x=320.0m..344.0m`,
+  `x=420.0m..453.45m`, and `x=465.0m..499.38m`.
+- Final planar replay rows retained `100%` planar-region quality. `planar-pad-intersect` had face
+  delta `-28` and planned planar interior `32` faces; `large-varied-planar-pad-timing` had face
+  delta `-666` and planned planar interior `212` faces.
+- Additional live visual probes remained visible at `x >= 50m`: the circle-pressure no-falloff
+  proof at `x=560.0m..572.0m`, and the authoritative replay-fixture falloff proof
+  `mta45-large-corridor-planar-falloff-live` at `x=620.0m..653.45m`. The replay-fixture sequence
+  created the large complicated terrain, applied the local target and diagonal corridor edits, then
+  applied the final planar pad with `1.5m` smooth falloff; the final mesh had `67339` faces and
+  centroid counts of `592` in the planar rectangle and `5781` in the planar-plus-falloff envelope.
 <!-- SIZE:VALIDATION-EVIDENCE:END -->
 
 ---
@@ -208,7 +280,40 @@ Not filled yet.
 <!-- SIZE:DELTA:START -->
 ## Estimation Delta Review
 
-Not filled yet.
+### Inflation Check
+
+- Validation exceeded repo baseline because hosted visual inspection found a real underimplementation
+  and forced another production slice plus redeploy/replay.
+- Validation burden reaches `4` because live evidence changed the implementation after local
+  closeout, even though it did not require a revert.
+- Rework is high because pressure clipping was insufficient; emitted planar-core compaction had to
+  be added through feature geometry and output planning.
+- Scope volatility was real but bounded: public circle-pressure clipping became required, while the
+  task's core planar-compaction outcome stayed unchanged.
+
+### Underestimated
+
+- The plan underweighted public circle-pressure inputs for `target_height`,
+  `survey_point_constraint`, and `local_fairing`; exact circular arc geometry was still unnecessary,
+  but effective-bound subtraction had to become part of the accepted rectangular occlusion path.
+- The plan also underweighted the emitted-topology layer. Suppressing older pressure was necessary
+  but not sufficient; no-falloff planar interiors needed an explicit coalescing path.
+
+### Overestimated
+
+- The feared estimate breaker did not occur: rectangular pressure, circle-pressure effective bounds,
+  and reference segment clipping were implementable inside `TerrainFeatureGeometryBuilder` without a
+  broader geometry library, output mesh surgery, or public contract change.
+- The hosted visual check, not code review, was the material rework driver.
+
+### Future Analog Lesson
+
+- For feature-aware terrain output tasks, public feature shapes should be enumerated before accepting
+  a fallback limitation. Circle region support can often be handled by policy-effective bounds if
+  the downstream policy already operates on effective rectangular extents.
+- Planned-cell metrics are acceptable as internal replay evidence when live emitted-face
+  classification is unavailable, but they must be paired with live visual/centroid face-count probes
+  when the acceptance criterion is visible planar compactness.
 <!-- SIZE:DELTA:END -->
 
 ---
@@ -218,17 +323,16 @@ Not filled yet.
 
 - `archetype:performance-sensitive`
 - `scope:managed-terrain`
+- `systems:command-layer`
 - `systems:terrain-kernel`
 - `systems:terrain-output`
-- `systems:terrain-mesh-generator`
 - `systems:validation-service`
-- `systems:managed-object-metadata`
+- `validation:contract`
 - `validation:hosted-matrix`
-- `validation:performance`
-- `validation:persistence`
+- `host:single-fix-loop`
 - `contract:no-public-shape-change`
 - `risk:performance-scaling`
-- `risk:partial-state`
+- `friction:high`
 - `volatility:medium`
 - `confidence:medium`
 <!-- SIZE:TAGS:END -->

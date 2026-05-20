@@ -14,6 +14,10 @@ class TerrainFeatureGeometryTest < Minitest::Test
         { id: 'p1', featureId: 'f2', role: 'protected', primitive: 'rectangle',
           ownerLocalBounds: [[1.0, 1.0], [4.0, 4.0]], boundaryTolerance: 0.001 }
       ],
+      planarRegions: [
+        { id: 'pl1', featureId: 'f4', primitive: 'rectangle',
+          ownerLocalBounds: [[2.0, 2.0], [6.0, 6.0]] }
+      ],
       pressureRegions: [
         { id: 'pr1', featureId: 'f3', role: 'side_transition', strength: 'firm',
           primitive: 'corridor', ownerLocalShape: { centerline: [[0.0, 0.0], [6.0, 0.0]],
@@ -34,9 +38,10 @@ class TerrainFeatureGeometryTest < Minitest::Test
     payload = geometry.to_h
     expected_keys = %w[
       outputAnchorCandidates protectedRegions pressureRegions referenceSegments affectedWindows
-      tolerances featureGeometryDigest referenceGeometryDigest
+      tolerances planarRegions featureGeometryDigest referenceGeometryDigest
     ]
     assert_equal(expected_keys, payload.keys)
+    assert_equal('pl1', geometry.planar_regions.first.fetch('id'))
     assert(JSON.parse(JSON.generate(payload)))
     refute_includes(JSON.generate(payload), 'Sketchup::')
     assert_match(/\A[a-f0-9]{64}\z/, payload.fetch('featureGeometryDigest'))

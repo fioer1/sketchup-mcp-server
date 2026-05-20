@@ -8,7 +8,7 @@ require_relative 'feature_aware_forced_subdivision_mask'
 module SU_MCP
   module Terrain
     # Pure planning policy seam for feature-aware adaptive output.
-    class FeatureAwareAdaptivePolicy
+    class FeatureAwareAdaptivePolicy # rubocop:disable Metrics/ClassLength
       HARD_MULTIPLIER = 0.25
       PROTECTED_MULTIPLIER = 0.25
       FIRM_MULTIPLIER = 0.5
@@ -28,6 +28,7 @@ module SU_MCP
                                     end
         @protected_regions = feature_geometry ? feature_geometry.protected_regions : []
         @pressure_regions = feature_geometry ? feature_geometry.pressure_regions : []
+        @planar_regions = feature_geometry ? normalized_planar_regions : []
         @supported_pressure_regions = normalized_supported_pressure_regions
         @forced_subdivision_mask = FeatureAwareForcedSubdivisionMask.new(
           feature_geometry: feature_geometry,
@@ -48,6 +49,16 @@ module SU_MCP
         target
       end
 
+      def planar_compaction_candidate?(bounds, column_span:, row_span:)
+        owner = owner_bounds(bounds)
+        return false unless planar_interior?(owner)
+        return false if target_cell_size_for_owner(owner)
+        return false if forced_subdivision_mask.target_cell_size_for_owner(owner)
+        return false if local_tolerance_for_owner(owner) < base_tolerance
+
+        column_span.positive? && row_span.positive?
+      end
+
       def split_pressure_for(bounds, column_span:, row_span:)
         owner = owner_bounds(bounds)
         target_cell_size = target_cell_size_for_owner(owner)
@@ -64,7 +75,8 @@ module SU_MCP
           tolerance: tolerance,
           target_cell_size: target_cell_size,
           density_split: density_split_required?(target_cell_size, column_span, row_span),
-          forced_split: forced_split
+          forced_split: forced_split,
+          planar_interior: planar_interior?(owner)
         }
       end
 
@@ -102,7 +114,7 @@ module SU_MCP
 
       attr_reader :feature_geometry, :state, :base_tolerance, :forced_subdivision_mask,
                   :output_anchor_candidates, :protected_regions, :pressure_regions,
-                  :supported_pressure_regions
+                  :planar_regions, :supported_pressure_regions
 
       def target_cell_size_for_owner(owner)
         matches = supported_pressure_regions.filter_map do |region|
@@ -199,6 +211,17 @@ module SU_MCP
         end
       end
 
+      def normalized_planar_regions
+        feature_geometry.planar_regions.filter_map do |region|
+          next unless region['primitive'] == 'rectangle'
+
+          bounds = shape_bounds(region)
+          next unless bounds
+
+          bounds
+        end
+      end
+
       def shape_bounds(entry)
         case entry['primitive']
         when 'rectangle'
@@ -245,6 +268,17 @@ module SU_MCP
           first.fetch(:max_x) >= second.fetch(:min_x) &&
           first.fetch(:min_y) <= second.fetch(:max_y) &&
           first.fetch(:max_y) >= second.fetch(:min_y)
+      end
+
+      def terrain_bounds_contain?(outer, inner)
+        outer.fetch(:min_x) <= inner.fetch(:min_x) &&
+          outer.fetch(:max_x) >= inner.fetch(:max_x) &&
+          outer.fetch(:min_y) <= inner.fetch(:min_y) &&
+          outer.fetch(:max_y) >= inner.fetch(:max_y)
+      end
+
+      def planar_interior?(owner)
+        planar_regions.any? { |region| terrain_bounds_contain?(region, owner) }
       end
 
       def point_intersects_owner?(point, owner)

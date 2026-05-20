@@ -10,6 +10,7 @@ require_relative '../edits/corridor_transition_edit'
 require_relative '../contracts/create_terrain_surface_request'
 require_relative '../contracts/edit_terrain_surface_request'
 require_relative '../features/feature_intent_merger'
+require_relative '../features/effective_feature_view'
 require_relative '../edits/local_fairing_edit'
 require_relative '../edits/planar_region_fit_edit'
 require_relative '../regions/sample_window'
@@ -239,7 +240,7 @@ module SU_MCP
         ) do
           edit_output_plan(context, saved, feature_plan, output_state)
         end
-        record_baseline_evidence(output_plan, state: output_state)
+        record_baseline_evidence(output_plan, state: feature_state)
         feature_context = cdt_feature_context(feature_plan, feature_state)
         feature_context = cdt_patch_feature_context(
           state: feature_state,
@@ -322,6 +323,7 @@ module SU_MCP
           dirtyWindow: sample_window_baseline_summary(output_plan.window),
           affectedPatchScope: affected_patch_scope_summary(output_plan, state),
           renderingSummary: output_plan_baseline_summary(output_plan),
+          planarInteriorMetrics: planar_interior_metrics(output_plan, state),
           simplificationTolerance: output_plan.simplification_tolerance,
           maxSimplificationError: output_plan.max_simplification_error
         }.compact
@@ -415,6 +417,80 @@ module SU_MCP
           vertexCount: output_plan.vertex_count,
           faceCount: output_plan.face_count
         }
+      end
+
+      def planar_interior_metrics(output_plan, state)
+        regions = absolute_rectangular_planar_regions(state)
+        return nil if regions.empty? || output_plan.adaptive_cells.empty?
+
+        cells = output_plan.adaptive_cells.select do |cell|
+          regions.any? { |region| cell_centroid_inside_region?(cell, region, state) }
+        end
+        return nil if cells.empty?
+
+        {
+          metricKind: 'planned_cell_centroid',
+          cellCount: cells.length,
+          faceCount: cells.length * 2,
+          vertexCount: unique_cell_vertex_count(cells),
+          qualityStatus: 'planned_metric'
+        }
+      end
+
+      def absolute_rectangular_planar_regions(state)
+        return [] unless state.respond_to?(:feature_intent)
+
+        features = EffectiveFeatureView.new(state.feature_intent).selection.fetch(:features)
+        features.filter_map do |feature|
+          next unless feature.fetch('kind') == 'planar_region'
+          next if positive_planar_blend?(feature)
+
+          region = FeatureIntentSet.stringify_keys(feature.dig('payload', 'region') || {})
+          next unless region['type'] == 'rectangle'
+
+          bounds = region.fetch('bounds')
+          {
+            min_x: [bounds.fetch('minX'), bounds.fetch('maxX')].min,
+            min_y: [bounds.fetch('minY'), bounds.fetch('maxY')].min,
+            max_x: [bounds.fetch('minX'), bounds.fetch('maxX')].max,
+            max_y: [bounds.fetch('minY'), bounds.fetch('maxY')].max
+          }
+        rescue KeyError, TypeError
+          nil
+        end
+      end
+
+      def positive_planar_blend?(feature)
+        blend = FeatureIntentSet.stringify_keys(feature.dig('payload', 'region', 'blend') || {})
+        distance = blend.fetch('distance', 0.0).to_f
+        falloff = blend.fetch('falloff', distance.positive? ? 'smooth' : 'none').to_s
+        distance.positive? && falloff != 'none'
+      end
+
+      def cell_centroid_inside_region?(cell, region, state)
+        min_x = axis_value(cell.fetch(:min_column), state, 'x')
+        max_x = axis_value(cell.fetch(:max_column), state, 'x')
+        min_y = axis_value(cell.fetch(:min_row), state, 'y')
+        max_y = axis_value(cell.fetch(:max_row), state, 'y')
+        center_x = (min_x + max_x) / 2.0
+        center_y = (min_y + max_y) / 2.0
+        center_x.between?(region.fetch(:min_x), region.fetch(:max_x)) &&
+          center_y.between?(region.fetch(:min_y), region.fetch(:max_y))
+      end
+
+      def axis_value(index, state, axis)
+        state.origin.fetch(axis) + (index * state.spacing.fetch(axis))
+      end
+
+      def unique_cell_vertex_count(cells)
+        cells.flat_map do |cell|
+          [
+            [cell.fetch(:min_column), cell.fetch(:min_row)],
+            [cell.fetch(:max_column), cell.fetch(:min_row)],
+            [cell.fetch(:min_column), cell.fetch(:max_row)],
+            [cell.fetch(:max_column), cell.fetch(:max_row)]
+          ]
+        end.uniq.length
       end
 
       def cdt_output_enabled?

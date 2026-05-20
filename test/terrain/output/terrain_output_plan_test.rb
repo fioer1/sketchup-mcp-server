@@ -457,6 +457,29 @@ class TerrainOutputPlanTest < Minitest::Test # rubocop:disable Metrics/ClassLeng
     )
   end
 
+  def test_v2_planar_regions_compact_interior_even_when_surrounding_patch_is_dense
+    state = one_spike_state
+    feature_policy = SU_MCP::Terrain::FeatureAwareAdaptivePolicy.new(
+      feature_geometry: planar_compaction_geometry,
+      state: state,
+      base_tolerance: 0.01
+    )
+
+    plan = SU_MCP::Terrain::TerrainOutputPlan.full_grid(
+      state: state,
+      terrain_state_summary: { digest: 'planar-compaction', revision: 1 },
+      feature_aware_adaptive_policy: feature_policy
+    )
+
+    planar_cells = plan.adaptive_cells.select { |cell| cell_center_within?(cell, 2, 2, 6, 6) }
+
+    assert_operator(planar_cells.length, :<=, 4)
+    assert(
+      planar_cells.any? { |cell| cell_width(cell) > 1 && cell_height(cell) > 1 },
+      'planar interior should contain coarse cells, not a full sample grid'
+    )
+  end
+
   def test_v2_dirty_forced_mask_does_not_expand_replacement_to_far_patches
     state = build_v2_state(columns: 97, rows: 97, elevations: Array.new(97 * 97, 0.0))
     patch_policy = SU_MCP::Terrain::AdaptivePatches::AdaptivePatchPolicy.new(patch_cell_size: 16)
@@ -720,6 +743,19 @@ class TerrainOutputPlanTest < Minitest::Test # rubocop:disable Metrics/ClassLeng
           'role' => 'control',
           'strength' => 'hard',
           'ownerLocalPoint' => [84.0, 84.0]
+        }
+      ]
+    )
+  end
+
+  def planar_compaction_geometry
+    SU_MCP::Terrain::TerrainFeatureGeometry.new(
+      planarRegions: [
+        {
+          'id' => 'planar-pad',
+          'featureId' => 'planar-pad',
+          'primitive' => 'rectangle',
+          'ownerLocalBounds' => [[2.0, 2.0], [6.0, 6.0]]
         }
       ]
     )

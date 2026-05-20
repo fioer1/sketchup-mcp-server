@@ -114,6 +114,7 @@ The current task order proves terrain authoring through concrete, testable incre
 43. [MTA-43 Add Patch Component Planner For Cross-Patch Features](MTA-43-add-patch-component-planner-for-cross-patch-features/task.md)
 44. [MTA-44 Add Sparse Local Detail Tiles And Composed Height Oracle](MTA-44-add-sparse-local-detail-tiles-and-composed-height-oracle/task.md)
 45. [MTA-45 Reduce Unnecessary Planar Region Output Tessellation](MTA-45-reduce-unnecessary-planar-region-output-tessellation/task.md)
+46. [MTA-46 Make Fairing Output Pressure Residual-Aware](MTA-46-make-fairing-output-pressure-residual-aware/task.md)
 
 ## Deferred Follow-Ons
 

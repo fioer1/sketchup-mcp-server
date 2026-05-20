@@ -150,8 +150,24 @@ module SU_MCP
           'baselineSeconds' => baseline['seconds'],
           'secondsDeltaPercent' => timing_delta_percent(row, baseline).round(1),
           'dirtyWindowChanged' => row['dirtyWindow'] != baseline['dirtyWindow'],
-          'patchScopeChanged' => patch_scope(row) != patch_scope(baseline)
-        }
+          'patchScopeChanged' => patch_scope(row) != patch_scope(baseline),
+          'planarInterior' => planar_interior_comparison(row, baseline)
+        }.compact
+      end
+
+      def planar_interior_comparison(row, baseline)
+        current = row['planarInteriorMetrics']
+        before = baseline['planarInteriorMetrics']
+        return nil unless current && before
+
+        {
+          'baselineFaceCount' => before['faceCount'],
+          'faceCountDelta' => current.fetch('faceCount').to_i - before.fetch('faceCount').to_i,
+          'baselineVertexCount' => before['vertexCount'],
+          'vertexCountDelta' => current.fetch('vertexCount').to_i -
+            before.fetch('vertexCount').to_i,
+          'qualityStatus' => current['qualityStatus']
+        }.compact
       end
 
       def patch_scope(row)

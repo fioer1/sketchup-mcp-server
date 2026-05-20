@@ -115,6 +115,7 @@ module SU_MCP
             meshType: row[:meshType] || row.dig(:renderingSummary, :meshType),
             faceCount: row[:faceCount],
             vertexCount: row[:vertexCount],
+            planarInteriorMetrics: row[:planarInteriorMetrics],
             adaptivePolicySummary: row[:adaptivePolicySummary],
             featureQualitySummary: row[:featureQualitySummary],
             harnessQualitySeconds: row[:harnessQualitySeconds],

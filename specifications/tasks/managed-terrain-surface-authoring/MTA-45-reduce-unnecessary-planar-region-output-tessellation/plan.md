@@ -99,9 +99,16 @@ Initial clipping matrix:
 - Older corridor area pressure can remain diagnostic/skipped unless implementation proves it still
   affects a planning consumer. Corridor compaction is required through corridor reference/detail
   segment clipping.
-- Older circle pressure and circular planar partial intersections are conservative cases: keep the
-  primitive and record an internal limitation unless a simple safe splitter is implemented. Fully
-  contained circle pressure may still be removed.
+- Older circle pressure from public target/survey/fairing regions must not be retained wholesale
+  when it partially intersects a later rectangular planar footprint. Because the current adaptive
+  policy consumes circle pressure through its policy-effective bounds, clip that effective pressure
+  by subtracting the planar rectangle into outside rectangle fragments. Exact circular arc fragments
+  are not required in this task, but the clipped result must not apply older density/tolerance
+  pressure to cells wholly inside the later planar footprint. Fully inside circle pressure is
+  removed; non-intersecting circle pressure remains unchanged.
+- Circular planar occluders remain a conservative unsupported case for partial intersections:
+  retain the primitive and record an internal limitation rather than deleting valid outside
+  influence. Fully contained older primitives may still be removed when containment is unambiguous.
 - Hard fixed controls, preserve/protected regions, and protected boundary pressure remain exempt.
 
 ### API and Interface Design
@@ -110,7 +117,9 @@ Initial clipping matrix:
   derivation. It runs after feature revisions and absolute planar regions are known and before
   `TerrainFeatureGeometry` is returned.
 - Do not add stack-order planar filtering to `FeatureAwareAdaptivePolicy`,
-  `FeatureAwareForcedSubdivisionMask`, `TerrainOutputPlan`, or mesh emission.
+  `FeatureAwareForcedSubdivisionMask`, `TerrainOutputPlan`, or mesh emission. Downstream policy may
+  consume only geometry-builder-owned clipped primitives; it must not reimplement feature revision
+  or planar precedence semantics.
 - Keep replay/result metrics internal. Public terrain command responses remain unchanged.
 
 ### Public Contract Updates
@@ -126,9 +135,11 @@ contract tests, docs, and examples.
 
 - Unsupported partial clipping preserves correctness over compaction. Retain the primitive and
   record an internal limitation rather than silently deleting valid outside influence.
-- The required rectangular planar over older crossing corridor/detail case must not fall back.
-- Valid heightmap output should not be refused merely because an optional partial-circle clipping
-  case is unsupported.
+- The required rectangular planar over older crossing corridor/detail, rectangular pressure, and
+  public circle-pressure cases must not fall back in a way that applies older pressure inside the
+  later planar footprint.
+- Valid heightmap output should not be refused merely because an optional circular-planar occluder
+  partial clipping case is unsupported.
 
 ### State Management
 
@@ -236,14 +247,16 @@ policy/forced-mask effects, replay metrics, contract no-leak coverage, and hoste
 
 | Provisional queue order | AC / requirement | Behavior or risk | Candidate implementation slice | Likely owner | Unit/core coverage | Integration/runtime coverage | Contract/schema coverage | Error/refusal coverage | Hosted/manual validation | Likely fixtures/helpers | Integration points | Suggested focused command | Suggested broader command | Blocker or explicit gap |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| 1 | Later rectangular planar suppresses older crossing pressure only inside footprint | Core stack-order bug | Feature-geometry clipping helper | `TerrainFeatureGeometryBuilder` | Replace crossing-corridor preservation test with segment-splitting assertions; assert deterministic fragment ids and role/strength/target-cell/feature-id preservation; add rectangle-pressure subtraction tests | Policy/output-plan test that inside cells no longer get older density or forced split while outside cells still do | n/a | Rectangular crossing must not fallback | Planar replay rows after metrics | Existing planar/corridor feature helpers | Feature geometry -> policy | `bundle exec ruby -Itest test/terrain/features/terrain_feature_geometry_builder_test.rb test/terrain/output/feature_aware_adaptive_policy_test.rb` | `bundle exec rake ruby:test` | Hard prerequisite; no fallback allowed |
-| 2 | Newer overlays remain authoritative | Planar applied forward would erase new edits | Feature-order comparison in clipping helper | `TerrainFeatureGeometryBuilder` | Newer corridor/target/survey/fairing tests where primitives survive inside planar footprint | Policy/output-plan test that newer overlay still drives split | n/a | n/a | Existing replay may cover survey/fairing after planar; add hosted row if ambiguous | Older/planar/newer fixture sequence | Feature geometry -> forced mask -> output plan | Same focused feature/policy command | `bundle exec rake ruby:test` | Required |
-| 3 | Positive planar falloff remains edge detail | Falloff could become broad interior pressure | Existing planar derivation plus clipping exclusions | `TerrainFeatureGeometryBuilder` | Retain no-falloff/no-pressure and falloff-edge tests | Forced-mask summary shows falloff detail only when applicable | n/a | n/a | Replay quality rows with planar quality | Existing planar feature helpers | Geometry -> forced mask | Focused feature/policy tests | `bundle exec rake ruby:test` | Required |
-| 4 | Unsupported primitive intersections preserve correctness | Unsafe deletion can erase valid outside pressure | Clipping fallback and limitations | Feature geometry helper | Circle/circular-planar partial fallback test if no splitter; limitation recorded | Policy fallback summary remains non-refusing for valid output | No-leak if limitation vocabulary could escape | Unsupported optional cases retain primitive | Hosted evidence records limitation only if encountered | Circle pressure fixtures | Geometry -> policy fallback summaries | Focused feature/policy tests | `bundle exec rake ruby:test` | Acceptable for circle/circular partial cases; blocker if rectangular corridor case falls back |
-| 5 | Planar-interior improvement is measurable | Total row count can hide unrelated effects | Replay/result metric helper | Replay/probes | Metric helper tests for centroid/vertex classification against no-falloff planar footprint | Result document/classifier tests compare planar interior deltas against MTA-40 final rows | No public response fields; exact no-leak terms for any new metric vocabulary | n/a | MTA-38 replay against MTA-40 final artifacts | MTA-40 final result pack | Replay result -> classifier/document | `bundle exec ruby -Itest test/terrain/probes/feature_aware_adaptive_baseline_result_classifier_test.rb test/terrain/replay/feature_aware_adaptive_baseline_replay_test.rb` | `bundle exec rake ruby:test` plus hosted replay | Mandatory result-pack column: planar-interior face/vertex delta or equivalent planned-cell delta |
-| 6 | Patch ownership, registry/readback, dirty-window, no-delete remain intact | Topology/lifecycle regression | Existing output generation path; no post-emission surgery | Output/mesh lifecycle | n/a unless output planning changes | `TerrainMeshGenerator`/patch lifecycle tests if face counts or planned cells change | n/a | Existing no-delete fallback behavior | Hosted replay captures registry/readback, dirty-window, patch scope, fallback/no-delete | Existing replay scenes | Mesh generation -> patch registry | Existing output and patch lifecycle tests | Hosted replay | Required if downstream compaction beyond feature clipping is added |
-| 7 | Public MCP contracts unchanged | Internal diagnostics leak to public response | Command/evidence sanitization | Command/contract layer | n/a | Command evidence tests if diagnostics touch command path | Contract no-leak assertions for exact new internal terms, including `planarInterior`, `planarCompaction`, `occlusion`, clipping counters, and any new `adaptivePolicySummary` or `forcedSubdivisionSummary` keys | n/a | n/a | Existing contract fixtures | Command diagnostics -> evidence builder | `bundle exec ruby -Itest test/terrain/contracts/terrain_contract_stability_test.rb` | `bundle exec rake ruby:test` | Required if diagnostics touch command path |
-| 8 | Performance does not regress unacceptably | Clipping/metrics increase planning cost | Feature clipping and replay metrics | Feature/probe/runtime | n/a | Replay/perf summary tests if result format changes | n/a | n/a | Three-run hosted performance comparison for planar rows against MTA-40 final perf summary | MTA-38/MTA-40 replay harness | Hosted replay -> perf summary | Focused replay/probe tests | Hosted performance replay | Required before closeout |
+| 1 | Later rectangular planar suppresses older crossing pressure only inside footprint | Core stack-order bug | Feature-geometry segment clipping helper | `TerrainFeatureGeometryBuilder` | Replace crossing-corridor preservation test with segment-splitting assertions; assert deterministic fragment ids and role/strength/target-cell/feature-id preservation | Policy/output-plan test that inside cells no longer get older forced split while outside cells still do | n/a | Rectangular corridor/detail crossing must not fallback | Planar replay rows after metrics | Existing planar/corridor feature helpers | Feature geometry -> forced mask -> policy | `bundle exec ruby -Itest test/terrain/features/terrain_feature_geometry_builder_test.rb test/terrain/output/feature_aware_adaptive_policy_test.rb` | `bundle exec rake ruby:test` | Hard prerequisite; no fallback allowed |
+| 2 | Older pressure from target/survey/fairing/fairing-like support does not pass through later rectangular planar footprint | Density/tolerance pressure leak remains after segment clipping | Feature-geometry pressure clipping helper | `TerrainFeatureGeometryBuilder` | Add rectangle-pressure subtraction tests and circle-pressure effective-bound subtraction tests; assert outside fragments retain feature id, role, strength, target cell size, and deterministic ids | Policy test that cells wholly inside the planar footprint receive no older density/tolerance from clipped pressure while outside cells still do | n/a | Rectangular planar over public circle pressure must not fallback by retaining whole primitive | Planar replay rows after metrics | Existing target/survey/fairing helpers plus circle fixtures | Feature geometry -> adaptive policy | Same focused feature/policy command | `bundle exec rake ruby:test` | Exact circular arc clipping is not required; policy-effective outside rectangles are acceptable |
+| 3 | Older non-hard anchors inside planar footprint are removed while hard/protected controls remain | Survey/control anchor pressure can leak forced/tolerance behavior | Anchor suppression and protected exemptions | `TerrainFeatureGeometryBuilder` | Survey anchor inside later planar removed; hard fixed control and preserve/protected boundary remain | Policy test as needed for anchor-driven tolerance/forced split | n/a | n/a | Hosted replay quality/readback | Existing survey/fixed/preserve helpers | Feature geometry -> forced mask -> policy | Focused feature/policy tests | `bundle exec rake ruby:test` | Required |
+| 4 | Newer overlays remain authoritative | Planar applied forward would erase new edits | Feature-order comparison in clipping helper | `TerrainFeatureGeometryBuilder` | Newer corridor/target/survey/fairing tests where primitives survive inside planar footprint | Policy/output-plan test that newer overlay still drives split | n/a | n/a | Existing replay may cover survey/fairing after planar; add hosted row if ambiguous | Older/planar/newer fixture sequence | Feature geometry -> forced mask -> output plan | Same focused feature/policy command | `bundle exec rake ruby:test` | Required |
+| 5 | Positive planar falloff remains edge detail | Falloff could become broad interior pressure or act as an occluder | Existing planar derivation plus clipping exclusions | `TerrainFeatureGeometryBuilder` | Retain no-falloff/no-pressure and falloff-edge tests; prove positive-falloff planar does not suppress older pressure as an absolute planar occluder | Forced-mask summary shows falloff detail only when applicable | n/a | n/a | Replay quality rows with planar quality | Existing planar feature helpers | Geometry -> forced mask | Focused feature/policy tests | `bundle exec rake ruby:test` | Required |
+| 6 | Unsupported primitive intersections preserve correctness | Unsafe deletion can erase valid outside pressure | Clipping fallback and limitations | Feature geometry helper | Circular planar occluder partial fallback test if no splitter; limitation recorded and primitive retained | Policy fallback summary remains non-refusing for valid output | No-leak if limitation vocabulary could escape | Unsupported optional circular-planar cases retain primitive | Hosted evidence records limitation only if encountered | Circle planar fixtures | Geometry -> policy fallback summaries | Focused feature/policy tests | `bundle exec rake ruby:test` | Acceptable only for circular planar occluder partials; not acceptable for rectangular planar over public circle pressure |
+| 7 | Planar-interior improvement is measurable | Total row count can hide unrelated effects | Replay/result metric helper | Replay/probes | Metric helper tests for centroid/vertex classification against no-falloff planar footprint | Result document/classifier tests compare planar interior deltas against MTA-40 final rows | No public response fields; exact no-leak terms for any new metric vocabulary | n/a | MTA-38 replay against MTA-40 final artifacts | MTA-40 final result pack | Replay result -> classifier/document | `bundle exec ruby -Itest test/terrain/probes/feature_aware_adaptive_baseline_result_classifier_test.rb test/terrain/replay/feature_aware_adaptive_baseline_replay_test.rb` | `bundle exec rake ruby:test` plus hosted replay | Mandatory result-pack column: planar-interior face/vertex delta or equivalent planned-cell delta |
+| 8 | Patch ownership, registry/readback, dirty-window, no-delete remain intact | Topology/lifecycle regression | Existing output generation path; no post-emission surgery | Output/mesh lifecycle | n/a unless output planning changes | `TerrainMeshGenerator`/patch lifecycle tests if face counts or planned cells change | n/a | Existing no-delete fallback behavior | Hosted replay captures registry/readback, dirty-window, patch scope, fallback/no-delete | Existing replay scenes | Mesh generation -> patch registry | Existing output and patch lifecycle tests | Hosted replay | Required if downstream compaction beyond feature clipping is added |
+| 9 | Public MCP contracts unchanged | Internal diagnostics leak to public response | Command/evidence sanitization | Command/contract layer | n/a | Command evidence tests if diagnostics touch command path | Contract no-leak assertions for exact new internal terms, including `planarInterior`, `planarCompaction`, `occlusion`, clipping counters, and any new `adaptivePolicySummary` or `forcedSubdivisionSummary` keys | n/a | n/a | Existing contract fixtures | Command diagnostics -> evidence builder | `bundle exec ruby -Itest test/terrain/contracts/terrain_contract_stability_test.rb` | `bundle exec rake ruby:test` | Required if diagnostics touch command path |
+| 10 | Performance does not regress unacceptably | Clipping/metrics increase planning cost | Feature clipping and replay metrics | Feature/probe/runtime | n/a | Replay/perf summary tests if result format changes | n/a | n/a | Three-run hosted performance comparison for planar rows against MTA-40 final perf summary | MTA-38/MTA-40 replay harness | Hosted replay -> perf summary | Focused replay/probe tests | Hosted performance replay | Required before closeout |
 
 Likely first failing target:
 `test/terrain/features/terrain_feature_geometry_builder_test.rb`, replacing
@@ -266,7 +279,8 @@ intersection-aware suppression expectation.
 1. Add failing focused tests for stack-order/intersection semantics in feature geometry derivation,
    including older crossing pressure clipped inside the later planar footprint and newer overlay
    pressure preserved. This phase is not complete until the rectangular planar over older crossing
-   corridor/detail case splits outside fragments and does not fall back to retain-primitive behavior.
+   corridor/detail case splits outside fragments, rectangular pressure subtracts outside fragments,
+   and public circle pressure no longer applies older density/tolerance inside the planar footprint.
 2. Implement intersection-aware clipping/suppression before policy planning for supported
    refinement-driving primitives; keep primitive support conservative and preserve pressure/detail
    outside the planar footprint.
@@ -284,22 +298,24 @@ intersection-aware suppression expectation.
 
 - Ship as an internal behavior correction in the existing managed-terrain runtime. No user opt-in,
   migration, or public contract rollout is planned.
-- Keep the first release bounded to required rectangular planar/corridor/rectangle-pressure
-  behavior. Unsupported partial-circle cases can remain internal limitations.
+- Keep the first release bounded to required rectangular planar occlusion over corridor/detail,
+  rectangular pressure, and public circle-pressure inputs. Unsupported partial circular-planar
+  occluder cases can remain internal limitations.
 - Do not deploy downstream compaction unless upstream clipping and metrics prove it is still needed
   and ownership-local.
 
 ## Risks and Controls
 
 - Older crossing pressure still leaks because only containment is handled: replace the existing
-  crossing-corridor expectation and require segment/rectangle clipping tests before any policy or
-  metric work.
+  crossing-corridor expectation and require segment, rectangle-pressure, and public circle-pressure
+  clipping tests before any metric or hosted work.
 - Pressure-only clipping misses forced subdivision: include anchors, reference/detail segments, and
   forced-subdivision-driving roles in the primitive taxonomy.
 - Newer overlays are flattened by planar semantics: prove stack-order direction with newer
   corridor/target/survey/fairing tests.
-- Valid outside pressure is erased: split/subtract required rectangular cases into outside
-  fragments; unsupported cases retain primitives with limitations.
+- Valid outside pressure is erased: split/subtract required rectangular and policy-effective circle
+  pressure cases into outside fragments; unsupported circular-planar occluder cases retain
+  primitives with limitations.
 - Internal metrics misattribute improvement: add planar-interior metrics and focused automated
   semantic tests; use hosted quality/topology as authoritative evidence.
 - Public contract drift: keep diagnostics internal and add no-leak contract assertions if new
