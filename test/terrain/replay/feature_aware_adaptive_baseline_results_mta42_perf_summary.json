@@ -1,0 +1,821 @@
+{
+  "schemaVersion": 1,
+  "summaryKind": "mta42_three_run_performance_summary",
+  "taskId": "MTA-42",
+  "generatedAt": "2026-05-22T17:31:32+03:00",
+  "baselinePerformanceSummaryPath": "test/terrain/replay/feature_aware_adaptive_baseline_results_mta45_perf_summary.json",
+  "sourceRunPaths": [
+    "test/terrain/replay/feature_aware_adaptive_baseline_results_mta42_perf_run_1.json",
+    "test/terrain/replay/feature_aware_adaptive_baseline_results_mta42_perf_run_2.json",
+    "test/terrain/replay/feature_aware_adaptive_baseline_results_mta42_perf_run_3.json"
+  ],
+  "runCount": 3,
+  "rowCount": 18,
+  "aggregate": {
+    "totalCommandSeconds": {
+      "mean": 79.396059,
+      "min": 77.845681,
+      "max": 82.283719,
+      "stdev": 2.043736,
+      "runs": [
+        77.845681,
+        78.058778,
+        82.283719
+      ],
+      "baselineMta45Mean": 78.4496,
+      "meanDeltaPercentVsMta45": 1.2
+    },
+    "totalHarnessQualitySeconds": {
+      "mean": 15.452101,
+      "min": 14.988318,
+      "max": 16.230518,
+      "stdev": 0.553781,
+      "runs": [
+        14.988318,
+        15.137468,
+        16.230518
+      ],
+      "baselineMta45Mean": 15.5895,
+      "meanDeltaPercentVsMta45": -0.9
+    },
+    "totalFaceCounts": [
+      464218
+    ],
+    "totalVertexCounts": [
+      235641
+    ]
+  },
+  "comparison": {
+    "comparisonKind": "mta45_three_run_performance_summary",
+    "rowTimingThresholdPercent": 25.0,
+    "rowsOverTimingThresholdVsMta45": [
+
+    ],
+    "seamFailures": [
+
+    ],
+    "geometryStability": {
+      "stableFaceCountRows": 18,
+      "stableVertexCountRows": 18,
+      "rowCount": 18
+    }
+  },
+  "rows": [
+    {
+      "rowId": "create-baseline",
+      "outcomes": [
+        "created"
+      ],
+      "faceCounts": [
+        1173
+      ],
+      "vertexCounts": [
+        626
+      ],
+      "seconds": {
+        "mean": 0.067824,
+        "min": 0.065169,
+        "max": 0.069458,
+        "stdev": 0.001894,
+        "runs": [
+          0.068846,
+          0.069458,
+          0.065169
+        ],
+        "baselineMta45Mean": 0.065295,
+        "meanDeltaPercentVsMta45": 3.9
+      },
+      "harnessQualitySeconds": {
+        "mean": 0.004692,
+        "min": 0.004491,
+        "max": 0.005061,
+        "stdev": 0.000261,
+        "runs": [
+          0.004491,
+          0.004525,
+          0.005061
+        ]
+      },
+      "seamStatuses": [
+        "passed"
+      ],
+      "seamRecordCounts": [
+        36
+      ]
+    },
+    {
+      "rowId": "target-local-center",
+      "outcomes": [
+        "edited"
+      ],
+      "faceCounts": [
+        1257
+      ],
+      "vertexCounts": [
+        680
+      ],
+      "seconds": {
+        "mean": 0.133944,
+        "min": 0.129542,
+        "max": 0.13952,
+        "stdev": 0.004157,
+        "runs": [
+          0.132769,
+          0.129542,
+          0.13952
+        ],
+        "baselineMta45Mean": 0.128943,
+        "meanDeltaPercentVsMta45": 3.9
+      },
+      "harnessQualitySeconds": {
+        "mean": 0.062142,
+        "min": 0.055952,
+        "max": 0.072698,
+        "stdev": 0.007501,
+        "runs": [
+          0.072698,
+          0.057777,
+          0.055952
+        ]
+      },
+      "seamStatuses": [
+        "passed"
+      ],
+      "seamRecordCounts": [
+        36
+      ]
+    },
+    {
+      "rowId": "target-adjacent-east",
+      "outcomes": [
+        "edited"
+      ],
+      "faceCounts": [
+        1331
+      ],
+      "vertexCounts": [
+        727
+      ],
+      "seconds": {
+        "mean": 0.150048,
+        "min": 0.145126,
+        "max": 0.155677,
+        "stdev": 0.004336,
+        "runs": [
+          0.145126,
+          0.149342,
+          0.155677
+        ],
+        "baselineMta45Mean": 0.146318,
+        "meanDeltaPercentVsMta45": 2.5
+      },
+      "harnessQualitySeconds": {
+        "mean": 0.05515,
+        "min": 0.052598,
+        "max": 0.059911,
+        "stdev": 0.003369,
+        "runs": [
+          0.052598,
+          0.052942,
+          0.059911
+        ]
+      },
+      "seamStatuses": [
+        "passed"
+      ],
+      "seamRecordCounts": [
+        36
+      ]
+    },
+    {
+      "rowId": "target-repeat-center",
+      "outcomes": [
+        "edited"
+      ],
+      "faceCounts": [
+        1331
+      ],
+      "vertexCounts": [
+        727
+      ],
+      "seconds": {
+        "mean": 0.146062,
+        "min": 0.142988,
+        "max": 0.151568,
+        "stdev": 0.003903,
+        "runs": [
+          0.142988,
+          0.143629,
+          0.151568
+        ],
+        "baselineMta45Mean": 0.151693,
+        "meanDeltaPercentVsMta45": -3.7
+      },
+      "harnessQualitySeconds": {
+        "mean": 0.052405,
+        "min": 0.050823,
+        "max": 0.053263,
+        "stdev": 0.00112,
+        "runs": [
+          0.053128,
+          0.050823,
+          0.053263
+        ]
+      },
+      "seamStatuses": [
+        "passed"
+      ],
+      "seamRecordCounts": [
+        36
+      ]
+    },
+    {
+      "rowId": "corridor-diagonal-intersect",
+      "outcomes": [
+        "edited"
+      ],
+      "faceCounts": [
+        1689
+      ],
+      "vertexCounts": [
+        911
+      ],
+      "seconds": {
+        "mean": 0.172603,
+        "min": 0.165486,
+        "max": 0.176453,
+        "stdev": 0.005038,
+        "runs": [
+          0.165486,
+          0.176453,
+          0.175869
+        ],
+        "baselineMta45Mean": 0.167964,
+        "meanDeltaPercentVsMta45": 2.8
+      },
+      "harnessQualitySeconds": {
+        "mean": 0.068599,
+        "min": 0.06794,
+        "max": 0.069045,
+        "stdev": 0.000476,
+        "runs": [
+          0.068813,
+          0.069045,
+          0.06794
+        ]
+      },
+      "seamStatuses": [
+        "passed"
+      ],
+      "seamRecordCounts": [
+        36
+      ]
+    },
+    {
+      "rowId": "planar-pad-intersect",
+      "outcomes": [
+        "edited"
+      ],
+      "faceCounts": [
+        1549
+      ],
+      "vertexCounts": [
+        844
+      ],
+      "seconds": {
+        "mean": 0.191618,
+        "min": 0.186124,
+        "max": 0.195229,
+        "stdev": 0.003948,
+        "runs": [
+          0.195229,
+          0.186124,
+          0.193502
+        ],
+        "baselineMta45Mean": 0.176874,
+        "meanDeltaPercentVsMta45": 8.3
+      },
+      "harnessQualitySeconds": {
+        "mean": 0.065883,
+        "min": 0.063808,
+        "max": 0.067593,
+        "stdev": 0.001567,
+        "runs": [
+          0.066248,
+          0.063808,
+          0.067593
+        ]
+      },
+      "seamStatuses": [
+        "passed"
+      ],
+      "seamRecordCounts": [
+        36
+      ]
+    },
+    {
+      "rowId": "survey-control-intersect",
+      "outcomes": [
+        "edited"
+      ],
+      "faceCounts": [
+        1583
+      ],
+      "vertexCounts": [
+        858
+      ],
+      "seconds": {
+        "mean": 0.21654,
+        "min": 0.210536,
+        "max": 0.219644,
+        "stdev": 0.004247,
+        "runs": [
+          0.210536,
+          0.219644,
+          0.219441
+        ],
+        "baselineMta45Mean": 0.211201,
+        "meanDeltaPercentVsMta45": 2.5
+      },
+      "harnessQualitySeconds": {
+        "mean": 0.067755,
+        "min": 0.065088,
+        "max": 0.069782,
+        "stdev": 0.001969,
+        "runs": [
+          0.068396,
+          0.069782,
+          0.065088
+        ]
+      },
+      "seamStatuses": [
+        "passed"
+      ],
+      "seamRecordCounts": [
+        36
+      ]
+    },
+    {
+      "rowId": "fairing-envelope-intersect",
+      "outcomes": [
+        "edited"
+      ],
+      "faceCounts": [
+        1773
+      ],
+      "vertexCounts": [
+        926
+      ],
+      "seconds": {
+        "mean": 0.203936,
+        "min": 0.202162,
+        "max": 0.205869,
+        "stdev": 0.001518,
+        "runs": [
+          0.205869,
+          0.202162,
+          0.203778
+        ],
+        "baselineMta45Mean": 0.197155,
+        "meanDeltaPercentVsMta45": 3.4
+      },
+      "harnessQualitySeconds": {
+        "mean": 0.070816,
+        "min": 0.069286,
+        "max": 0.073014,
+        "stdev": 0.001594,
+        "runs": [
+          0.070148,
+          0.073014,
+          0.069286
+        ]
+      },
+      "seamStatuses": [
+        "passed"
+      ],
+      "seamRecordCounts": [
+        36
+      ]
+    },
+    {
+      "rowId": "feature-aware-baseline-terrain-large-timing-create",
+      "outcomes": [
+        "created"
+      ],
+      "faceCounts": [
+        76191
+      ],
+      "vertexCounts": [
+        38416
+      ],
+      "seconds": {
+        "mean": 8.708501,
+        "min": 8.683518,
+        "max": 8.756187,
+        "stdev": 0.033732,
+        "runs": [
+          8.685798,
+          8.683518,
+          8.756187
+        ],
+        "baselineMta45Mean": 8.611205,
+        "meanDeltaPercentVsMta45": 1.1
+      },
+      "harnessQualitySeconds": {
+        "mean": 0.10052,
+        "min": 0.097996,
+        "max": 0.103971,
+        "stdev": 0.002526,
+        "runs": [
+          0.099592,
+          0.103971,
+          0.097996
+        ]
+      },
+      "seamStatuses": [
+        "passed"
+      ],
+      "seamRecordCounts": [
+        784
+      ]
+    },
+    {
+      "rowId": "large-varied-local-target-timing",
+      "outcomes": [
+        "edited"
+      ],
+      "faceCounts": [
+        18770
+      ],
+      "vertexCounts": [
+        9575
+      ],
+      "seconds": {
+        "mean": 2.865552,
+        "min": 2.840422,
+        "max": 2.891535,
+        "stdev": 0.020876,
+        "runs": [
+          2.864699,
+          2.840422,
+          2.891535
+        ],
+        "baselineMta45Mean": 2.79889,
+        "meanDeltaPercentVsMta45": 2.4
+      },
+      "harnessQualitySeconds": {
+        "mean": 2.501509,
+        "min": 2.450716,
+        "max": 2.545735,
+        "stdev": 0.039068,
+        "runs": [
+          2.450716,
+          2.508077,
+          2.545735
+        ]
+      },
+      "seamStatuses": [
+        "passed"
+      ],
+      "seamRecordCounts": [
+        196
+      ]
+    },
+    {
+      "rowId": "large-varied-corridor-diagonal-timing",
+      "outcomes": [
+        "edited"
+      ],
+      "faceCounts": [
+        71925
+      ],
+      "vertexCounts": [
+        36372
+      ],
+      "seconds": {
+        "mean": 12.806887,
+        "min": 12.624201,
+        "max": 13.126004,
+        "stdev": 0.226438,
+        "runs": [
+          12.624201,
+          12.670458,
+          13.126004
+        ],
+        "baselineMta45Mean": 12.636712,
+        "meanDeltaPercentVsMta45": 1.3
+      },
+      "harnessQualitySeconds": {
+        "mean": 2.466466,
+        "min": 2.426467,
+        "max": 2.52519,
+        "stdev": 0.042423,
+        "runs": [
+          2.426467,
+          2.44774,
+          2.52519
+        ]
+      },
+      "seamStatuses": [
+        "passed"
+      ],
+      "seamRecordCounts": [
+        784
+      ]
+    },
+    {
+      "rowId": "large-varied-planar-pad-timing",
+      "outcomes": [
+        "edited"
+      ],
+      "faceCounts": [
+        66523
+      ],
+      "vertexCounts": [
+        33777
+      ],
+      "seconds": {
+        "mean": 11.686615,
+        "min": 11.538548,
+        "max": 11.960394,
+        "stdev": 0.193806,
+        "runs": [
+          11.538548,
+          11.560904,
+          11.960394
+        ],
+        "baselineMta45Mean": 11.460067,
+        "meanDeltaPercentVsMta45": 2.0
+      },
+      "harnessQualitySeconds": {
+        "mean": 2.252893,
+        "min": 2.22489,
+        "max": 2.282603,
+        "stdev": 0.023592,
+        "runs": [
+          2.251185,
+          2.22489,
+          2.282603
+        ]
+      },
+      "seamStatuses": [
+        "passed"
+      ],
+      "seamRecordCounts": [
+        784
+      ]
+    },
+    {
+      "rowId": "large-varied-survey-control-timing",
+      "outcomes": [
+        "edited"
+      ],
+      "faceCounts": [
+        67888
+      ],
+      "vertexCounts": [
+        34457
+      ],
+      "seconds": {
+        "mean": 12.878833,
+        "min": 12.350726,
+        "max": 13.833064,
+        "stdev": 0.676026,
+        "runs": [
+          12.350726,
+          12.452709,
+          13.833064
+        ],
+        "baselineMta45Mean": 12.785612,
+        "meanDeltaPercentVsMta45": 0.7
+      },
+      "harnessQualitySeconds": {
+        "mean": 2.396995,
+        "min": 2.235964,
+        "max": 2.660008,
+        "stdev": 0.187534,
+        "runs": [
+          2.295013,
+          2.235964,
+          2.660008
+        ]
+      },
+      "seamStatuses": [
+        "passed"
+      ],
+      "seamRecordCounts": [
+        784
+      ]
+    },
+    {
+      "rowId": "large-varied-fairing-envelope-timing",
+      "outcomes": [
+        "edited"
+      ],
+      "faceCounts": [
+        55097
+      ],
+      "vertexCounts": [
+        27883
+      ],
+      "seconds": {
+        "mean": 12.374543,
+        "min": 12.143333,
+        "max": 12.774475,
+        "stdev": 0.283943,
+        "runs": [
+          12.143333,
+          12.205821,
+          12.774475
+        ],
+        "baselineMta45Mean": 12.524046,
+        "meanDeltaPercentVsMta45": -1.2
+      },
+      "harnessQualitySeconds": {
+        "mean": 1.917638,
+        "min": 1.823843,
+        "max": 2.097644,
+        "stdev": 0.127321,
+        "runs": [
+          1.831427,
+          1.823843,
+          2.097644
+        ]
+      },
+      "seamStatuses": [
+        "passed"
+      ],
+      "seamRecordCounts": [
+        784
+      ]
+    },
+    {
+      "rowId": "feature-aware-baseline-terrain-wide-timing-create",
+      "outcomes": [
+        "created"
+      ],
+      "faceCounts": [
+        31734
+      ],
+      "vertexCounts": [
+        16065
+      ],
+      "seconds": {
+        "mean": 3.33773,
+        "min": 3.199689,
+        "max": 3.608038,
+        "stdev": 0.191151,
+        "runs": [
+          3.199689,
+          3.205463,
+          3.608038
+        ],
+        "baselineMta45Mean": 3.107029,
+        "meanDeltaPercentVsMta45": 7.4
+      },
+      "harnessQualitySeconds": {
+        "mean": 0.070905,
+        "min": 0.060692,
+        "max": 0.090249,
+        "stdev": 0.013686,
+        "runs": [
+          0.060692,
+          0.061773,
+          0.090249
+        ]
+      },
+      "seamStatuses": [
+        "passed"
+      ],
+      "seamRecordCounts": [
+        576
+      ]
+    },
+    {
+      "rowId": "wide-varied-local-target-timing",
+      "outcomes": [
+        "edited"
+      ],
+      "faceCounts": [
+        8367
+      ],
+      "vertexCounts": [
+        4316
+      ],
+      "seconds": {
+        "mean": 1.320412,
+        "min": 1.292851,
+        "max": 1.360023,
+        "stdev": 0.028716,
+        "runs": [
+          1.292851,
+          1.308362,
+          1.360023
+        ],
+        "baselineMta45Mean": 1.270055,
+        "meanDeltaPercentVsMta45": 4.0
+      },
+      "harnessQualitySeconds": {
+        "mean": 1.221782,
+        "min": 1.146211,
+        "max": 1.274327,
+        "stdev": 0.054779,
+        "runs": [
+          1.146211,
+          1.244807,
+          1.274327
+        ]
+      },
+      "seamStatuses": [
+        "passed"
+      ],
+      "seamRecordCounts": [
+        144
+      ]
+    },
+    {
+      "rowId": "wide-varied-half-corridor-timing",
+      "outcomes": [
+        "edited"
+      ],
+      "faceCounts": [
+        31677
+      ],
+      "vertexCounts": [
+        16103
+      ],
+      "seconds": {
+        "mean": 5.511086,
+        "min": 5.365699,
+        "max": 5.761186,
+        "stdev": 0.177625,
+        "runs": [
+          5.406372,
+          5.365699,
+          5.761186
+        ],
+        "baselineMta45Mean": 5.492748,
+        "meanDeltaPercentVsMta45": 0.3
+      },
+      "harnessQualitySeconds": {
+        "mean": 1.206517,
+        "min": 1.128775,
+        "max": 1.297567,
+        "stdev": 0.069549,
+        "runs": [
+          1.128775,
+          1.193208,
+          1.297567
+        ]
+      },
+      "seamStatuses": [
+        "passed"
+      ],
+      "seamRecordCounts": [
+        576
+      ]
+    },
+    {
+      "rowId": "wide-varied-fairing-large-timing",
+      "outcomes": [
+        "edited"
+      ],
+      "faceCounts": [
+        24360
+      ],
+      "vertexCounts": [
+        12378
+      ],
+      "seconds": {
+        "mean": 6.623324,
+        "min": 6.472616,
+        "max": 6.908291,
+        "stdev": 0.201614,
+        "runs": [
+          6.472616,
+          6.489067,
+          6.908291
+        ],
+        "baselineMta45Mean": 6.517837,
+        "meanDeltaPercentVsMta45": 1.6
+      },
+      "harnessQualitySeconds": {
+        "mean": 0.869435,
+        "min": 0.84172,
+        "max": 0.915105,
+        "stdev": 0.032539,
+        "runs": [
+          0.84172,
+          0.851479,
+          0.915105
+        ]
+      },
+      "seamStatuses": [
+        "passed"
+      ],
+      "seamRecordCounts": [
+        576
+      ]
+    }
+  ]
+}

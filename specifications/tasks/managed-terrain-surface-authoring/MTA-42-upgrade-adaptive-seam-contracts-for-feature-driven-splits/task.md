@@ -1,7 +1,7 @@
 # Task: MTA-42 Upgrade Adaptive Seam Contracts For Feature-Driven Splits
 **Task ID**: `MTA-42`
 **Title**: `Upgrade Adaptive Seam Contracts For Feature-Driven Splits`
-**Status**: `defined`
+**Status**: `complete`
 **Priority**: `core`
 **Date**: `2026-05-15`
 
@@ -25,9 +25,12 @@ neighbor spans, seam digests, and validation for feature-driven splits.
 - Define deterministic seam lattice behavior for adaptive patch boundaries under feature-driven
   subdivision.
 - Preserve retained neighbor spans when only one side of a seam is regenerated.
-- Detect when a seam change requires neighbor promotion instead of one-sided replacement.
+- Detect when a seam change requires bounded neighbor promotion or safe refusal/fallback instead of
+  one-sided replacement.
 - Store or validate seam digests in derived patch metadata where needed for readback and repeated
   edits.
+- Preserve adaptive mesh generation for valid heightmap create and edit flows; seam safeguards must
+  not turn supported valid terrain output into broad refusal.
 - Prove seam correctness with hosted replay evidence, including timing, face count, patch scope,
   and no-crack/no-T-junction checks.
 
@@ -44,9 +47,15 @@ Scenario: Feature-driven seam lattice is deterministic
 Scenario: One-sided invalid seam changes are refused or promoted
   Given a feature-driven split requires changing a retained neighbor boundary
   When the replacement side cannot conform to the retained neighbor span
-  Then the planner promotes the neighbor patch when within policy budget
+  Then the planner promotes the neighbor patch when within the MTA-42 seam policy budget
   Or refuses or safely falls back before mutation when promotion exceeds policy
   And old output remains intact on refusal or failed validation
+
+Scenario: Valid heightmap output continues to generate mesh
+  Given a valid managed terrain heightmap create or edit flow
+  When seam validation and feature-driven split planning run
+  Then adaptive mesh output is still generated for supported valid terrain output
+  And seam safeguards refuse or fall back before mutation only when safe conformance is unavailable
 
 Scenario: Seam validation catches cracks and T-junction regressions
   Given the MTA-38 replay corpus extended with seam-sensitive feature rows
@@ -86,6 +95,8 @@ Scenario: Live evidence is recorded for the same baseline corpus
 - Seam metadata must remain derived output state, not terrain source state.
 - Public MCP contracts must remain unchanged.
 - Production output must remain adaptive patch/cell terrain output, not global CDT.
+- Seam validation must not become a broad refusal path for valid heightmap terrain output; refusal or
+  fallback is reserved for seam conditions that cannot be conformed safely before mutation.
 
 ## Dependencies
 
@@ -103,7 +114,7 @@ Scenario: Live evidence is recorded for the same baseline corpus
 
 ## Related Technical Plan
 
-- none yet
+- [Technical Plan](./plan.md)
 
 ## Success Metrics
 

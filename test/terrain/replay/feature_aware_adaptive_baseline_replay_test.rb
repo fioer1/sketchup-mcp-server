@@ -89,7 +89,7 @@ class FeatureAwareAdaptiveBaselineReplayTest < Minitest::Test
       adaptivePolicySummary affectedPatchScope faceCount vertexCount meshType
       simplificationTolerance
       maxSimplificationError renderingSummary planarInteriorMetrics featureQualitySummary
-      harnessQualitySeconds timingBuckets
+      seamValidationSummary harnessQualitySeconds timingBuckets
     ].each { |field| assert_includes(row.keys, field) }
     assert_replay_evidence_values(row)
     refute_includes(JSON.generate(row), 'rawTriangles')
@@ -119,6 +119,15 @@ class FeatureAwareAdaptiveBaselineReplayTest < Minitest::Test
     assert_equal(
       { faceCount: 12, vertexCount: 8, qualityStatus: 'captured' },
       row.fetch(:planarInteriorMetrics)
+    )
+    assert_equal(
+      {
+        status: 'passed',
+        seamRecordCount: 16,
+        validationCount: 8,
+        maxZGap: 0.0
+      },
+      row.fetch(:seamValidationSummary)
     )
     assert_equal(0.01, row.fetch(:simplificationTolerance))
     assert_equal(0.009, row.fetch(:maxSimplificationError))
@@ -490,6 +499,12 @@ class FeatureAwareAdaptiveBaselineReplayTest < Minitest::Test
         affectedPatchScope: { patches: %w[adaptive-patch-v1-c1-r1] },
         renderingSummary: { status: 'captured', topology: 'single_mesh' },
         planarInteriorMetrics: { faceCount: 12, vertexCount: 8, qualityStatus: 'captured' },
+        seamValidationSummary: {
+          status: 'passed',
+          seamRecordCount: 16,
+          validationCount: 8,
+          maxZGap: 0.0
+        },
         timingBuckets: {
           commandOutputPlanning: 0.02,
           featureSelectionDiagnostics: 0.03,

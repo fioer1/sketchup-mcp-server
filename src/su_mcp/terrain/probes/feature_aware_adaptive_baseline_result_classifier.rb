@@ -40,8 +40,10 @@ module SU_MCP
         return ['failed', 'missing baseline row'] unless baseline
         return ['failed', 'row refused or lacks mesh evidence'] unless accepted_mesh_row?(row)
         return ['failed', 'missing adaptive policy summary'] unless row['adaptivePolicySummary']
-        return ['failed', 'supported forced subdivision pressure was skipped'] if
-          forced_subdivision_skipped?(row)
+
+        validation_failure = validation_failure_reason(row)
+        return ['failed', validation_failure] if validation_failure
+
         return ['regressed', 'dirty window or patch scope changed'] if scope_changed?(row, baseline)
         return ['regressed', 'timing exceeded regression threshold'] if
           timing_delta_percent(row, baseline) > TIMING_REGRESSION_PERCENT
@@ -53,8 +55,21 @@ module SU_MCP
         ['neutral', delta_reason(row, baseline)]
       end
 
+      def validation_failure_reason(row)
+        return 'seam validation failed' if seam_validation_failed?(row)
+        return 'supported forced subdivision pressure was skipped' if
+          forced_subdivision_skipped?(row)
+
+        nil
+      end
+
       def accepted_mesh_row?(row)
         row['outcome'] != 'refused' && row['faceCount']
+      end
+
+      def seam_validation_failed?(row)
+        summary = row['seamValidationSummary']
+        summary && summary['status'] == 'failed'
       end
 
       def scope_changed?(row, baseline)

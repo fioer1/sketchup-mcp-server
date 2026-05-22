@@ -126,6 +126,22 @@ class FeatureAwareAdaptiveBaselineResultClassifierTest < Minitest::Test
     )
   end
 
+  def test_fails_rows_with_accepted_seam_mismatch_evidence
+    row = classify(
+      current_row(
+        seam_summary: {
+          'status' => 'failed',
+          'comparisonMode' => 'planned_vs_registry',
+          'mismatchCategory' => 'topology_mismatch',
+          'maxZGap' => 0.0
+        }
+      )
+    )
+
+    assert_equal('failed', row.fetch('verdict'))
+    assert_includes(row.fetch('verdictReason'), 'seam')
+  end
+
   private
 
   def classify(row, baseline: baseline_row)
@@ -151,7 +167,8 @@ class FeatureAwareAdaptiveBaselineResultClassifierTest < Minitest::Test
     quality_status: nil,
     forced_summary: nil,
     quality_summary: nil,
-    planar_interior_metrics: nil
+    planar_interior_metrics: nil,
+    seam_summary: nil
   )
     {
       'rowId' => 'feature-row',
@@ -168,7 +185,8 @@ class FeatureAwareAdaptiveBaselineResultClassifierTest < Minitest::Test
         forced_summary
       ),
       'featureQualitySummary' => quality_payload(quality_summary, quality_status),
-      'planarInteriorMetrics' => planar_interior_metrics
+      'planarInteriorMetrics' => planar_interior_metrics,
+      'seamValidationSummary' => seam_summary
     }.compact
   end
 

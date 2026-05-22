@@ -3,6 +3,8 @@
 require_relative '../regions/sample_window'
 require_relative 'terrain_output_cell_window'
 require_relative 'adaptive_output_conformity'
+require_relative 'adaptive_seams/adaptive_seam_contract'
+require_relative 'adaptive_seams/adaptive_seam_validator'
 require_relative 'patch_lifecycle/patch_plan'
 require_relative 'patch_lifecycle/patch_window_resolver'
 
@@ -21,7 +23,8 @@ module SU_MCP
                   :previous_state_revision, :state_revision, :adaptive_cells,
                   :simplification_tolerance, :max_simplification_error, :adaptive_patch_plan,
                   :adaptive_patch_policy, :feature_aware_adaptive_policy,
-                  :feature_output_policy_diagnostics
+                  :feature_output_policy_diagnostics, :adaptive_seam_records,
+                  :adaptive_seam_validations, :sealed_adaptive_seam_plan
 
       def self.full_grid(
         state:,
@@ -143,6 +146,12 @@ module SU_MCP
           state: state,
           collapse_coplanar_edges: !feature_aware_adaptive_policy.nil?
         )
+        seam_artifacts = adaptive_seam_artifacts_for(
+          state,
+          adaptive_patch_policy,
+          intent,
+          cell_window
+        )
         summary = adaptive_summary_for(state, cells, terrain_state_summary, previous_state_summary)
         new(
           intent: intent,
@@ -154,8 +163,46 @@ module SU_MCP
           adaptive_patch_policy: adaptive_patch_policy,
           feature_aware_adaptive_policy: feature_aware_adaptive_policy,
           adaptive_patch_plan: adaptive_patch_plan_for(state, adaptive_patch_policy),
+          adaptive_seam_records: seam_artifacts.fetch(:records),
+          adaptive_seam_validations: seam_artifacts.fetch(:validations),
+          sealed_adaptive_seam_plan: seam_artifacts.fetch(:sealed_plan),
           feature_output_policy_diagnostics: feature_output_policy_diagnostics
         )
+      end
+
+      def self.adaptive_seam_artifacts_for(state, policy, intent, cell_window)
+        return { records: [], validations: [], sealed_plan: nil } unless
+          policy&.hard_patch_boundaries
+
+        patches = adaptive_patch_domains_for(state, policy, intent, cell_window)
+        replacement_patch_ids = replacement_patch_ids_for(state, policy, intent, cell_window)
+        records = patches.flat_map do |patch|
+          seam_records_for_patch(
+            state,
+            policy,
+            patch,
+            replacement_patch_ids.include?(patch.fetch(:patchId))
+          )
+        end
+        {
+          records: records,
+          validations: same_batch_seam_validations(records),
+          sealed_plan: AdaptiveSeamPlan.new(
+            replacement_patch_ids: replacement_patch_ids,
+            seam_records: records
+          )
+        }
+      end
+
+      def self.replacement_patch_ids_for(state, policy, intent, cell_window)
+        unless intent == :dirty_window && cell_window
+          return policy.patch_domains(state.dimensions).map { |patch| patch.fetch(:patchId) }
+        end
+
+        PatchLifecycle::PatchWindowResolver.new(
+          policy: policy,
+          dimensions: state.dimensions
+        ).resolve(cell_window: cell_window).fetch(:replacementPatchIds)
       end
 
       def self.summary_for(columns, rows, terrain_state_summary, previous_terrain_state_summary)
@@ -190,6 +237,160 @@ module SU_MCP
         return nil unless policy
 
         PatchLifecycle::PatchPlan.new(policy: policy, dimensions: state.dimensions)
+      end
+
+      def self.seam_records_for_patch(state, policy, patch, replacement_side)
+        seam_side_specs(state, policy, patch).map do |spec|
+          seam_record_for_side(
+            state: state,
+            policy: policy,
+            patch: patch,
+            spec: spec,
+            replacement_side: replacement_side
+          )
+        end
+      end
+
+      def self.seam_side_specs(state, policy, patch)
+        max_bounds = policy.patch_grid_bounds(state.dimensions)
+        context = seam_patch_context(policy, patch, max_bounds)
+        bounds = patch.fetch(:sample_bounds)
+        [
+          west_seam_spec(bounds, context),
+          east_seam_spec(bounds, context),
+          south_seam_spec(bounds, context),
+          north_seam_spec(bounds, context)
+        ]
+      end
+
+      def self.seam_patch_context(policy, patch, max_bounds)
+        {
+          policy: policy,
+          max_bounds: max_bounds,
+          patch_column: patch.fetch(:patchColumn),
+          patch_row: patch.fetch(:patchRow)
+        }
+      end
+
+      def self.west_seam_spec(bounds, context)
+        patch_column = context.fetch(:patch_column)
+        patch_row = context.fetch(:patch_row)
+        {
+          side: 'west',
+          positions: [[bounds.fetch(:min_column), bounds.fetch(:min_row)],
+                      [bounds.fetch(:min_column), bounds.fetch(:max_row)]],
+          neighbor_patch_id: west_neighbor_patch_id(context.fetch(:policy), patch_column, patch_row)
+        }
+      end
+
+      def self.east_seam_spec(bounds, context)
+        {
+          side: 'east',
+          positions: [[bounds.fetch(:max_column), bounds.fetch(:min_row)],
+                      [bounds.fetch(:max_column), bounds.fetch(:max_row)]],
+          neighbor_patch_id: east_neighbor_patch_id(
+            context.fetch(:policy),
+            context.fetch(:max_bounds),
+            context.fetch(:patch_column),
+            context.fetch(:patch_row)
+          )
+        }
+      end
+
+      def self.south_seam_spec(bounds, context)
+        patch_column = context.fetch(:patch_column)
+        patch_row = context.fetch(:patch_row)
+        {
+          side: 'south',
+          positions: [[bounds.fetch(:min_column), bounds.fetch(:min_row)],
+                      [bounds.fetch(:max_column), bounds.fetch(:min_row)]],
+          neighbor_patch_id: south_neighbor_patch_id(
+            context.fetch(:policy),
+            patch_column,
+            patch_row
+          )
+        }
+      end
+
+      def self.west_neighbor_patch_id(policy, patch_column, patch_row)
+        return nil if patch_column.zero?
+
+        policy.patch_id_for_coords(patch_column - 1, patch_row)
+      end
+
+      def self.south_neighbor_patch_id(policy, patch_column, patch_row)
+        return nil if patch_row.zero?
+
+        policy.patch_id_for_coords(patch_column, patch_row - 1)
+      end
+
+      def self.north_seam_spec(bounds, context)
+        {
+          side: 'north',
+          positions: [[bounds.fetch(:min_column), bounds.fetch(:max_row)],
+                      [bounds.fetch(:max_column), bounds.fetch(:max_row)]],
+          neighbor_patch_id: north_neighbor_patch_id(
+            context.fetch(:policy),
+            context.fetch(:max_bounds),
+            context.fetch(:patch_column),
+            context.fetch(:patch_row)
+          )
+        }
+      end
+
+      def self.east_neighbor_patch_id(policy, max_bounds, patch_column, patch_row)
+        return nil if patch_column == max_bounds.fetch(:max_patch_column)
+
+        policy.patch_id_for_coords(patch_column + 1, patch_row)
+      end
+
+      def self.north_neighbor_patch_id(policy, max_bounds, patch_column, patch_row)
+        return nil if patch_row == max_bounds.fetch(:max_patch_row)
+
+        policy.patch_id_for_coords(patch_column, patch_row + 1)
+      end
+
+      def self.seam_record_for_side(state:, policy:, patch:, spec:, replacement_side:)
+        side = spec.fetch(:side)
+        positions = spec.fetch(:positions)
+        neighbor_patch_id = spec.fetch(:neighbor_patch_id)
+        vertical = %w[east west].include?(side)
+        AdaptiveSeams::AdaptiveSeamContract.build(
+          schema_version: 1,
+          side: side,
+          patch_id: patch.fetch(:patchId),
+          neighbor_patch_id: neighbor_patch_id,
+          boundary_kind: neighbor_patch_id ? 'neighbor' : 'world_edge',
+          edge_axis: vertical ? 'column' : 'row',
+          edge_index: positions.first.fetch(vertical ? 0 : 1),
+          positions: positions,
+          z_values: positions.map { |column, row| height_at_point(state, column, row) },
+          policy_fingerprint: policy.output_policy_fingerprint
+        ).merge(replacementSide: replacement_side)
+      end
+
+      def self.same_batch_seam_validations(records)
+        records.filter_map do |record|
+          next unless record.fetch(:boundaryKind) == 'neighbor'
+
+          counterpart = counterpart_seam_record(records, record)
+          next unless counterpart
+          next if record.fetch(:patchId) > counterpart.fetch(:patchId)
+
+          AdaptiveSeams::AdaptiveSeamValidator.validate_retained(
+            planned: record,
+            retained: counterpart
+          ).merge(comparisonMode: 'planned_vs_planned')
+        end
+      end
+
+      def self.counterpart_seam_record(records, record)
+        records.find do |candidate|
+          candidate.fetch(:patchId) == record.fetch(:neighborPatchId) &&
+            candidate.fetch(:neighborPatchId, nil) == record.fetch(:patchId) &&
+            candidate.fetch(:edgeAxis) == record.fetch(:edgeAxis) &&
+            candidate.fetch(:edgeIndex) == record.fetch(:edgeIndex)
+        end
       end
 
       def self.adaptive_cells_for(
@@ -590,6 +791,10 @@ module SU_MCP
         ).fetch(:max_error)
       end
 
+      def self.height_at_point(state, column, row)
+        state.elevations.fetch((row * state.dimensions.fetch('columns')) + column)
+      end
+
       # rubocop:disable Metrics/AbcSize
       def self.max_cell_error_probe(state, min_column, min_row, max_column, max_row, threshold)
         dimensions = state.dimensions
@@ -634,6 +839,9 @@ module SU_MCP
         adaptive_patch_policy: nil,
         feature_aware_adaptive_policy: nil,
         adaptive_patch_plan: nil,
+        adaptive_seam_records: [],
+        adaptive_seam_validations: [],
+        sealed_adaptive_seam_plan: nil,
         feature_output_policy_diagnostics: nil
       )
         @intent = intent
@@ -655,6 +863,9 @@ module SU_MCP
         @adaptive_patch_policy = adaptive_patch_policy
         @feature_aware_adaptive_policy = feature_aware_adaptive_policy
         @adaptive_patch_plan = adaptive_patch_plan
+        @adaptive_seam_records = adaptive_seam_records
+        @adaptive_seam_validations = adaptive_seam_validations
+        @sealed_adaptive_seam_plan = sealed_adaptive_seam_plan
         @feature_output_policy_diagnostics = feature_output_policy_diagnostics
       end
 
@@ -677,6 +888,8 @@ module SU_MCP
           }
         }
       end
+
+      AdaptiveSeamPlan = Struct.new(:replacement_patch_ids, :seam_records, keyword_init: true)
     end
     # rubocop:enable Metrics/ClassLength
   end

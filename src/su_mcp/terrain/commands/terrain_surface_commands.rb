@@ -342,10 +342,22 @@ module SU_MCP
         if mesh_generator.respond_to?(:last_adaptive_patch_timing) &&
            mesh_generator.last_adaptive_patch_timing
           timing.merge!(mesh_generator.last_adaptive_patch_timing)
+          merge_generator_seam_summary!
         elsif mesh_generator.respond_to?(:last_cdt_patch_timing) &&
               mesh_generator.last_cdt_patch_timing
           timing.merge!(mesh_generator.last_cdt_patch_timing)
         end
+      end
+
+      def merge_generator_seam_summary!
+        return unless mesh_generator.respond_to?(:last_adaptive_seam_validation_summary)
+
+        summary = mesh_generator.last_adaptive_seam_validation_summary
+        return unless summary && @last_baseline_evidence
+
+        @last_baseline_evidence = @last_baseline_evidence.merge(
+          seamValidationSummary: summary
+        )
       end
 
       def generic_baseline_timing_buckets(timing)

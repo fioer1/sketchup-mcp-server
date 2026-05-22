@@ -71,13 +71,50 @@ module SU_MCP
         end
 
         def normalize_patch_record(patch)
+          seam_records = normalize_seam_records(registry_value(patch, :seamRecords, []))
           {
             patchId: registry_value(patch, :patchId),
             bounds: registry_value(patch, :bounds),
             outputBounds: registry_value(patch, :outputBounds),
             replacementBatchId: registry_value(patch, :replacementBatchId),
             faceCount: registry_value(patch, :faceCount),
-            status: registry_value(patch, :status, 'valid')
+            status: registry_value(patch, :status, 'valid'),
+            seamRecords: seam_records.fetch(:records),
+            seamStatus: seam_records.fetch(:status)
+          }.compact
+        end
+
+        def normalize_seam_records(records)
+          normalized = Array(records).map { |record| normalize_seam_record(record) }
+          {
+            records: normalized,
+            status: seam_status_for(normalized)
+          }
+        end
+
+        def seam_status_for(records)
+          return 'invalidated' if records.any? { |record| record[:status] == 'invalidated' }
+
+          'valid'
+        end
+
+        def normalize_seam_record(record)
+          positions = registry_value(record, :positions, [])
+          valid = positions.is_a?(Array) && positions.length >= 2
+          {
+            schemaVersion: registry_value(record, :schemaVersion),
+            side: registry_value(record, :side),
+            boundaryKind: registry_value(record, :boundaryKind),
+            neighborPatchId: registry_value(record, :neighborPatchId),
+            edgeAxis: registry_value(record, :edgeAxis),
+            edgeIndex: registry_value(record, :edgeIndex),
+            positions: positions,
+            endpoints: registry_value(record, :endpoints),
+            segmentCount: registry_value(record, :segmentCount),
+            chainDigest: registry_value(record, :chainDigest),
+            outputPolicyFingerprint: registry_value(record, :outputPolicyFingerprint),
+            zValues: registry_value(record, :zValues),
+            status: valid ? 'valid' : 'invalidated'
           }.compact
         end
 

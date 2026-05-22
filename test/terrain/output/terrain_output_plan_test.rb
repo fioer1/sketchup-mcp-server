@@ -221,6 +221,66 @@ class TerrainOutputPlanTest < Minitest::Test # rubocop:disable Metrics/ClassLeng
     end
   end
 
+  def test_v2_adaptive_patch_plan_emits_structural_world_edge_seam_records
+    state = build_v2_state(columns: 9, rows: 9, elevations: Array.new(81, 1.0))
+    policy = SU_MCP::Terrain::AdaptivePatches::AdaptivePatchPolicy.new(patch_cell_size: 4)
+
+    plan = SU_MCP::Terrain::TerrainOutputPlan.full_grid(
+      state: state,
+      terrain_state_summary: { digest: 'digest-v2', revision: 1 },
+      adaptive_patch_policy: policy
+    )
+
+    world_edges = plan.adaptive_seam_records.select do |record|
+      record.fetch(:boundaryKind) == 'world_edge'
+    end
+
+    refute_empty(world_edges)
+    assert(world_edges.all? { |record| record.fetch(:positions).length >= 2 })
+    assert(world_edges.all? { |record| record.fetch(:comparisonMode) == 'world_edge' })
+  end
+
+  def test_v2_adaptive_patch_plan_validates_same_batch_counterpart_seams
+    state = build_v2_state(columns: 9, rows: 9, elevations: gaussian_elevations(9, amplitude: 0.2))
+    policy = SU_MCP::Terrain::AdaptivePatches::AdaptivePatchPolicy.new(patch_cell_size: 4)
+
+    plan = SU_MCP::Terrain::TerrainOutputPlan.full_grid(
+      state: state,
+      terrain_state_summary: { digest: 'digest-v2', revision: 1 },
+      adaptive_patch_policy: policy
+    )
+
+    same_batch = plan.adaptive_seam_validations.select do |result|
+      result.fetch(:comparisonMode) == 'planned_vs_planned'
+    end
+
+    refute_empty(same_batch)
+    assert(same_batch.all? { |result| result.fetch(:status) == :passed })
+    refute_includes(JSON.generate(plan.to_summary), 'chainDigest')
+  end
+
+  def test_v2_adaptive_dirty_plan_marks_replacement_and_context_seams_without_public_leak
+    state = build_v2_state(columns: 17, rows: 17, elevations: wave_elevations(17, 17))
+    policy = SU_MCP::Terrain::AdaptivePatches::AdaptivePatchPolicy.new(patch_cell_size: 4)
+
+    plan = SU_MCP::Terrain::TerrainOutputPlan.dirty_window(
+      state: state,
+      terrain_state_summary: { digest: 'digest-v2', revision: 2 },
+      previous_terrain_state_summary: { digest: 'digest-v1', revision: 1 },
+      window: SU_MCP::Terrain::SampleWindow.new(
+        min_column: 5,
+        min_row: 5,
+        max_column: 5,
+        max_row: 5
+      ),
+      adaptive_patch_policy: policy
+    )
+
+    assert(plan.adaptive_seam_records.any? { |record| record.fetch(:replacementSide) })
+    assert(plan.adaptive_seam_records.any? { |record| !record.fetch(:replacementSide) })
+    refute_includes(JSON.generate(plan.to_summary), 'replacementSide')
+  end
+
   def test_v2_adaptive_plan_splits_cells_on_stable_patch_boundaries_before_conformance
     state = build_v2_state(columns: 9, rows: 9, elevations: gaussian_elevations(9, amplitude: 1.0))
     plan = SU_MCP::Terrain::TerrainOutputPlan.full_grid(

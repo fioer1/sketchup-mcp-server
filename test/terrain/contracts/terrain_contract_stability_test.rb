@@ -624,7 +624,11 @@ class TerrainContractStabilityTest < Minitest::Test
       featureAwareAdaptivePolicy adaptivePolicySummary toleranceRange densityHitCount
       hardProtectedToleranceHitCount fallbackCounts targetCellSize targetDensity
       forcedSubdivisionSummary forcedSubdivisionHitCount forcedMask supportedInputCounts
-      skippedInputCounts ownerLocalStart ownerLocalEnd
+      skippedInputCounts ownerLocalStart ownerLocalEnd adaptiveSeam seamRecord seamRecords
+      chainDigest retainedSpan retainedNeighborSpan replacementSide promotedPatchIds
+      seamDigest seamChain seamLattice maxZGap topology_mismatch z_mismatch
+      schema_version_mismatch owner_edge_identity_mismatch promotionBudget
+      second_order_dependency
     ].each { |term| refute_includes(serialized, term) }
     refute_includes(serialized_output, 'regeneration')
   end

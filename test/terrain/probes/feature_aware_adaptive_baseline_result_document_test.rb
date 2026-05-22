@@ -43,6 +43,51 @@ class FeatureAwareAdaptiveBaselineResultDocumentTest < Minitest::Test
     )
   end
 
+  def test_serializes_internal_seam_evidence_for_hosted_result_rows
+    document = SU_MCP::Terrain::FeatureAwareAdaptiveBaselineResultDocument.new(
+      replay: replay,
+      evidence: {
+        rows: [
+          {
+            rowId: 'retained-seam-edit',
+            sourceElementId: 'terrain-main',
+            commandKind: 'edit',
+            timingBuckets: { total: 0.1 },
+            accepted: true,
+            faceCount: 90,
+            vertexCount: 45,
+            seamValidationSummary: {
+              status: 'passed',
+              comparisonMode: 'planned_vs_registry',
+              mismatchCategory: nil,
+              maxZGap: 0.0,
+              promotionCount: 1,
+              fallbackReason: nil,
+              noDeleteOutcome: 'old_output_preserved_on_failure'
+            }
+          }
+        ]
+      },
+      replay_path: __FILE__,
+      clock: Struct.new(:now).new(Time.utc(2026, 5, 18)),
+      model: Object.new,
+      include_timing: false
+    ).to_h
+
+    row = document.fetch(:rows).first
+
+    assert_equal(
+      {
+        status: 'passed',
+        comparisonMode: 'planned_vs_registry',
+        maxZGap: 0.0,
+        promotionCount: 1,
+        noDeleteOutcome: 'old_output_preserved_on_failure'
+      },
+      row.fetch(:seamValidationSummary)
+    )
+  end
+
   private
 
   def replay

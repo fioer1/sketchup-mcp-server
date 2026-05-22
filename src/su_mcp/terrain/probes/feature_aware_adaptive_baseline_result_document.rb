@@ -103,29 +103,32 @@ module SU_MCP
       end
 
       def result_rows
-        evidence.fetch(:rows).map do |row|
-          {
-            rowId: row.fetch(:rowId),
-            sourceElementId: row.fetch(:sourceElementId),
-            commandKind: row.fetch(:commandKind),
-            featureContextClass: row[:featureContextClass],
-            seconds: row.fetch(:timingBuckets).fetch(:total),
-            timingBuckets: row.fetch(:timingBuckets),
-            outcome: row[:outcome] || inferred_outcome(row),
-            meshType: row[:meshType] || row.dig(:renderingSummary, :meshType),
-            faceCount: row[:faceCount],
-            vertexCount: row[:vertexCount],
-            planarInteriorMetrics: row[:planarInteriorMetrics],
-            adaptivePolicySummary: row[:adaptivePolicySummary],
-            featureQualitySummary: row[:featureQualitySummary],
-            harnessQualitySeconds: row[:harnessQualitySeconds],
-            simplificationTolerance: row[:simplificationTolerance],
-            maxSimplificationError: row[:maxSimplificationError],
-            dirtyWindow: dirty_window_result(row[:dirtyWindow]),
-            patchScope: patch_scope_result(row[:affectedPatchScope]),
-            refusal: row.fetch(:accepted, false) ? nil : row[:verdict]
-          }.compact
-        end
+        evidence.fetch(:rows).map { |row| result_row(row) }
+      end
+
+      def result_row(row)
+        {
+          rowId: row.fetch(:rowId),
+          sourceElementId: row.fetch(:sourceElementId),
+          commandKind: row.fetch(:commandKind),
+          featureContextClass: row[:featureContextClass],
+          seconds: row.fetch(:timingBuckets).fetch(:total),
+          timingBuckets: row.fetch(:timingBuckets),
+          outcome: row[:outcome] || inferred_outcome(row),
+          meshType: row[:meshType] || row.dig(:renderingSummary, :meshType),
+          faceCount: row[:faceCount],
+          vertexCount: row[:vertexCount],
+          planarInteriorMetrics: row[:planarInteriorMetrics],
+          adaptivePolicySummary: row[:adaptivePolicySummary],
+          seamValidationSummary: seam_validation_result(row[:seamValidationSummary]),
+          featureQualitySummary: row[:featureQualitySummary],
+          harnessQualitySeconds: row[:harnessQualitySeconds],
+          simplificationTolerance: row[:simplificationTolerance],
+          maxSimplificationError: row[:maxSimplificationError],
+          dirtyWindow: dirty_window_result(row[:dirtyWindow]),
+          patchScope: patch_scope_result(row[:affectedPatchScope]),
+          refusal: row.fetch(:accepted, false) ? nil : row[:verdict]
+        }.compact
       end
 
       def inferred_outcome(row)
@@ -167,6 +170,12 @@ module SU_MCP
             scope.fetch('conformanceRing', nil)
           end
         }.compact
+      end
+
+      def seam_validation_result(summary)
+        return nil unless summary
+
+        summary.compact
       end
 
       def live_geometry_after_run

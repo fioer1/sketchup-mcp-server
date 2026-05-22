@@ -16,7 +16,7 @@ module SU_MCP
         verdict outcome stateRevision featureViewDigest policyFingerprint featureContext dirtyWindow
         adaptivePolicySummary affectedPatchScope faceCount vertexCount meshType
         simplificationTolerance maxSimplificationError renderingSummary planarInteriorMetrics
-        featureQualitySummary harnessQualitySeconds timingBuckets
+        seamValidationSummary featureQualitySummary harnessQualitySeconds timingBuckets
       ].freeze
 
       attr_reader :document
@@ -221,6 +221,7 @@ module SU_MCP
             row['dirtyWindowExpectation'],
           affectedPatchScope: evidence_value(baseline_evidence, :affectedPatchScope),
           planarInteriorMetrics: evidence_value(baseline_evidence, :planarInteriorMetrics),
+          seamValidationSummary: evidence_value(baseline_evidence, :seamValidationSummary),
           renderingSummary: evidence_value(baseline_evidence, :renderingSummary) ||
             { status: accepted_result?(result) ? 'captured' : 'not_captured' }
         }

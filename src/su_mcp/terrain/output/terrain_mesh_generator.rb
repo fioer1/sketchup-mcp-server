@@ -51,7 +51,7 @@ module SU_MCP
       DEFAULT_CDT_ENABLED = false
 
       attr_reader :last_cdt_patch_timing, :last_cdt_failure_reason,
-                  :last_adaptive_patch_timing
+                  :last_adaptive_patch_timing, :last_adaptive_seam_validation_summary
 
       def initialize(
         length_converter: Semantic::LengthConverter.new,
@@ -74,6 +74,7 @@ module SU_MCP
       def generate(owner:, state:, terrain_state_summary:, output_plan: nil, feature_context: nil)
         @last_cdt_failure_reason = nil
         @last_adaptive_patch_timing = nil
+        @last_adaptive_seam_validation_summary = nil
         return no_data_refusal if adaptive_state?(state) && state.elevations.any?(&:nil?)
 
         # Create/adopt generation emits the complete derived grid; edit regeneration may be partial.
@@ -138,6 +139,7 @@ module SU_MCP
       def regenerate(owner:, state:, terrain_state_summary:, output_plan: nil, feature_context: nil)
         @last_cdt_failure_reason = nil
         @last_adaptive_patch_timing = nil
+        @last_adaptive_seam_validation_summary = nil
         unsupported = unsupported_child_types(owner.entities)
         return unsupported_children_refusal(unsupported) unless unsupported.empty?
         return no_data_refusal if adaptive_state?(state) && state.elevations.any?(&:nil?)
@@ -808,6 +810,9 @@ module SU_MCP
         output_plan = timing.measure(:adaptivePlanning) do
           full_adaptive_rebuild_plan(state, output_plan)
         end
+        @last_adaptive_seam_validation_summary = adaptive_seam_validation_summary(
+          output_plan
+        )
         patches = timing.measure(:dirtyWindowMapping) do
           output_plan.adaptive_patch_policy.patch_domains(state.dimensions)
         end
@@ -875,6 +880,17 @@ module SU_MCP
         return cdt_ownership_refusal if ownership.fetch(:outcome) == :refused
         return generate_adaptive_patches(owner: owner, state: state, output_plan: output_plan) if
           ownership.fetch(:outcome) == :fallback
+
+        seam_gate = validate_adaptive_seam_plan_before_mutation(
+          owner: owner,
+          output_plan: output_plan,
+          replacement_patch_ids: resolution.fetch(:replacementPatchIds)
+        )
+        @last_adaptive_seam_validation_summary = adaptive_seam_validation_summary(
+          output_plan,
+          retained_result: seam_gate
+        )
+        return cdt_ownership_refusal unless seam_gate.fetch(:status) == :passed
 
         patches = resolution.fetch(:replacementPatches)
         planned = timing.measure(:adaptivePlanning) do
@@ -1004,11 +1020,141 @@ module SU_MCP
           patch_records << adaptive_registry_patch_record(
             patch: patch,
             batch_id: batch_id,
-            face_count: faces.length
+            face_count: faces.length,
+            seam_records: adaptive_seam_records_for(output_plan).select do |record|
+              record.fetch(:patchId) == patch.fetch(:patchId)
+            end
           )
           faces
         end
         { faces: face_plans, patches: patch_records }
+      end
+
+      def validate_adaptive_seam_plan_before_mutation(
+        owner:,
+        output_plan:,
+        replacement_patch_ids:
+      )
+        sealed = output_plan.sealed_adaptive_seam_plan
+        return { status: :failed, reason: :missing_seam_plan } unless sealed
+        return { status: :failed, reason: :sealed_scope_mismatch } unless
+          sealed.replacement_patch_ids.sort == replacement_patch_ids.sort
+
+        registry = patch_registry_store.read(owner)
+        return { status: :failed, reason: :registry_invalid } unless
+          registry.fetch(:status) == 'valid'
+
+        retained_seam_validation(
+          registry: registry,
+          output_plan: output_plan,
+          replacement_patch_ids: replacement_patch_ids
+        )
+      end
+
+      def retained_seam_validation(registry:, output_plan:, replacement_patch_ids:)
+        patch_records = registry.fetch(:patches, []).to_h { |patch| [patch.fetch(:patchId), patch] }
+        output_plan.adaptive_seam_records.each do |record|
+          next unless retained_neighbor_record?(record, replacement_patch_ids)
+
+          retained = retained_seam_record(patch_records, record)
+          return { status: :failed, reason: :retained_seam_missing } unless retained
+
+          result = AdaptiveSeams::AdaptiveSeamValidator.validate_retained(
+            # Pre-erase retained checks compare seam topology/digest/policy. Full z-inclusive
+            # retained validation waits for the post-emit host path so valid edits do not
+            # over-refuse before replacement geometry exists.
+            planned: record_without_z(record),
+            retained: record_without_z(retained)
+          )
+          return result unless result.fetch(:status) == :passed
+        end
+        { status: :passed }
+      end
+
+      def adaptive_seam_records_for(output_plan)
+        return [] unless output_plan.respond_to?(:adaptive_seam_records)
+
+        output_plan.adaptive_seam_records
+      end
+
+      def adaptive_seam_validation_summary(output_plan, retained_result: nil)
+        validations = Array(output_plan.adaptive_seam_validations)
+        retained = adaptive_retained_seam_entry(retained_result)
+        entries = adaptive_seam_validation_entries(validations, retained)
+        {
+          status: adaptive_seam_status(entries),
+          seamRecordCount: adaptive_seam_records_for(output_plan).length,
+          validationCount: validations.length,
+          replacementPatchCount: adaptive_seam_replacement_patch_count(output_plan),
+          maxZGap: adaptive_seam_max_z_gap(entries),
+          mismatchCategory: adaptive_seam_mismatch_category(entries),
+          sameBatch: adaptive_same_batch_seam_entries(entries, validations.length),
+          retained: retained
+        }.compact
+      end
+
+      def adaptive_retained_seam_entry(retained_result)
+        return nil unless retained_result
+
+        adaptive_seam_validation_entry(retained_result)
+      end
+
+      def adaptive_seam_validation_entries(validations, retained)
+        entries = validations.map { |validation| adaptive_seam_validation_entry(validation) }
+        retained ? entries + [retained] : entries
+      end
+
+      def adaptive_seam_status(entries)
+        entries.any? { |entry| entry.fetch(:status) == 'failed' } ? 'failed' : 'passed'
+      end
+
+      def adaptive_seam_max_z_gap(entries)
+        entries.map { |entry| entry.fetch(:maxZGap, 0.0).to_f }.max || 0.0
+      end
+
+      def adaptive_seam_mismatch_category(entries)
+        entries.find { |entry| entry[:mismatchCategory] }&.fetch(:mismatchCategory)
+      end
+
+      def adaptive_same_batch_seam_entries(entries, count)
+        return nil if entries.empty?
+
+        entries.first(count)
+      end
+
+      def adaptive_seam_validation_entry(validation)
+        {
+          status: validation.fetch(:status).to_s,
+          comparisonMode: validation.fetch(:comparisonMode, nil),
+          mismatchCategory: validation.fetch(:mismatchCategory, nil),
+          reason: validation.fetch(:reason, nil)&.to_s,
+          maxZGap: validation.fetch(:maxZGap, 0.0).to_f
+        }.compact
+      end
+
+      def adaptive_seam_replacement_patch_count(output_plan)
+        output_plan.sealed_adaptive_seam_plan&.replacement_patch_ids&.length
+      end
+
+      def record_without_z(record)
+        record.reject { |key, _value| key.to_s == 'zValues' }
+      end
+
+      def retained_neighbor_record?(record, replacement_patch_ids)
+        record.fetch(:replacementSide, false) &&
+          record.fetch(:boundaryKind) == 'neighbor' &&
+          !replacement_patch_ids.include?(record.fetch(:neighborPatchId))
+      end
+
+      def retained_seam_record(patch_records, planned_record)
+        patch = patch_records[planned_record.fetch(:neighborPatchId)]
+        return nil unless patch && patch.fetch(:seamStatus, 'valid') == 'valid'
+
+        patch.fetch(:seamRecords, []).find do |record|
+          record.fetch(:neighborPatchId, nil) == planned_record.fetch(:patchId) &&
+            record.fetch(:edgeAxis) == planned_record.fetch(:edgeAxis) &&
+            record.fetch(:edgeIndex) == planned_record.fetch(:edgeIndex)
+        end
       end
 
       def emit_planned_adaptive_patch_faces(entities, faces)
@@ -1104,13 +1250,14 @@ module SU_MCP
         )
       end
 
-      def adaptive_registry_patch_record(patch:, batch_id:, face_count:)
+      def adaptive_registry_patch_record(patch:, batch_id:, face_count:, seam_records: [])
         {
           patchId: patch.fetch(:patchId),
           bounds: patch.fetch(:bounds),
           outputBounds: patch.fetch(:bounds),
           replacementBatchId: batch_id,
           faceCount: face_count,
+          seamRecords: seam_records,
           status: 'valid'
         }
       end
