@@ -14,6 +14,11 @@ module SU_MCP
       FIRM_MULTIPLIER = 0.5
       SOFT_MULTIPLIER = 1.0
       TOLERANCE_FLOOR_MULTIPLIER = 0.1
+      FAIRING_SUPPORT_ROLE = 'fairing_support'
+      FAIRING_OUTPUT_TOLERANCE_MULTIPLIER = 0.5
+      PLANAR_COMPACTION_ADVISORY_DENSITY_ROLES = %w[
+        fairing_support survey_anchor
+      ].freeze
 
       def initialize(feature_geometry: nil, state: nil, base_tolerance: 0.01)
         @feature_geometry = feature_geometry
@@ -52,16 +57,27 @@ module SU_MCP
       def planar_compaction_candidate?(bounds, column_span:, row_span:)
         owner = owner_bounds(bounds)
         return false unless planar_interior?(owner)
-        return false if target_cell_size_for_owner(owner)
+        return false if authoritative_target_cell_size_for_owner(owner)
         return false if forced_subdivision_mask.target_cell_size_for_owner(owner)
-        return false if local_tolerance_for_owner(owner) < base_tolerance
+        return false if local_tolerance_for_planar_compaction_owner(owner) < base_tolerance
 
         column_span.positive? && row_span.positive?
       end
 
+      def planar_compaction_residual_guard_required?(bounds)
+        planar_compaction_residual_guard_required_for_owner?(owner_bounds(bounds))
+      end
+
+      def planar_compaction_residual_guard_required_for_owner?(owner)
+        matching_supported_pressure_regions(owner).any? do |region|
+          planar_compaction_advisory_density_role?(region.fetch(:role))
+        end
+      end
+
       def split_pressure_for(bounds, column_span:, row_span:)
         owner = owner_bounds(bounds)
-        target_cell_size = target_cell_size_for_owner(owner)
+        matching_pressure_regions = matching_supported_pressure_regions(owner)
+        target_cell_size = target_cell_size_for_regions(matching_pressure_regions)
         forced_split = forced_subdivision_mask.split_required?(
           bounds,
           column_span: column_span,
@@ -69,13 +85,20 @@ module SU_MCP
           owner_bounds: owner
         )
         tolerance = local_tolerance_for_owner(owner)
+        density_split = density_split_required?(target_cell_size, column_span, row_span)
+        fairing_only_density = fairing_only_density_split?(density_split, matching_pressure_regions)
+        tolerance = fairing_output_tolerance(tolerance) if fairing_only_density
         @density_hit_count += 1 if target_cell_size
         record_tolerance_hit(tolerance) if tolerance < base_tolerance
         {
           tolerance: tolerance,
           target_cell_size: target_cell_size,
-          density_split: density_split_required?(target_cell_size, column_span, row_span),
+          density_split: density_split,
+          fairing_only_density_split: fairing_only_density,
           forced_split: forced_split,
+          planar_compaction_residual_guard: planar_compaction_residual_guard_required_for_owner?(
+            owner
+          ),
           planar_interior: planar_interior?(owner)
         }
       end
@@ -117,12 +140,45 @@ module SU_MCP
                   :planar_regions, :supported_pressure_regions
 
       def target_cell_size_for_owner(owner)
-        matches = supported_pressure_regions.filter_map do |region|
-          next unless terrain_bounds_intersect?(region.fetch(:bounds), owner)
+        target_cell_size_for_regions(matching_supported_pressure_regions(owner))
+      end
 
-          region.fetch(:target_cell_size)
+      def authoritative_target_cell_size_for_owner(owner)
+        target_cell_size_for_regions(
+          matching_supported_pressure_regions(owner).reject do |region|
+            planar_compaction_advisory_density_role?(region.fetch(:role))
+          end
+        )
+      end
+
+      def matching_supported_pressure_regions(owner)
+        supported_pressure_regions.select do |region|
+          terrain_bounds_intersect?(region.fetch(:bounds), owner)
         end
-        matches.min
+      end
+
+      def target_cell_size_for_regions(regions)
+        regions.filter_map { |region| region.fetch(:target_cell_size) }.min
+      end
+
+      def fairing_only_density_pressure?(regions)
+        density_regions = regions.select { |region| region.fetch(:target_cell_size) }
+        density_regions.any? &&
+          density_regions.all? { |region| region.fetch(:role).to_s == FAIRING_SUPPORT_ROLE }
+      end
+
+      def fairing_only_density_split?(density_split, regions)
+        return false unless density_split
+
+        fairing_only_density_pressure?(regions)
+      end
+
+      def fairing_output_tolerance(tolerance)
+        [tolerance, base_tolerance * FAIRING_OUTPUT_TOLERANCE_MULTIPLIER].min
+      end
+
+      def planar_compaction_advisory_density_role?(role)
+        PLANAR_COMPACTION_ADVISORY_DENSITY_ROLES.include?(role.to_s)
       end
 
       def local_tolerance_for_owner(owner)
@@ -130,11 +186,25 @@ module SU_MCP
         [tolerance, base_tolerance * TOLERANCE_FLOOR_MULTIPLIER].max
       end
 
+      def local_tolerance_for_planar_compaction_owner(owner)
+        tolerance = tolerance_values_for(
+          owner,
+          ignored_pressure_roles: PLANAR_COMPACTION_ADVISORY_DENSITY_ROLES
+        ).min || base_tolerance
+        [tolerance, base_tolerance * TOLERANCE_FLOOR_MULTIPLIER].max
+      end
+
       def applicable_tolerance_values(owner)
+        tolerance_values_for(owner, ignored_pressure_roles: [])
+      end
+
+      def tolerance_values_for(owner, ignored_pressure_roles:)
         tolerance_values = []
         tolerance_values.concat(anchor_tolerance_values(owner))
         tolerance_values.concat(protected_region_tolerance_values(owner))
-        tolerance_values.concat(pressure_region_tolerance_values(owner))
+        tolerance_values.concat(
+          pressure_region_tolerance_values_excluding(owner, ignored_roles: ignored_pressure_roles)
+        )
         tolerance_values.compact
       end
 
@@ -156,7 +226,12 @@ module SU_MCP
       end
 
       def pressure_region_tolerance_values(owner)
+        pressure_region_tolerance_values_excluding(owner, ignored_roles: [])
+      end
+
+      def pressure_region_tolerance_values_excluding(owner, ignored_roles:)
         supported_pressure_regions.filter_map do |region|
+          next if ignored_roles.include?(region.fetch(:role).to_s)
           next unless terrain_bounds_intersect?(region.fetch(:bounds), owner)
 
           base_tolerance * multiplier_for(region.fetch(:strength), region.fetch(:role))

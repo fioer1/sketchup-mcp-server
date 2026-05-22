@@ -1,7 +1,7 @@
 # Task: MTA-46 Make Fairing Output Pressure Residual-Aware
 **Task ID**: `MTA-46`
 **Title**: `Make Fairing Output Pressure Residual-Aware`
-**Status**: `defined`
+**Status**: `implemented`
 **Priority**: `core`
 **Date**: `2026-05-20`
 
@@ -18,16 +18,21 @@ policy issue: a later broad circular `local_fairing` edit can make an otherwise 
 planar area look dense again. The final heightfield can remain within planar quality tolerance, but
 fairing support is currently treated as unconditional soft density pressure. That pressure can force
 subdivision across the fairing envelope, including inside already-planar or newly-planar cells where
-additional triangles do not represent meaningful surface change.
+additional triangles do not represent meaningful surface change. In this defect class, height
+correctness and output compactness diverge: passing planar quality sampling is not proof that the
+emitted planar area stayed compact.
 
 The task exists to make fairing-derived output pressure residual-aware enough that fairing still
 represents genuinely bumpy or high-error terrain, while avoiding dense output over regions whose
-post-edit surface is already low-error.
+post-edit surface is already low-error. The important distinction is not whether a newer fairing
+overlaps a planar area; it is whether the post-fairing surface materially requires output detail in
+the overlapped cells.
 
 ## Goals
 
 - Prevent `fairing_support` pressure from forcing dense adaptive output over cells whose post-edit
   heightfield is already low-error or planar enough to simplify.
+- Distinguish circular fairing overlap from circular fairing output-detail need.
 - Preserve fairing behavior on genuinely uneven terrain where the resulting surface still needs
   output detail.
 - Keep circular fairing regions in scope, including the large circular fairing-over-planar replay
@@ -66,8 +71,11 @@ Scenario: Non-fairing feature pressure remains authoritative
 Scenario: Hosted replay records the fairing-over-planar distinction
   Given the MTA-38 replay corpus and the MTA-45 fairing-over-planar observation
   When MTA-46 verification completes
-  Then hosted evidence records the large circular fairing-over-planar case
-  And the evidence compares face counts, planar-region quality, timing, and affected patch scope
+  Then hosted evidence records the isolated large planar compaction sequence before fairing
+  And hosted or fixture evidence records the later large circular fairing-over-planar case
+  And hosted or fixture evidence records a separate circular fairing-over-bumpy-terrain case
+  And the evidence compares face counts, planar-region quality, fairing quality or residual error,
+    timing, and affected patch scope
   And the task records whether fairing pressure remains bounded to geometrically necessary output detail
 ```
 
@@ -95,6 +103,9 @@ Scenario: Hosted replay records the fairing-over-planar distinction
 ## Technical Constraints
 
 - `MTA-45` is the immediate discovery source and provides the clean planar compaction comparison.
+- The clean MTA-45 comparison is the isolated sequence: create large terrain, apply the local target,
+  apply the diagonal corridor, then apply the no-falloff planar pad. The full replay final state,
+  which later includes survey and fairing rows, is not by itself proof of planar-edit compaction.
 - `MTA-39` owns feature-aware tolerance and density policy behavior that this task must refine
   without breaking non-fairing pressure.
 - `MTA-40` owns forced subdivision policy that must remain authoritative for feature-critical
@@ -102,6 +113,8 @@ Scenario: Hosted replay records the fairing-over-planar distinction
 - `MTA-38` replay artifacts should be used or extended for hosted timing and quality comparison.
 - Circular fairing regions must remain represented as circular regions at the intent level; any
   policy simplification must not silently change user-authored fairing shape semantics.
+- Current policy-effective circular bounds can overstate affected area; MTA-46 must not quietly
+  reduce the observed circular fairing problem to a rectangle-only case.
 - Hosted SketchUp validation is required because the defect is visible in emitted terrain topology,
   not only in feature evidence counters.
 
@@ -123,7 +136,7 @@ Scenario: Hosted replay records the fairing-over-planar distinction
 
 ## Related Technical Plan
 
-- none yet
+- [Technical Plan](./plan.md)
 
 ## Success Metrics
 

@@ -300,6 +300,120 @@ class FeatureAwareAdaptivePolicyTest < Minitest::Test
     assert_equal(false, inside.fetch(:density_split))
   end
 
+  def test_split_pressure_marks_fairing_only_density_pressure_for_residual_gate
+    policy = build_policy(
+      feature_geometry: geometry(
+        pressureRegions: [
+          fairing_pressure('fairing-circle', 'circle', [4.0, 4.0, 3.0], 4)
+        ]
+      )
+    )
+
+    pressure = policy.split_pressure_for(bounds(1, 1, 7, 7), column_span: 6, row_span: 6)
+
+    assert_equal(0.005, pressure.fetch(:tolerance))
+    assert_equal(4, pressure.fetch(:target_cell_size))
+    assert_equal(true, pressure.fetch(:density_split))
+    assert_equal(true, pressure.fetch(:fairing_only_density_split))
+    assert_equal(true, pressure.fetch(:planar_compaction_residual_guard))
+  end
+
+  def test_split_pressure_keeps_target_and_hard_break_density_out_of_fairing_gate
+    policy = build_policy(
+      feature_geometry: geometry(
+        pressureRegions: [
+          target_pressure('target-circle', 'circle', [4.0, 4.0, 3.0], 4),
+          hard_break_pressure('hard-break', [[0.0, 0.0], [8.0, 8.0]], 4)
+        ]
+      )
+    )
+
+    target = policy.split_pressure_for(bounds(1, 1, 7, 7), column_span: 6, row_span: 6)
+
+    assert_equal(4, target.fetch(:target_cell_size))
+    assert_equal(true, target.fetch(:density_split))
+    assert_equal(false, target.fetch(:fairing_only_density_split))
+  end
+
+  def test_planar_compaction_ignores_fairing_only_density_pressure
+    policy = build_policy(
+      feature_geometry: geometry(
+        planarRegions: [
+          planar_region('planar-pad', [[2.0, 2.0], [6.0, 6.0]])
+        ],
+        pressureRegions: [
+          fairing_pressure('fairing-circle', 'circle', [4.0, 4.0, 3.0], 4)
+        ]
+      )
+    )
+
+    assert_equal(
+      true,
+      policy.planar_compaction_candidate?(bounds(2, 2, 4, 4), column_span: 2, row_span: 2)
+    )
+  end
+
+  def test_planar_compaction_keeps_authoritative_density_pressure
+    policy = build_policy(
+      feature_geometry: geometry(
+        planarRegions: [
+          planar_region('planar-pad', [[2.0, 2.0], [6.0, 6.0]])
+        ],
+        pressureRegions: [
+          fairing_pressure('fairing-circle', 'circle', [4.0, 4.0, 3.0], 4),
+          target_pressure('target-circle', 'circle', [4.0, 4.0, 3.0], 4)
+        ]
+      )
+    )
+
+    assert_equal(
+      false,
+      policy.planar_compaction_candidate?(bounds(2, 2, 4, 4), column_span: 2, row_span: 2)
+    )
+  end
+
+  def test_planar_compaction_ignores_broad_survey_support_density_away_from_anchor
+    policy = build_policy(
+      feature_geometry: geometry(
+        outputAnchorCandidates: [
+          output_anchor('survey-anchor', 'survey_anchor', [5.5, 5.5])
+        ],
+        planarRegions: [
+          planar_region('planar-pad', [[2.0, 2.0], [6.0, 6.0]])
+        ],
+        pressureRegions: [
+          survey_pressure('survey-support', 'circle', [4.0, 4.0, 3.0], 2)
+        ]
+      )
+    )
+
+    assert_equal(
+      true,
+      policy.planar_compaction_candidate?(bounds(2, 2, 4, 4), column_span: 2, row_span: 2)
+    )
+  end
+
+  def test_planar_compaction_keeps_survey_anchor_forced_detail
+    policy = build_policy(
+      feature_geometry: geometry(
+        outputAnchorCandidates: [
+          output_anchor('survey-anchor', 'survey_anchor', [3.0, 3.0])
+        ],
+        planarRegions: [
+          planar_region('planar-pad', [[2.0, 2.0], [6.0, 6.0]])
+        ],
+        pressureRegions: [
+          survey_pressure('survey-support', 'circle', [4.0, 4.0, 3.0], 2)
+        ]
+      )
+    )
+
+    assert_equal(
+      false,
+      policy.planar_compaction_candidate?(bounds(2, 2, 4, 4), column_span: 2, row_span: 2)
+    )
+  end
+
   private
 
   def build_policy(feature_geometry:)
@@ -337,6 +451,16 @@ class FeatureAwareAdaptivePolicyTest < Minitest::Test
     SU_MCP::Terrain::TerrainFeatureGeometry.new(values)
   end
 
+  def planar_region(id, owner_local_bounds)
+    {
+      'id' => id,
+      'featureId' => id,
+      'role' => 'planar_interior',
+      'primitive' => 'rectangle',
+      'ownerLocalBounds' => owner_local_bounds
+    }
+  end
+
   def rectangle_pressure(id, strength, owner_local_bounds, target_cell_size)
     {
       'id' => id,
@@ -346,6 +470,44 @@ class FeatureAwareAdaptivePolicyTest < Minitest::Test
       'primitive' => 'rectangle',
       'ownerLocalShape' => owner_local_bounds,
       'targetCellSize' => target_cell_size
+    }
+  end
+
+  def fairing_pressure(id, primitive, owner_local_shape, target_cell_size)
+    role_pressure(id, 'fairing_support', primitive, owner_local_shape, target_cell_size)
+  end
+
+  def target_pressure(id, primitive, owner_local_shape, target_cell_size)
+    role_pressure(id, 'target_support', primitive, owner_local_shape, target_cell_size)
+  end
+
+  def hard_break_pressure(id, owner_local_bounds, target_cell_size)
+    role_pressure(id, 'hard_break', 'rectangle', owner_local_bounds, target_cell_size)
+  end
+
+  def survey_pressure(id, primitive, owner_local_shape, target_cell_size)
+    role_pressure(id, 'survey_anchor', primitive, owner_local_shape, target_cell_size, 'firm')
+  end
+
+  def role_pressure(id, role, primitive, owner_local_shape, target_cell_size, strength = 'soft')
+    {
+      'id' => id,
+      'featureId' => id,
+      'role' => role,
+      'strength' => strength,
+      'primitive' => primitive,
+      'ownerLocalShape' => owner_local_shape,
+      'targetCellSize' => target_cell_size
+    }
+  end
+
+  def output_anchor(id, role, owner_local_point)
+    {
+      'id' => id,
+      'featureId' => id,
+      'role' => role,
+      'strength' => 'firm',
+      'ownerLocalPoint' => owner_local_point
     }
   end
 

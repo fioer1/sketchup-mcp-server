@@ -398,6 +398,102 @@ class TerrainOutputPlanTest < Minitest::Test # rubocop:disable Metrics/ClassLeng
     assert(distant_cells.all? { |cell| cell_width(cell) > 2 || cell_height(cell) > 2 })
   end
 
+  def test_v2_fairing_only_density_pressure_does_not_split_low_residual_cells
+    state = build_v2_state(columns: 17, rows: 17, elevations: Array.new(17 * 17, 0.0))
+    baseline = SU_MCP::Terrain::TerrainOutputPlan.full_grid(
+      state: state,
+      terrain_state_summary: { digest: 'baseline', revision: 1 }
+    )
+    feature_policy = SU_MCP::Terrain::FeatureAwareAdaptivePolicy.new(
+      feature_geometry: fairing_circle_geometry,
+      state: state,
+      base_tolerance: 0.01
+    )
+
+    plan = SU_MCP::Terrain::TerrainOutputPlan.full_grid(
+      state: state,
+      terrain_state_summary: { digest: 'fairing-low-residual', revision: 1 },
+      feature_aware_adaptive_policy: feature_policy
+    )
+
+    assert_equal(baseline.face_count, plan.face_count)
+    assert_equal([[0, 0, 16, 16]], plan.adaptive_cells.map { |cell| cell_bounds(cell) })
+  end
+
+  def test_v2_fairing_over_bumpy_terrain_keeps_residual_detail
+    state = build_v2_state(columns: 17, rows: 17, elevations: spike_elevations(17, 8, 8, 1.0))
+    feature_policy = SU_MCP::Terrain::FeatureAwareAdaptivePolicy.new(
+      feature_geometry: fairing_circle_geometry,
+      state: state,
+      base_tolerance: 0.01
+    )
+
+    plan = SU_MCP::Terrain::TerrainOutputPlan.full_grid(
+      state: state,
+      terrain_state_summary: { digest: 'fairing-bumpy', revision: 1 },
+      feature_aware_adaptive_policy: feature_policy
+    )
+
+    local_cells = plan.adaptive_cells.select { |cell| cell_center_within?(cell, 7, 7, 9, 9) }
+
+    assert(local_cells.any?)
+    assert(local_cells.all? { |cell| cell_width(cell) <= 2 && cell_height(cell) <= 2 })
+    assert_operator(plan.face_count, :>, 2)
+  end
+
+  def test_v2_mixed_fairing_region_simplifies_low_error_cells_and_refines_high_error_cells
+    state = build_v2_state(columns: 17, rows: 17, elevations: spike_elevations(17, 12, 8, 1.0))
+    feature_policy = SU_MCP::Terrain::FeatureAwareAdaptivePolicy.new(
+      feature_geometry: fairing_circle_geometry(radius: 8.0),
+      state: state,
+      base_tolerance: 0.01
+    )
+
+    low_error_probe = SU_MCP::Terrain::TerrainOutputPlan.send(
+      :adaptive_split_probe,
+      state,
+      0,
+      0,
+      4,
+      4,
+      feature_policy
+    )
+    high_error_probe = SU_MCP::Terrain::TerrainOutputPlan.send(
+      :adaptive_split_probe,
+      state,
+      8,
+      4,
+      16,
+      12,
+      feature_policy
+    )
+
+    assert_equal(false, low_error_probe.fetch(:split))
+    assert_equal(true, high_error_probe.fetch(:split))
+  end
+
+  def test_v2_fairing_gate_uses_one_residual_probe_per_split_decision
+    elevations = CountingElevations.new(Array.new(17 * 17, 0.0))
+    state = counting_probe_state(columns: 17, rows: 17, elevations: elevations)
+    feature_policy = SU_MCP::Terrain::FeatureAwareAdaptivePolicy.new(
+      feature_geometry: fairing_circle_geometry,
+      state: state,
+      base_tolerance: 0.01
+    )
+
+    SU_MCP::Terrain::TerrainOutputPlan.send(
+      :adaptive_split_probe,
+      state,
+      0,
+      0,
+      16,
+      16,
+      feature_policy
+    )
+
+    assert_equal((17 * 17) + 4, elevations.read_count)
+  end
+
   def test_v2_dirty_feature_density_pressure_does_not_expand_replacement_to_far_patches
     state = build_v2_state(columns: 97, rows: 97, elevations: Array.new(97 * 97, 0.0))
     patch_policy = SU_MCP::Terrain::AdaptivePatches::AdaptivePatchPolicy.new(patch_cell_size: 16)
@@ -457,6 +553,30 @@ class TerrainOutputPlanTest < Minitest::Test # rubocop:disable Metrics/ClassLeng
     )
   end
 
+  def test_v2_fairing_gate_does_not_suppress_overlapping_authoritative_forced_detail
+    state = build_v2_state(columns: 17, rows: 17, elevations: Array.new(17 * 17, 0.0))
+    feature_policy = SU_MCP::Terrain::FeatureAwareAdaptivePolicy.new(
+      feature_geometry: fairing_with_forced_anchor_geometry,
+      state: state,
+      base_tolerance: 0.01
+    )
+
+    plan = SU_MCP::Terrain::TerrainOutputPlan.full_grid(
+      state: state,
+      terrain_state_summary: { digest: 'fairing-forced-anchor', revision: 1 },
+      feature_aware_adaptive_policy: feature_policy
+    )
+
+    local_cells = plan.adaptive_cells.select { |cell| cell_center_within?(cell, 7, 7, 9, 9) }
+
+    assert(local_cells.all? { |cell| cell_width(cell) <= 2 && cell_height(cell) <= 2 })
+    assert_operator(
+      feature_policy.summary.dig(:forcedSubdivisionSummary, :hitCount),
+      :>,
+      0
+    )
+  end
+
   def test_v2_planar_regions_compact_interior_even_when_surrounding_patch_is_dense
     state = one_spike_state
     feature_policy = SU_MCP::Terrain::FeatureAwareAdaptivePolicy.new(
@@ -478,6 +598,71 @@ class TerrainOutputPlanTest < Minitest::Test # rubocop:disable Metrics/ClassLeng
       planar_cells.any? { |cell| cell_width(cell) > 1 && cell_height(cell) > 1 },
       'planar interior should contain coarse cells, not a full sample grid'
     )
+  end
+
+  def test_v2_fairing_only_density_does_not_block_low_error_planar_coalescing
+    state = build_v2_state(columns: 9, rows: 9, elevations: Array.new(9 * 9, 0.0))
+    feature_policy = SU_MCP::Terrain::FeatureAwareAdaptivePolicy.new(
+      feature_geometry: fairing_planar_compaction_geometry,
+      state: state,
+      base_tolerance: 0.01
+    )
+
+    compacted = SU_MCP::Terrain::TerrainOutputPlan.send(
+      :merge_planar_candidate_cells_with_policy,
+      state,
+      planar_quadrant_cells,
+      nil,
+      feature_policy
+    )
+
+    assert_equal([[2, 2, 6, 6]], compacted.map { |cell| cell_bounds(cell) })
+  end
+
+  def test_v2_fairing_planar_compaction_preserves_high_residual_edge_detail
+    elevations = Array.new(9 * 9, 0.0)
+    elevations[(5 * 9) + 3] = 0.012
+    state = build_v2_state(columns: 9, rows: 9, elevations: elevations)
+    feature_policy = SU_MCP::Terrain::FeatureAwareAdaptivePolicy.new(
+      feature_geometry: fairing_planar_compaction_geometry,
+      state: state,
+      base_tolerance: 0.01
+    )
+
+    compacted = SU_MCP::Terrain::TerrainOutputPlan.send(
+      :merge_planar_candidate_cells_with_policy,
+      state,
+      planar_quadrant_cells,
+      nil,
+      feature_policy
+    )
+
+    refute_includes(compacted.map { |cell| cell_bounds(cell) }, [2, 2, 6, 6])
+    assert_includes(compacted.map { |cell| cell_bounds(cell) }, [2, 2, 6, 4])
+    assert_includes(compacted.map { |cell| cell_bounds(cell) }, [2, 4, 4, 6])
+  end
+
+  def test_v2_fairing_planar_edge_residual_splits_below_fairing_target_cell_size
+    elevations = Array.new(9 * 9, 0.0)
+    elevations[(4 * 9) + 4] = 0.012
+    state = build_v2_state(columns: 9, rows: 9, elevations: elevations)
+    feature_policy = SU_MCP::Terrain::FeatureAwareAdaptivePolicy.new(
+      feature_geometry: fairing_planar_compaction_geometry,
+      state: state,
+      base_tolerance: 0.01
+    )
+
+    probe = SU_MCP::Terrain::TerrainOutputPlan.send(
+      :adaptive_split_probe,
+      state,
+      2,
+      2,
+      6,
+      6,
+      feature_policy
+    )
+
+    assert_equal(true, probe.fetch(:split))
   end
 
   def test_v2_dirty_forced_mask_does_not_expand_replacement_to_far_patches
@@ -638,6 +823,15 @@ class TerrainOutputPlanTest < Minitest::Test # rubocop:disable Metrics/ClassLeng
     )
   end
 
+  def counting_probe_state(columns:, rows:, elevations:)
+    Struct.new(:dimensions, :elevations, :origin, :spacing).new(
+      { 'columns' => columns, 'rows' => rows },
+      elevations,
+      { 'x' => 0.0, 'y' => 0.0 },
+      { 'x' => 1.0, 'y' => 1.0 }
+    )
+  end
+
   def mixed_resolution_state
     build_v2_state(
       columns: 6,
@@ -712,6 +906,31 @@ class TerrainOutputPlanTest < Minitest::Test # rubocop:disable Metrics/ClassLeng
     )
   end
 
+  def fairing_circle_geometry(radius: 6.0)
+    SU_MCP::Terrain::TerrainFeatureGeometry.new(
+      pressureRegions: [
+        role_pressure('fairing-circle', 'fairing_support', 'circle', [8.0, 8.0, radius], 4)
+      ]
+    )
+  end
+
+  def fairing_with_forced_anchor_geometry
+    SU_MCP::Terrain::TerrainFeatureGeometry.new(
+      outputAnchorCandidates: [
+        {
+          'id' => 'hard-control',
+          'featureId' => 'feature-hard',
+          'role' => 'control',
+          'strength' => 'hard',
+          'ownerLocalPoint' => [8.0, 8.0]
+        }
+      ],
+      pressureRegions: [
+        role_pressure('fairing-circle', 'fairing_support', 'circle', [8.0, 8.0, 6.0], 4)
+      ]
+    )
+  end
+
   def far_density_geometry
     SU_MCP::Terrain::TerrainFeatureGeometry.new(
       pressureRegions: [
@@ -761,6 +980,31 @@ class TerrainOutputPlanTest < Minitest::Test # rubocop:disable Metrics/ClassLeng
     )
   end
 
+  def fairing_planar_compaction_geometry
+    SU_MCP::Terrain::TerrainFeatureGeometry.new(
+      planarRegions: [
+        {
+          'id' => 'planar-pad',
+          'featureId' => 'planar-pad',
+          'primitive' => 'rectangle',
+          'ownerLocalBounds' => [[2.0, 2.0], [6.0, 6.0]]
+        }
+      ],
+      pressureRegions: [
+        role_pressure('fairing-circle', 'fairing_support', 'circle', [4.0, 4.0, 4.0], 4)
+      ]
+    )
+  end
+
+  def planar_quadrant_cells
+    [
+      { min_column: 2, min_row: 2, max_column: 4, max_row: 4, max_error: 0.0 },
+      { min_column: 4, min_row: 2, max_column: 6, max_row: 4, max_error: 0.0 },
+      { min_column: 2, min_row: 4, max_column: 4, max_row: 6, max_error: 0.0 },
+      { min_column: 4, min_row: 4, max_column: 6, max_row: 6, max_error: 0.0 }
+    ]
+  end
+
   def rectangle_pressure(id, strength, owner_local_bounds, target_cell_size)
     {
       'id' => id,
@@ -771,6 +1015,24 @@ class TerrainOutputPlanTest < Minitest::Test # rubocop:disable Metrics/ClassLeng
       'ownerLocalShape' => owner_local_bounds,
       'targetCellSize' => target_cell_size
     }
+  end
+
+  def role_pressure(id, role, primitive, owner_local_shape, target_cell_size)
+    {
+      'id' => id,
+      'featureId' => id,
+      'role' => role,
+      'strength' => 'soft',
+      'primitive' => primitive,
+      'ownerLocalShape' => owner_local_shape,
+      'targetCellSize' => target_cell_size
+    }
+  end
+
+  def spike_elevations(size, column, row, height)
+    elevations = Array.new(size * size, 0.0)
+    elevations[(row * size) + column] = height
+    elevations
   end
 
   def gaussian_elevations(size, amplitude:)

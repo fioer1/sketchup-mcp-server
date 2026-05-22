@@ -2,13 +2,13 @@
 
 **Task ID**: MTA-46  
 **Title**: Make Fairing Output Pressure Residual-Aware  
-**Status**: seeded  
+**Status**: challenged
 **Created**: 2026-05-20  
 **Last Updated**: 2026-05-20  
 
 **Related Task**: [task.md](./task.md)  
-**Related Plan**: none yet  
-**Related Summary**: none yet  
+**Related Plan**: [plan.md](./plan.md)
+**Related Summary**: [summary.md](./summary.md)
 
 ---
 
@@ -67,31 +67,50 @@
 
 | Dimension | Score (0-4) | Notes |
 |---|---:|---|
-| Functional Scope | <0-4> | <short note> |
-| Technical Change Surface | <0-4> | <short note> |
-| Implementation Friction Risk | <0-4> | <short note> |
-| Validation Burden Risk | <0-4> | <short note; repo baseline closeout is usually 2> |
-| Dependency / Coordination Risk | <0-4> | <short note> |
-| Discovery / Ambiguity Risk | <0-4> | <short note> |
-| Scope Volatility Risk | <0-4> | <short note> |
-| Rework Risk | <0-4> | <short note> |
-| Confidence | <0-4> | <short note> |
+| Functional Scope | 2 | Behavior-visible output compaction refinement in an existing fairing workflow; no new public operation. |
+| Technical Change Surface | 3 | Crosses feature-aware policy, adaptive split planning, internal evidence/replay, and hosted validation surfaces. |
+| Implementation Friction Risk | 3 | Must gate fairing before subdivision while preserving bumpy detail, shared soft pressure behavior, forced masks, and circular intent. |
+| Validation Burden Risk | 3 | Requires special two-sided fixture/hosted proof, topology compactness checks, bumpy preservation, and repeated timing bands beyond routine closeout. |
+| Dependency / Coordination Risk | 2 | Depends on implemented MTA-38/MTA-39/MTA-40/MTA-45 behavior and hosted SketchUp access. |
+| Discovery / Ambiguity Risk | 2 | Main rule is settled, but exact internal API shape, fixture sufficiency, and bounds-overstatement evidence remain tactical unknowns. |
+| Scope Volatility Risk | 1 | Scope is deliberately narrowed to `fairing_support`; shared soft pressure is gated by regression coverage rather than accepted expansion. |
+| Rework Risk | 2 | Hosted topology/performance may require one localized correction, following MTA-45/MTA-40 lessons, but plan has explicit falsification gates. |
+| Confidence | 3 | Strong planning evidence and analogs; final confidence depends on implementation and hosted proof. |
 
 ### Analog Brief
 
-- Not filled yet.
+- Closest analog: MTA-45. It looked like a planar policy/output compaction task, but hosted output
+  exposed additional topology behavior; expect at least one validation-driven correction path.
+- MTA-39 supports the policy/evidence shape: allocation, quality, timing, and face-count signals
+  must stay separate.
+- MTA-40 supports preserving forced subdivision independently from density/residual gates.
+- MTA-38 supports the hosted replay evidence pattern and repeated timing-band expectation.
 
 ### Top Assumptions
 
-- Not filled yet.
+- `FeatureAwareAdaptivePolicy` can expose fairing-only pressure classification without changing
+  public command output.
+- `TerrainOutputPlan` can reuse existing residual probes before density subdivision without a new
+  residual cache.
+- Existing or small new replay fixtures can isolate low-error fairing-over-planar and bumpy circular
+  fairing cases.
+- Hosted SketchUp validation access remains available for final topology and timing proof.
 
 ### Estimate Breakers
 
-- Not filled yet.
+- `fairing_support` classification cannot be threaded without broad policy or output-plan redesign.
+- Circular bounds overstatement proves material enough that exact circle handling is needed inside
+  MTA-46.
+- Bumpy fairing detail is lost under the residual gate and requires a different rule than planned.
+- Hosted timing shows repeated unacceptable regression from residual probing.
 
 ### Predicted Notes
 
-- Not filled yet.
+- Treat this as a medium-large internal output-policy task, not a small density-threshold tweak.
+- Validation score is `3` because the plan requires special two-sided hosted topology/performance
+  evidence; unrun hosted evidence remains a confidence condition, not completed validation burden.
+- Scope volatility is low unless implementation expands beyond `fairing_support` or changes public
+  contract behavior.
 <!-- SIZE:PREDICTED:END -->
 
 ---
@@ -100,16 +119,32 @@
 ## Challenge Review
 
 ### Confirmed Drivers
-- Not filled yet.
+- Functional scope remains `2`: behavior-visible output compaction changes an existing workflow
+  without adding a public operation.
+- Technical surface and friction remain high because the plan crosses policy classification,
+  output split timing, compaction interaction, internal evidence, replay fixtures, and hosted proof.
+- Validation burden remains `3` because the distinguishing work is special two-sided topology and
+  performance evidence, not routine CI or a routine hosted matrix.
+- Premortem additions fit the predicted risk shape: current-heightfield residual source,
+  pre-recursion split proof, stale fairing-marker compaction guard, circular bounds sensitivity, and
+  duplicate-probe guard.
 
 ### Contested Drivers / Missing Evidence
-- Not filled yet.
+- Exact internal policy-to-output API shape remains implementation-time tactical ambiguity, but not
+  enough to change scope while the ownership boundary is fixed.
+- Existing replay rows may not isolate both acceptance sides; this is already an estimate breaker
+  only if new fixture work expands materially beyond the planned focused rows.
+- Hosted timing regression risk is real but not yet evidence of validation burden `4`; repeated
+  blockers or redesign would be drift, not current prediction.
 
 ### Score Changes
-- None.
+- None. Premortem findings strengthen the existing `3` implementation-friction and validation
+  scores rather than raising them.
 
 ### Recommendation
-- Not filled yet.
+- Proceed with implementation under the finalized plan. Record drift if circular bounds require
+  exact topology, if bumpy preservation needs a different rule, if residual probing causes repeated
+  timing failure, or if public contract shape unexpectedly changes.
 <!-- SIZE:CHALLENGE:END -->
 
 ---

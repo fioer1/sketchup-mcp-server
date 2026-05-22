@@ -14,6 +14,7 @@ module SU_MCP
     class TerrainOutputPlan
       ADAPTIVE_SIMPLIFICATION_TOLERANCE = 0.01
       ADAPTIVE_MIN_CELL_SIZE = 1
+      ADVISORY_PLANAR_COMPACTION_TOLERANCE = ADAPTIVE_SIMPLIFICATION_TOLERANCE * 0.25
 
       attr_reader :intent, :window, :cell_window, :execution_strategy, :mesh_type,
                   :vertex_count, :face_count, :state_digest, :previous_state_digest,
@@ -246,7 +247,12 @@ module SU_MCP
         end
         return cells if candidates.empty?
 
-        compacted = merge_planar_candidate_cells(state, candidates, patch_policy)
+        compacted = merge_planar_candidate_cells_with_policy(
+          state,
+          candidates,
+          patch_policy,
+          feature_policy
+        )
         (retained + compacted).sort_by do |cell|
           [
             cell.fetch(:min_row),
@@ -271,17 +277,25 @@ module SU_MCP
       end
 
       def self.merge_planar_candidate_cells(state, cells, patch_policy)
-        horizontal = merge_planar_cells_along(
+        merge_planar_candidate_cells_with_policy(state, cells, patch_policy, nil)
+      end
+
+      def self.merge_planar_candidate_cells_with_policy(state, cells, patch_policy, feature_policy)
+        horizontal = merge_planar_cells_along_with_policy(
+          state,
           cells.map { |cell| cell.merge(patch_key: patch_key_for_cell(cell, patch_policy)) },
           fixed_keys: %i[patch_key min_row max_row],
           min_key: :min_column,
-          max_key: :max_column
+          max_key: :max_column,
+          feature_policy: feature_policy
         )
-        merge_planar_cells_along(
+        merge_planar_cells_along_with_policy(
+          state,
           horizontal,
           fixed_keys: %i[patch_key min_column max_column],
           min_key: :min_row,
-          max_key: :max_row
+          max_key: :max_row,
+          feature_policy: feature_policy
         ).map do |cell|
           adaptive_cell(
             cell.fetch(:min_column),
@@ -300,21 +314,79 @@ module SU_MCP
       end
 
       def self.merge_planar_cells_along(cells, fixed_keys:, min_key:, max_key:)
+        merge_planar_cells_along_with_policy(
+          nil,
+          cells,
+          fixed_keys: fixed_keys,
+          min_key: min_key,
+          max_key: max_key,
+          feature_policy: nil
+        )
+      end
+
+      def self.merge_planar_cells_along_with_policy(
+        state,
+        cells,
+        fixed_keys:,
+        min_key:,
+        max_key:,
+        feature_policy:
+      )
         cells.group_by { |cell| fixed_keys.map { |key| cell.fetch(key) } }
              .flat_map do |_fixed, group|
-          merge_sorted_planar_cells(group.sort_by { |cell| cell.fetch(min_key) }, min_key, max_key)
+          merge_sorted_planar_cells_with_policy(
+            state,
+            group.sort_by { |cell| cell.fetch(min_key) },
+            min_key,
+            max_key,
+            feature_policy
+          )
         end
       end
 
       def self.merge_sorted_planar_cells(cells, min_key, max_key)
+        merge_sorted_planar_cells_with_policy(nil, cells, min_key, max_key, nil)
+      end
+
+      def self.merge_sorted_planar_cells_with_policy(state, cells, min_key, max_key, feature_policy)
         cells.each_with_object([]) do |cell, merged|
           previous = merged.last
-          if previous && previous.fetch(max_key) == cell.fetch(min_key)
+          if planar_cells_mergeable?(state, previous, cell, min_key, max_key, feature_policy)
             previous[max_key] = cell.fetch(max_key)
           else
             merged << cell.dup
           end
         end
+      end
+
+      def self.planar_cells_mergeable?(state, previous, cell, min_key, max_key, feature_policy)
+        previous &&
+          previous.fetch(max_key) == cell.fetch(min_key) &&
+          planar_merge_residual_allowed?(
+            state,
+            previous.merge(max_key => cell.fetch(max_key)),
+            feature_policy
+          )
+      end
+
+      def self.planar_merge_residual_allowed?(state, cell, feature_policy)
+        return true unless feature_policy.respond_to?(:planar_compaction_residual_guard_required?)
+
+        bounds = {
+          min_column: cell.fetch(:min_column),
+          min_row: cell.fetch(:min_row),
+          max_column: cell.fetch(:max_column),
+          max_row: cell.fetch(:max_row)
+        }
+        return true unless feature_policy.planar_compaction_residual_guard_required?(bounds)
+
+        max_cell_error(
+          state,
+          cell.fetch(:min_column),
+          cell.fetch(:min_row),
+          cell.fetch(:max_column),
+          cell.fetch(:max_row)
+        ) <= ADVISORY_PLANAR_COMPACTION_TOLERANCE
       end
 
       def self.patch_key_for_cell(cell, patch_policy)
@@ -418,8 +490,7 @@ module SU_MCP
           max_column,
           max_row
         )
-        if split_pressure.fetch(:planar_interior, false) &&
-           !feature_split_required?(split_pressure)
+        if planar_residual_probe_bypassed?(split_pressure)
           return {
             max_error: max_cell_error(state, min_column, min_row, max_column, max_row),
             split: false
@@ -435,12 +506,27 @@ module SU_MCP
         )
         {
           max_error: probe.fetch(:max_error),
-          split: probe.fetch(:exceeded) || feature_split_required?(split_pressure)
+          split: probe.fetch(:exceeded) ||
+            residual_gated_feature_split_required?(split_pressure, probe.fetch(:exceeded))
         }
+      end
+
+      def self.planar_residual_probe_bypassed?(split_pressure)
+        split_pressure.fetch(:planar_interior, false) &&
+          !feature_split_required?(split_pressure) &&
+          !split_pressure.fetch(:planar_compaction_residual_guard, false)
       end
 
       def self.feature_split_required?(split_pressure)
         split_pressure.fetch(:density_split) || split_pressure.fetch(:forced_split)
+      end
+
+      def self.residual_gated_feature_split_required?(split_pressure, residual_exceeded)
+        return true if split_pressure.fetch(:forced_split)
+        return false unless split_pressure.fetch(:density_split)
+        return residual_exceeded if split_pressure.fetch(:fairing_only_density_split, false)
+
+        true
       end
 
       def self.feature_split_pressure(
