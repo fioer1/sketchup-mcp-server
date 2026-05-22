@@ -1,7 +1,7 @@
 # Task: MTA-43 Add Patch Component Planner For Cross-Patch Features
 **Task ID**: `MTA-43`
 **Title**: `Add Patch Component Planner For Cross-Patch Features`
-**Status**: `defined`
+**Status**: `planned`
 **Priority**: `core`
 **Date**: `2026-05-15`
 
@@ -105,7 +105,7 @@ Scenario: Live evidence is recorded for the same baseline corpus
 
 ## Related Technical Plan
 
-- none yet
+- [Technical Plan](./plan.md)
 
 ## Success Metrics
 
