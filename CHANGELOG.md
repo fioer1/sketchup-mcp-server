@@ -2,6 +2,17 @@
 
 <!-- version list -->
 
+## v1.13.0 (2026-05-22)
+
+### Features
+
+- **MTA-42**: Deterministic terrain seam geometry stitching
+  ([`aa2a191`](https://github.com/SidhNor/sketchup-mcp-server/commit/aa2a191d6e2b84481a39b25236a3fc97abf89ef1))
+
+- **MTA-46**: Fairing derrived feature pressure simplification
+  ([`cf82020`](https://github.com/SidhNor/sketchup-mcp-server/commit/cf820203bc263aabc52386bb588d9e1503ae9c77))
+
+
 ## v1.12.0 (2026-05-20)
 
 ### Bug Fixes
