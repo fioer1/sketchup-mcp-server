@@ -2,6 +2,24 @@
 
 <!-- version list -->
 
+## v1.14.0 (2026-05-23)
+
+### Bug Fixes
+
+- **MTA-42**: Seam generator compatibility on older terrains
+  ([`d9643ba`](https://github.com/SidhNor/sketchup-mcp-server/commit/d9643baad6b000cf5139803139e9a1f2bbed6843))
+
+### Documentation
+
+- **MTA-43**: Patch component planner
+  ([`9897b7d`](https://github.com/SidhNor/sketchup-mcp-server/commit/9897b7d61bd77d88794e0c7f3ef95fe9e41069ac))
+
+### Features
+
+- **SEM-16**: Proper planting mass proxy
+  ([`d1d3603`](https://github.com/SidhNor/sketchup-mcp-server/commit/d1d360398befecd79f938feb2b0992ed6e1f177c))
+
+
 ## v1.13.0 (2026-05-22)
 
 ### Features
