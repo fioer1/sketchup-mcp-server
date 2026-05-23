@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative 'planar_geometry_helper'
+require_relative 'generated_component_library'
 require_relative 'scene_properties'
 require_relative 'terrain_anchor_resolver'
 
@@ -48,28 +49,32 @@ module SU_MCP
       ].freeze
 
       def initialize(scene_properties: SceneProperties.new,
+                     component_library: GeneratedComponentLibrary.new,
                      terrain_anchor_resolver: TerrainAnchorResolver.new)
         @scene_properties = scene_properties
+        @component_library = component_library
         @terrain_anchor_resolver = terrain_anchor_resolver
       end
 
       def build(model:, params:, destination: nil)
         payload = normalized_payload(params)
         payload = apply_terrain_anchor(payload, params)
+        definition = tree_definition(model: model, payload: payload)
         target_collection = destination || model.active_entities
         wrapper_group = target_collection.add_group
         scene_properties.apply!(model: model, group: wrapper_group, params: params)
 
-        proxy_mesh = wrapper_group.entities.add_group
-        trunk_rings = build_trunk(group: proxy_mesh, payload: payload)
-        build_canopy(group: proxy_mesh, payload: payload, trunk_rings: trunk_rings)
+        wrapper_group.entities.add_instance(
+          definition,
+          translation_for(tree_position(payload))
+        )
 
         wrapper_group
       end
 
       private
 
-      attr_reader :scene_properties, :terrain_anchor_resolver
+      attr_reader :scene_properties, :component_library, :terrain_anchor_resolver
 
       def normalized_payload(params)
         payload = params.fetch('definition').dup
@@ -124,6 +129,39 @@ module SU_MCP
           ring: canopy_rings.last,
           apex: apex_point(payload)
         )
+      end
+
+      def tree_definition(model:, payload:)
+        component_library.definition_for(
+          model: model,
+          family: 'tree_proxy',
+          version: '1',
+          signature: tree_signature(payload),
+          generator: self.class.name
+        ) do |entities|
+          definition_payload = payload.merge(
+            'position' => { 'x' => 0.0, 'y' => 0.0, 'z' => 0.0 }
+          )
+          trunk_rings = build_trunk(group: entities_owner(entities), payload: definition_payload)
+          build_canopy(
+            group: entities_owner(entities),
+            payload: definition_payload,
+            trunk_rings: trunk_rings
+          )
+        end
+      end
+
+      def entities_owner(entities)
+        Struct.new(:entities).new(entities)
+      end
+
+      def tree_signature(payload)
+        [
+          format('height=%.9f', tree_height(payload)),
+          format('canopy_x=%.9f', canopy_radius_x(payload) * 2.0),
+          format('canopy_y=%.9f', canopy_radius_y(payload) * 2.0),
+          format('trunk=%.9f', trunk_radius(payload) * 2.0)
+        ].join('|')
       end
 
       def tree_position(payload)
@@ -216,6 +254,16 @@ module SU_MCP
       def apex_point(payload)
         position = tree_position(payload)
         [position[:x], position[:y], position[:z] + tree_height(payload)]
+      end
+
+      def translation_for(position)
+        origin = [position.fetch(:x), position.fetch(:y), position.fetch(:z)]
+        transformation = Geom::Transformation.new(origin)
+        return transformation if transformation.respond_to?(:origin) && transformation.origin
+
+        { origin: origin }
+      rescue StandardError
+        { origin: origin }
       end
 
       def add_ring_face(group:, ring:, reverse: false)

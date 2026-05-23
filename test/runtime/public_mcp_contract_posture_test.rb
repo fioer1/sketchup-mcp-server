@@ -99,6 +99,15 @@ class PublicMcpContractPostureTest < Minitest::Test
     assert_includes(docs, 'Regional scope is not implicit planar fitting')
   end
 
+  def test_semantic_docs_list_planting_mass_surface_drape_without_public_proxy_controls
+    docs = read_repo_file('docs/mcp-tool-reference.md')
+
+    assert_includes(docs, 'planting_mass -> surface_drape')
+    refute_includes(docs, 'componentStrategy')
+    refute_includes(docs, 'edgeFade')
+    refute_includes(docs, 'planting seed')
+  end
+
   private
 
   def read_repo_file(relative_path)

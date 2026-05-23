@@ -26,6 +26,7 @@ The current task set persists the completed first-wave semantic work and the nex
 - managed-object maintenance alignment for post-create semantic revision behavior
 - horizontal-cross-section terrain-drape realization for hosted semantic paths
 - governed duplication and managed deletion policy
+- terrain-sampled planting-mass `proxy_mass` representation quality for early-design planting proxies
 
 ## Current Task Order
 
@@ -43,6 +44,8 @@ The current task set persists the completed first-wave semantic work and the nex
 12. [SEM-12 Add Governed Duplication and Managed Deletion Policy](SEM-12-add-governed-duplication-and-managed-deletion-policy/task.md)
 13. [SEM-13 Realize Horizontal Cross-Section Terrain Drape for Paths](SEM-13-realize-horizontal-cross-section-terrain-drape-for-paths/task.md)
 14. [SEM-14 Harden Create Site Element Request Recovery and Definition Boundaries](SEM-14-harden-create-site-element-request-recovery-and-definition-boundaries/task.md)
+15. [SEM-15 Add Terrain-Anchored Hosting for Tree Proxy and Structure](SEM-15-add-terrain-anchored-hosting-for-tree-proxy-and-structure/task.md)
+16. [SEM-16 Realize Terrain-Sampled Planting Mass Proxy Representation](SEM-16-realize-terrain-sampled-planting-mass-proxy-representation/task.md)
 
 ## Deferred Follow-Ons
 
@@ -67,3 +70,4 @@ The following follow-ons remain intentionally deferred from the active task fold
 - `SEM-12` remains the next draft follow-on for governed duplication and managed deletion policy.
 - `SEM-13` is now completed and live-validated: `path + surface_drape` builds a smoothed terrain-following top ribbon with horizontal cross-sections, coherent downward thickness shell output, and structured refusals.
 - `SEM-14` is the current create-contract hardening follow-on. It keeps one canonical sectioned `create_site_element` surface while addressing bounded malformed request-shape recovery and family-specific `definition` boundary drift at the MCP seam.
+- `SEM-16` is a planned follow-on for the live `planting_mass + representation.mode: "proxy_mass"` gap. It uses `procedural_terrain_planting_mass.rb` as prototype evidence for terrain-sampled procedural planting output, reuses existing scene-query/profile sampling and staged-asset surface-frame logic, and adds a generated-component seam that also componentizes the accepted tree proxy without changing its visual contract. It does not add public procedural controls, add next-wave semantic families, or implement staged-asset replacement.

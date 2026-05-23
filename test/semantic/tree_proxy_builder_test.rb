@@ -53,13 +53,16 @@ class TreeProxyBuilderTest < Minitest::Test
     )
 
     assert_instance_of(SemanticTestSupport::FakeGroup, group)
-    assert_equal(1, group.entities.groups.length)
+    assert_equal(0, group.entities.groups.length)
+    assert_equal(1, group.entities.component_instances.length)
     assert_equal(0, group.entities.faces.length)
     assert_equal('Cherry Proxy', group.name)
     assert_equal('Trees', group.layer.name)
 
-    proxy_mesh = group.entities.groups.first
-    assert_instance_of(SemanticTestSupport::FakeGroup, proxy_mesh)
+    proxy_instance = group.entities.component_instances.first
+    proxy_mesh = proxy_instance.definition
+    assert_equal('tree_proxy',
+                 proxy_mesh.get_attribute('su_mcp_generated_component', 'family'))
     assert_equal(0, proxy_mesh.entities.groups.length)
     horizontal_caps = proxy_mesh.entities.faces.select do |face|
       face.points.length == 12 && face.points.map { |point| point[2] }.uniq.length == 1
@@ -88,15 +91,15 @@ class TreeProxyBuilderTest < Minitest::Test
 
     widest_canopy_ring = widest_ring_points(
       proxy_mesh,
-      center_x: 14.0,
-      center_y: 37.7,
+      center_x: 0.0,
+      center_y: 0.0,
       lower_z: cap_levels.last,
       upper_z: 5.5
     )
     assert_equal(12, widest_canopy_ring.length)
 
-    radii = ordered_ring_points(widest_canopy_ring, center_x: 14.0, center_y: 37.7).map do |point|
-      radial_distance(point, center_x: 14.0, center_y: 37.7)
+    radii = ordered_ring_points(widest_canopy_ring, center_x: 0.0, center_y: 0.0).map do |point|
+      radial_distance(point, center_x: 0.0, center_y: 0.0)
     end
     assert_three_lobe_profile(radii)
   end
@@ -131,8 +134,16 @@ class TreeProxyBuilderTest < Minitest::Test
       }
     )
 
-    implicit_faces = implicit_group.entities.groups.first.entities.faces.map(&:points)
-    explicit_faces = explicit_group.entities.groups.first.entities.faces.map(&:points)
+    implicit_faces = implicit_group.entities.component_instances.first
+                                   .definition
+                                   .entities
+                                   .faces
+                                   .map(&:points)
+    explicit_faces = explicit_group.entities.component_instances.first
+                                   .definition
+                                   .entities
+                                   .faces
+                                   .map(&:points)
 
     assert_equal(explicit_faces, implicit_faces)
   end
@@ -182,8 +193,10 @@ class TreeProxyBuilderTest < Minitest::Test
       }
     )
 
-    proxy_mesh = group.entities.groups.first
-    z_levels = proxy_mesh.entities.faces.flat_map { |face| face.points.map { |point| point[2] } }
+    proxy_instance = group.entities.component_instances.first
+    z_levels = proxy_instance.definition.entities.faces.flat_map do |face|
+      face.points.map { |point| point[2] + transformation_origin(proxy_instance.transformation)[2] }
+    end
 
     assert_equal([{ host_target: host_target, anchor_xy: [14.0, 37.7], role: 'tree_base' }],
                  anchor_resolver.calls)
@@ -316,6 +329,14 @@ class TreeProxyBuilderTest < Minitest::Test
   def span(points, axis:)
     coordinates = points.map { |point| point.fetch(axis) }
     coordinates.max - coordinates.min
+  end
+
+  def transformation_origin(transformation)
+    return transformation.fetch(:origin) if transformation.is_a?(Hash)
+    return [transformation.origin.x, transformation.origin.y, transformation.origin.z] if
+      transformation.respond_to?(:origin) && transformation.origin
+
+    [0.0, 0.0, 0.0]
   end
 
   def assert_three_lobe_profile(radii)

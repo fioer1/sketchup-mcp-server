@@ -77,6 +77,7 @@ and placement rules only, so the runtime-owned guidance text stays in one place.
 Currently shipped hosting pairs:
 
 - `path -> surface_drape`
+- `planting_mass -> surface_drape`
 - `pad -> surface_snap`
 - `retaining_edge -> edge_clamp`
 - `tree_proxy -> terrain_anchored`
@@ -86,6 +87,11 @@ Terrain-anchored behavior:
 
 - `tree_proxy`: samples terrain at `definition.position.x/y` and replaces caller `position.z`
 - `structure`: samples one arithmetic-mean footprint point and keeps the built form planar
+
+Surface-draped planting behavior:
+
+- `planting_mass`: `representation.mode: "proxy_mass"` creates deterministic low-poly planting
+  motif instances and terrain-derived underlay geometry from the requested boundary.
 
 #### `set_entity_metadata`
 

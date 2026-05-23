@@ -335,7 +335,10 @@ module SU_MCP
         tool_entry(
           name: 'eval_ruby',
           title: 'Evaluate Ruby',
-          description: 'Evaluate arbitrary Ruby code inside SketchUp.',
+          description: 'Evaluate arbitrary Ruby code inside SketchUp. SketchUp Ruby API ' \
+                       'geometry and Length values use internal inches, while public MCP ' \
+                       'tool inputs and outputs use meters; convert explicitly when crossing ' \
+                       'between eval_ruby code and MCP tool data.',
           handler_key: :eval_ruby,
           annotations: { read_only_hint: false, destructive_hint: false },
           classification: 'escape_hatch',
@@ -1732,7 +1735,8 @@ module SU_MCP
                 ),
                 'Terrain or edge conformity mode. Contextual by elementType; unsupported ' \
                 'requests refuse with allowedValues for the requested element type. ' \
-                'Supported hosted pairs include path -> surface_drape, pad -> surface_snap, ' \
+                'Supported hosted pairs include path -> surface_drape, ' \
+                'planting_mass -> surface_drape, pad -> surface_snap, ' \
                 'retaining_edge -> edge_clamp, tree_proxy -> terrain_anchored, and ' \
                 'structure -> terrain_anchored.'
               ),

@@ -28,6 +28,87 @@ module SemanticTestSupport
     end
   end
 
+  class FakeDefinition
+    attr_accessor :name
+    attr_reader :entities, :attributes
+
+    def initialize(name:, id_sequence:, layer:, material:)
+      @name = name
+      @attributes = Hash.new { |hash, key| hash[key] = {} }
+      @entities = FakeEntitiesCollection.new(
+        id_sequence: id_sequence,
+        layer: layer,
+        material: material,
+        owner: self
+      )
+    end
+
+    def set_attribute(dictionary_name, key, value)
+      @attributes[dictionary_name][key] = value
+    end
+
+    def get_attribute(dictionary_name, key, default = nil)
+      @attributes.fetch(dictionary_name, {}).fetch(key, default)
+    end
+
+    def attribute_dictionary(name, create = false)
+      dictionary = @attributes[name]
+      return dictionary if dictionary
+      return nil unless create
+
+      @attributes[name] = {}
+    end
+
+    def clear!
+      entities.clear!
+    end
+  end
+
+  class FakeDefinitionsCollection
+    include Enumerable
+
+    attr_reader :definitions, :removed_definitions
+
+    def initialize(id_sequence:, layer:, material:)
+      @id_sequence = id_sequence
+      @layer = layer
+      @material = material
+      @definitions = []
+      @removed_definitions = []
+    end
+
+    def add(name)
+      definition = FakeDefinition.new(
+        name: name,
+        id_sequence: @id_sequence,
+        layer: @layer,
+        material: @material
+      )
+      @definitions << definition
+      definition
+    end
+
+    def [](name)
+      @definitions.find { |definition| definition.name == name }
+    end
+
+    def remove(definition)
+      @definitions.delete(definition)
+      @removed_definitions << definition
+      definition
+    end
+
+    def each(&block)
+      return enum_for(:each) unless block_given?
+
+      @definitions.each(&block)
+    end
+
+    def length
+      @definitions.length
+    end
+  end
+
   class FakeEntitiesCollection
     include Enumerable
 
@@ -132,6 +213,14 @@ module SemanticTestSupport
       @edges.delete(entity)
       @construction_points.delete(entity)
       entity
+    end
+
+    def clear!
+      @groups.clear
+      @component_instances.clear
+      @faces.clear
+      @edges.clear
+      @construction_points.clear
     end
 
     def add_edge_entity(edge)
@@ -323,7 +412,7 @@ module SemanticTestSupport
 
   class FakeFace < Sketchup::Face
     attr_accessor :material, :bounds, :parent_collection
-    attr_reader :pushpull_calls, :points, :layer, :persistent_id, :attributes, :edges
+    attr_reader :pushpull_calls, :points, :layer, :persistent_id, :attributes, :edges, :details
 
     def initialize(entity_id:, persistent_id:, layer:, material:, points:)
       super()
@@ -335,6 +424,7 @@ module SemanticTestSupport
       @normal_z = polygon_signed_area(points).negative? ? -1.0 : 1.0
       @pushpull_calls = []
       @attributes = Hash.new { |hash, key| hash[key] = {} }
+      @details = {}
       @edges = Array.new(points.length) { FakeEdge.new }
       @bounds = build_bounds(points)
     end
@@ -444,7 +534,7 @@ module SemanticTestSupport
   end
 
   class FakeModel
-    attr_reader :active_entities, :materials, :layers, :options, :operations
+    attr_reader :active_entities, :materials, :layers, :options, :operations, :definitions
 
     def initialize(
       active_entities: nil,
@@ -465,6 +555,11 @@ module SemanticTestSupport
         material: default_material
       )
       @active_entities.owner = self
+      @definitions = FakeDefinitionsCollection.new(
+        id_sequence: @id_sequence,
+        layer: @layers.first,
+        material: default_material
+      )
       @operations = []
     end
 

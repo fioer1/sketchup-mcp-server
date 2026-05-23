@@ -258,6 +258,40 @@ class SemanticCommandsTest < Minitest::Test
   end
   # rubocop:enable Metrics/AbcSize
 
+  def test_create_site_element_passes_public_metadata_to_builder_params
+    created_group = @model.active_entities.add_group
+    captured_params = nil
+    builder = Object.new
+    builder.define_singleton_method(:build) do |**kwargs|
+      captured_params = kwargs.fetch(:params)
+      created_group
+    end
+    commands = SU_MCP::SemanticCommands.new(
+      model: @model,
+      registry: FakeRegistry.new(builder),
+      metadata_writer: FakeMetadataWriter.new,
+      serializer: FakeSerializer.new(sourceElementId: 'hedge-001', semanticType: 'planting_mass')
+    )
+
+    commands.create_site_element(sectioned_planting_mass_request(
+                                   'metadata' => {
+                                     'sourceElementId' => 'runoff-pocket-017',
+                                     'status' => 'proposed'
+                                   },
+                                   'representation' => {
+                                     'mode' => 'proxy_mass'
+                                   }
+                                 ))
+
+    assert_equal(
+      {
+        'sourceElementId' => 'runoff-pocket-017',
+        'status' => 'proposed'
+      },
+      captured_params['metadata']
+    )
+  end
+
   def test_create_site_element_returns_structured_refusal_for_missing_matching_payloads
     commands = SU_MCP::SemanticCommands.new(model: @model)
 
@@ -1176,6 +1210,67 @@ class SemanticCommandsTest < Minitest::Test
     assert_equal(['surface_snap'], pad_result.dig(:refusal, :details, :allowedValues))
     assert_equal(['terrain_anchored'], tree_result.dig(:refusal, :details, :allowedValues))
     assert_equal(['terrain_anchored'], structure_result.dig(:refusal, :details, :allowedValues))
+  end
+
+  def test_create_site_element_allows_surface_drape_for_planting_mass_and_passes_host
+    created_group = @model.active_entities.add_group
+    captured_params = nil
+    terrain_target = @model.active_entities.add_group
+    builder = Object.new
+    builder.define_singleton_method(:build) do |**kwargs|
+      captured_params = kwargs.fetch(:params)
+      created_group
+    end
+    commands = SU_MCP::SemanticCommands.new(
+      model: @model,
+      registry: FakeRegistry.new(builder),
+      metadata_writer: FakeMetadataWriter.new,
+      serializer: FakeSerializer.new(sourceElementId: 'pocket-001', semanticType: 'planting_mass'),
+      target_resolver: FakeTargetResolver.new(resolution: 'unique', entity: terrain_target)
+    )
+
+    result = commands.create_site_element(sectioned_planting_mass_request(
+                                            'hosting' => {
+                                              'mode' => 'surface_drape',
+                                              'target' => { 'sourceElementId' => 'terrain-main' }
+                                            },
+                                            'representation' => {
+                                              'mode' => 'proxy_mass'
+                                            }
+                                          ))
+
+    assert_equal(true, result[:success])
+    assert_equal('created', result[:outcome])
+    assert_same(terrain_target, captured_params.dig('hosting', 'resolved_target'))
+  end
+
+  def test_create_site_element_refuses_hidden_public_planting_proxy_controls
+    commands = SU_MCP::SemanticCommands.new(model: @model)
+
+    result = commands.create_site_element(sectioned_planting_mass_request(
+                                            'definition' => {
+                                              'mode' => 'mass_polygon',
+                                              'boundary' => [
+                                                [0.0, 0.0], [4.0, 0.0],
+                                                [4.0, 2.0], [0.0, 2.0]
+                                              ],
+                                              'averageHeight' => 1.8,
+                                              'seed' => 123,
+                                              'spacing' => 0.62,
+                                              'componentStrategy' => 'instances'
+                                            },
+                                            'representation' => {
+                                              'mode' => 'proxy_mass'
+                                            }
+                                          ))
+
+    assert_equal(true, result[:success])
+    assert_equal('refused', result[:outcome])
+    assert_equal('malformed_request_shape', result.dig(:refusal, :code))
+    assert_equal(
+      %w[seed spacing componentStrategy],
+      result.dig(:refusal, :details, :misnestedFields)
+    )
   end
 
   def test_create_site_element_aborts_and_cleans_up_replacement_when_old_entity_erase_fails

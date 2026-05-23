@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative 'planar_geometry_helper'
+require_relative 'planting_mass_proxy_builder'
 require_relative 'scene_properties'
 
 module SU_MCP
@@ -9,11 +10,18 @@ module SU_MCP
     class PlantingMassBuilder
       include PlanarGeometryHelper
 
-      def initialize(scene_properties: SceneProperties.new)
+      def initialize(
+        scene_properties: SceneProperties.new,
+        proxy_builder: PlantingMassProxyBuilder.new(scene_properties: scene_properties)
+      )
         @scene_properties = scene_properties
+        @proxy_builder = proxy_builder
       end
 
       def build(model:, params:, destination: nil)
+        return proxy_builder.build(model: model, params: params, destination: destination) if
+          proxy_mass?(params)
+
         payload = params.fetch('definition')
         target_collection = destination || model.active_entities
         group = target_collection.add_group
@@ -29,7 +37,11 @@ module SU_MCP
 
       private
 
-      attr_reader :scene_properties
+      attr_reader :scene_properties, :proxy_builder
+
+      def proxy_mass?(params)
+        params.dig('representation', 'mode') == 'proxy_mass'
+      end
     end
   end
 end

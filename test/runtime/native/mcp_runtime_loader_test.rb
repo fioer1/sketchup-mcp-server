@@ -1737,7 +1737,10 @@ class McpRuntimeLoaderTest < Minitest::Test
         :build_tool,
         name: 'eval_ruby',
         title: 'Evaluate Ruby',
-        description: 'Evaluate arbitrary Ruby code inside SketchUp.',
+        description: 'Evaluate arbitrary Ruby code inside SketchUp. SketchUp Ruby API ' \
+                     'geometry and Length values use internal inches, while public MCP ' \
+                     'tool inputs and outputs use meters; convert explicitly when crossing ' \
+                     'between eval_ruby code and MCP tool data.',
         annotations: { read_only_hint: false, destructive_hint: false },
         input_schema: {},
         classification: 'escape_hatch',
@@ -1756,7 +1759,10 @@ class McpRuntimeLoaderTest < Minitest::Test
         :build_tool,
         name: 'eval_ruby',
         title: 'Evaluate Ruby',
-        description: 'Evaluate arbitrary Ruby code inside SketchUp.',
+        description: 'Evaluate arbitrary Ruby code inside SketchUp. SketchUp Ruby API ' \
+                     'geometry and Length values use internal inches, while public MCP ' \
+                     'tool inputs and outputs use meters; convert explicitly when crossing ' \
+                     'between eval_ruby code and MCP tool data.',
         annotations: { read_only_hint: false, destructive_hint: false },
         input_schema: {},
         classification: 'escape_hatch',

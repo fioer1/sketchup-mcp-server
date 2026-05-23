@@ -23,6 +23,7 @@ module SU_MCP
     SUPPORTED_HOSTING_MODES = {
       'path' => ['surface_drape'],
       'pad' => ['surface_snap'],
+      'planting_mass' => ['surface_drape'],
       'retaining_edge' => ['edge_clamp'],
       'structure' => ['terrain_anchored'],
       'tree_proxy' => ['terrain_anchored']
@@ -224,6 +225,7 @@ module SU_MCP
 
     def migrated_builder_payload(params)
       payload = { 'definition' => params.fetch('definition') }
+      payload['metadata'] = params['metadata'] if params.key?('metadata')
       payload['sceneProperties'] = params['sceneProperties'] if params.key?('sceneProperties')
       payload['representation'] = params['representation'] if params.key?('representation')
       payload
