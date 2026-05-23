@@ -1056,7 +1056,9 @@ module SU_MCP
         output_plan.adaptive_seam_records.each do |record|
           next unless retained_neighbor_record?(record, replacement_patch_ids)
 
-          retained = retained_seam_record(patch_records, record)
+          retained_patch = patch_records[record.fetch(:neighborPatchId)]
+          retained = retained_seam_record(retained_patch, record) ||
+                     legacy_retained_context_seam_record(output_plan, retained_patch, record)
           return { status: :failed, reason: :retained_seam_missing } unless retained
 
           result = AdaptiveSeams::AdaptiveSeamValidator.validate_retained(
@@ -1147,11 +1149,24 @@ module SU_MCP
       end
 
       def retained_seam_record(patch_records, planned_record)
-        patch = patch_records[planned_record.fetch(:neighborPatchId)]
+        patch = patch_records
         return nil unless patch && patch.fetch(:seamStatus, 'valid') == 'valid'
 
         patch.fetch(:seamRecords, []).find do |record|
           record.fetch(:neighborPatchId, nil) == planned_record.fetch(:patchId) &&
+            record.fetch(:edgeAxis) == planned_record.fetch(:edgeAxis) &&
+            record.fetch(:edgeIndex) == planned_record.fetch(:edgeIndex)
+        end
+      end
+
+      def legacy_retained_context_seam_record(output_plan, retained_patch, planned_record)
+        return nil unless retained_patch && retained_patch.fetch(:seamStatus, 'valid') == 'valid'
+        return nil unless retained_patch.fetch(:seamRecords, []).empty?
+
+        adaptive_seam_records_for(output_plan).find do |record|
+          !record.fetch(:replacementSide, false) &&
+            record.fetch(:patchId) == planned_record.fetch(:neighborPatchId) &&
+            record.fetch(:neighborPatchId, nil) == planned_record.fetch(:patchId) &&
             record.fetch(:edgeAxis) == planned_record.fetch(:edgeAxis) &&
             record.fetch(:edgeIndex) == planned_record.fetch(:edgeIndex)
         end
@@ -1238,6 +1253,9 @@ module SU_MCP
         retained = existing.fetch(:patches, []).reject do |patch|
           patches.any? { |new_patch| new_patch.fetch(:patchId) == patch.fetch(:patchId) }
         end
+        retained = retained.map do |patch|
+          adaptive_patch_record_with_current_seams(patch, output_plan)
+        end
         store.write!(
           owner: owner,
           registry: {
@@ -1248,6 +1266,15 @@ module SU_MCP
             patches: retained + patches
           }
         )
+      end
+
+      def adaptive_patch_record_with_current_seams(patch, output_plan)
+        seam_records = adaptive_seam_records_for(output_plan).select do |record|
+          record.fetch(:patchId) == patch.fetch(:patchId)
+        end
+        return patch if seam_records.empty?
+
+        patch.merge(seamRecords: seam_records, seamStatus: 'valid')
       end
 
       def adaptive_registry_patch_record(patch:, batch_id:, face_count:, seam_records: [])

@@ -26,6 +26,9 @@
   - rejects missing or mutated sealed seam scope before mutation;
   - validates retained-neighbor seam topology/digest/policy against registry metadata before
     erasing old faces;
+  - lazily upgrades legacy adaptive patch registries that predate MTA-42 seam records by validating
+    missing retained seam metadata against the sealed retained-context plan and then backfilling
+    current seam records into retained context patch metadata on the successful write;
   - preserves old output on seam mismatch by returning the existing sanitized ownership-refusal
     envelope.
 - Kept retained pre-erase validation topology/digest/policy-only. Z-inclusive retained validation is
@@ -73,6 +76,13 @@
   - `5 runs, 20 assertions, 0 failures, 0 errors, 0 skips`
   - `bundle exec rubocop --cache false src/su_mcp/terrain/output/adaptive_seams test/terrain/output/adaptive_seams`
   - `4 files inspected, no offenses detected`
+- Legacy registry migration follow-up:
+  - `bundle exec ruby -Itest test/terrain/output/terrain_mesh_generator_test.rb -n '/legacy_registry_missing_seam_records|retained_seam_mismatch/'`
+  - `2 runs, 72 assertions, 0 failures, 0 errors, 0 skips`
+  - `bundle exec ruby -Itest test/terrain/output/terrain_mesh_generator_test.rb`
+  - `77 runs, 1931 assertions, 0 failures, 0 errors, 0 skips`
+  - `bundle exec rubocop --cache false src/su_mcp/terrain/output/terrain_mesh_generator.rb test/terrain/output/terrain_mesh_generator_test.rb`
+  - `2 files inspected, no offenses detected`
 
 ## Code Review
 

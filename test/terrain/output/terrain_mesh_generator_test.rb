@@ -2056,6 +2056,45 @@ class TerrainMeshGeneratorTest < Minitest::Test # rubocop:disable Metrics/ClassL
     refute_includes(JSON.generate(result), 'topology_mismatch')
   end
 
+  def test_v2_adaptive_dirty_window_migrates_legacy_registry_missing_seam_records
+    model = build_semantic_model
+    owner = model.active_entities.add_group
+    before_state = build_v2_state(columns: 17, rows: 17, elevations: Array.new(289, 1.0))
+    after_state = build_v2_state(
+      columns: 17,
+      rows: 17,
+      elevations: hill_elevations(17, amplitude: 0.2),
+      revision: 2
+    )
+    policy = SU_MCP::Terrain::AdaptivePatches::AdaptivePatchPolicy.new(patch_cell_size: 4)
+    identity_generator.generate(
+      owner: owner,
+      state: before_state,
+      terrain_state_summary: { digest: 'digest-1', revision: 1 },
+      output_plan: adaptive_full_plan(before_state, 'digest-1', policy)
+    )
+    legacy_registry = adaptive_registry(owner)
+    legacy_registry.fetch(:patches).each do |patch|
+      patch.delete(:seamRecords)
+      patch.delete(:seamStatus)
+    end
+    owner.set_attribute('su_mcp_terrain', 'adaptivePatchRegistry', JSON.generate(legacy_registry))
+
+    result = identity_generator.regenerate(
+      owner: owner,
+      state: after_state,
+      terrain_state_summary: { digest: 'digest-2', revision: 2 },
+      output_plan: adaptive_dirty_plan(after_state, 'digest-2', policy, dirty_window(5, 5, 5, 5))
+    )
+
+    assert_equal('generated', result.fetch(:outcome))
+    migrated_patch = adaptive_registry(owner).fetch(:patches).find do |patch|
+      patch.fetch(:patchId) == 'adaptive-patch-v1-c3-r1'
+    end
+    assert_equal('valid', migrated_patch.fetch(:seamStatus))
+    refute_empty(migrated_patch.fetch(:seamRecords))
+  end
+
   def test_v2_adaptive_dirty_window_rejects_mutated_sealed_seam_plan_scope
     model = build_semantic_model
     owner = model.active_entities.add_group
