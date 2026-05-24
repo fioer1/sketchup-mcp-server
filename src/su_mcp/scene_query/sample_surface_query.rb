@@ -32,13 +32,16 @@ module SU_MCP
       blocking_entities = scene_entities || entities
       target_query = request.fetch(:target)
       sample_spec = request.fetch(:sampling)
-      ignore = resolved_ignore_entities_or_refusal(resolution_entries, params['ignoreTargets'])
-      return ToolResponse.refusal_result(ignore.fetch(:refusal)) if ignore.key?(:refusal)
-
-      ignore_entities = ignore.fetch(:entities)
-      target = resolved_target_or_refusal(
+      references = resolved_target_and_ignore_or_refusal(
         resolution_entries,
         target_query,
+        params['ignoreTargets']
+      )
+      return ToolResponse.refusal_result(references.fetch(:refusal)) if references.key?(:refusal)
+
+      ignore_entities = references.fetch(:ignore_entities)
+      target = resolved_sampleable_target_or_refusal(
+        references.fetch(:target_entry),
         visible_only: visible_only?(params),
         ignore_entities: ignore_entities
       )
@@ -81,13 +84,16 @@ module SU_MCP
 
       resolution_entries = normalized_entity_entries(entity_entries, entities)
       blocking_entities = scene_entities || entities
-      ignore = resolved_ignore_entities_or_refusal(resolution_entries, params['ignoreTargets'])
-      return ToolResponse.refusal_result(ignore.fetch(:refusal)) if ignore.key?(:refusal)
-
-      ignore_entities = ignore.fetch(:entities)
-      target = resolved_target_or_refusal(
+      references = resolved_target_and_ignore_or_refusal(
         resolution_entries,
         request.fetch(:target),
+        params['ignoreTargets']
+      )
+      return ToolResponse.refusal_result(references.fetch(:refusal)) if references.key?(:refusal)
+
+      ignore_entities = references.fetch(:ignore_entities)
+      target = resolved_sampleable_target_or_refusal(
+        references.fetch(:target_entry),
         visible_only: visible_only?(params),
         ignore_entities: ignore_entities
       )
@@ -307,40 +313,125 @@ module SU_MCP
       raise "Sample point #{key} is required"
     end
 
-    def resolve_ignore_entities(entity_entries, raw_ignore_targets)
-      Array(raw_ignore_targets).map do |ignore_target|
-        query = normalized_target_reference(ignore_target)
-        resolve_entity_entry!(
-          entity_entries,
-          query,
-          none_message: 'Ignore target reference resolves to no entity',
-          ambiguous_message: 'Ignore target reference resolves ambiguously'
-        ).fetch(:entity)
-      end
+    def resolved_target_and_ignore_or_refusal(entity_entries, target_query, raw_ignore_targets)
+      references = target_and_ignore_references(target_query, raw_ignore_targets)
+      collect_reference_matches(entity_entries, references)
+      ignore_refusal = first_ignore_resolution_refusal(references)
+      return { refusal: ignore_refusal } if ignore_refusal
+
+      target_refusal = target_resolution_failure(references.fetch(:target))
+      return { refusal: target_refusal } if target_refusal
+
+      {
+        target_entry: references.fetch(:target).fetch(:matches).first,
+        ignore_entities: references.fetch(:ignores).map do |reference|
+          reference.fetch(:matches).first.fetch(:entity)
+        end
+      }
+    rescue RuntimeError => e
+      { refusal: ignore_target_resolution_refusal(e.message) }
     end
 
-    def resolved_ignore_entities_or_refusal(entity_entries, raw_ignore_targets)
-      { entities: resolve_ignore_entities(entity_entries, raw_ignore_targets) }
-    rescue RuntimeError => e
+    def target_and_ignore_references(target_query, raw_ignore_targets)
+      ignore_references = Array(raw_ignore_targets).map do |ignore_target|
+        { role: :ignore, query: normalized_target_reference(ignore_target), matches: [] }
+      end
+
       {
-        refusal: refusal_payload(
-          code: 'ignore_target_resolution_failed',
-          message: e.message,
-          details: {
-            field: 'ignoreTargets',
-            resolution: e.message.include?('ambiguously') ? 'ambiguous' : 'none'
-          }
-        )
+        target: { role: :target, query: target_query, matches: [] },
+        ignores: ignore_references
       }
     end
 
-    def resolved_target_or_refusal(entity_entries, target_query, visible_only:, ignore_entities:)
-      target_entry = resolve_entity_entry!(
-        entity_entries,
-        target_query,
+    def collect_reference_matches(entity_entries, references)
+      all_references = [references.fetch(:target)] + references.fetch(:ignores)
+      if serializer.respond_to?(:target_identity_value)
+        collect_identity_reference_matches(entity_entries, all_references)
+      else
+        collect_reference_matches_by_predicate(entity_entries, all_references)
+      end
+    end
+
+    def collect_identity_reference_matches(entity_entries, references)
+      buckets = reference_buckets_by_identity(references)
+      entity_entries.each do |entry|
+        entity = entry.fetch(:entity)
+        matched_references = {}.compare_by_identity
+        buckets.each do |identity_key, values|
+          identity_value = serializer.target_identity_value(entity, identity_key)
+          next unless values.key?(identity_value)
+
+          values.fetch(identity_value).each do |reference|
+            next unless target_reference_matches?(entity, reference.fetch(:query))
+
+            matched_references[reference] = reference
+          end
+        end
+        matched_references.each_value { |reference| reference.fetch(:matches) << entry }
+      end
+    end
+
+    def reference_buckets_by_identity(references)
+      references.each_with_object({}) do |reference, buckets|
+        reference.fetch(:query).each do |identity_key, identity_value|
+          value_bucket = (buckets[identity_key] ||= {})
+          (value_bucket[identity_value] ||= []) << reference
+        end
+      end
+    end
+
+    def collect_reference_matches_by_predicate(entity_entries, references)
+      entity_entries.each do |entry|
+        entity = entry.fetch(:entity)
+        references.each do |reference|
+          next unless target_reference_matches?(entity, reference.fetch(:query))
+
+          reference.fetch(:matches) << entry
+        end
+      end
+    end
+
+    def first_ignore_resolution_refusal(references)
+      references.fetch(:ignores).each do |reference|
+        failure = reference_resolution_failure(
+          reference,
+          none_message: 'Ignore target reference resolves to no entity',
+          ambiguous_message: 'Ignore target reference resolves ambiguously'
+        )
+        return ignore_target_resolution_refusal(failure) if failure
+      end
+      nil
+    end
+
+    def target_resolution_failure(reference)
+      failure = reference_resolution_failure(
+        reference,
         none_message: 'Target reference resolves to no entity',
         ambiguous_message: 'Target reference resolves ambiguously'
       )
+      failure ? target_resolution_refusal(RuntimeError.new(failure)) : nil
+    end
+
+    def reference_resolution_failure(reference, none_message:, ambiguous_message:)
+      matches = reference.fetch(:matches)
+      return none_message if matches.empty?
+      return ambiguous_message if matches.length > 1
+
+      nil
+    end
+
+    def ignore_target_resolution_refusal(message)
+      refusal_payload(
+        code: 'ignore_target_resolution_failed',
+        message: message,
+        details: {
+          field: 'ignoreTargets',
+          resolution: message.include?('ambiguously') ? 'ambiguous' : 'none'
+        }
+      )
+    end
+
+    def resolved_sampleable_target_or_refusal(target_entry, visible_only:, ignore_entities:)
       target_entity = target_entry.fetch(:entity)
       target_face_entries = support.sampleable_faces_for(
         target_entity,

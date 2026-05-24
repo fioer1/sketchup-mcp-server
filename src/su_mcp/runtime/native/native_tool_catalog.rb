@@ -131,8 +131,11 @@ module SU_MCP
           description: 'Sample world-space surface elevation from an explicit target using ' \
                        'a canonical sampling object. Use sampling.type points for explicit ' \
                        'XY control checks or profile for terrain-shape review between ' \
-                       'controls. This is not broad scene discovery and does not return ' \
-                       'terrain validation verdicts.',
+                       'controls. For direct terrain-surface readback, prefer visibleOnly ' \
+                       'false instead of sending ignoreTargets. Use ignoreTargets only for ' \
+                       'known visible blockers or target descendants that must be excluded. ' \
+                       'This is not broad scene discovery and does not return terrain ' \
+                       'validation verdicts.',
           handler_key: :sample_surface_z,
           annotations: { read_only_hint: true, destructive_hint: false },
           classification: 'first_class',
@@ -144,9 +147,16 @@ module SU_MCP
               sampling: sample_surface_sampling_schema,
               ignoreTargets: {
                 type: 'array',
-                items: target_reference_schema
+                items: target_reference_schema,
+                description: 'Optional exclusions for known visible blockers or target ' \
+                             'descendants. Do not send defensive or stale ignore lists; ' \
+                             'each reference must resolve uniquely.'
               },
-              visibleOnly: boolean_schema
+              visibleOnly: described_schema(
+                boolean_schema,
+                'Defaults to true and filters/blocks against visible scene geometry. Set ' \
+                'false when the intent is direct readback from the explicit target surface.'
+              )
             },
             additionalProperties: false
           }

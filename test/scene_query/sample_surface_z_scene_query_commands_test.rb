@@ -156,6 +156,20 @@ class SampleSurfaceZSceneQueryCommandsTest < Minitest::Test
     end
   end
 
+  class CountingIdentitySerializer < SU_MCP::SceneQuerySerializer
+    attr_reader :target_identity_value_calls
+
+    def initialize
+      super
+      @target_identity_value_calls = 0
+    end
+
+    def target_identity_value(entity, key)
+      @target_identity_value_calls += 1
+      super
+    end
+  end
+
   def setup
     install_runtime_geometry_stubs
     @commands = SU_MCP::SceneQueryCommands.new
@@ -211,6 +225,46 @@ class SampleSurfaceZSceneQueryCommandsTest < Minitest::Test
 
     assert_equal(true, result[:success])
     assert_equal(0, serializer.serialize_target_match_calls)
+  end
+
+  def test_target_and_ignore_resolution_batches_identity_references
+    adapter = SU_MCP::Adapters::ModelAdapter.new
+    serializer = CountingIdentitySerializer.new
+    query = MeterIdentitySampleSurfaceQuery.new(serializer: serializer)
+    entries = adapter.all_entity_paths_recursive
+
+    result = query.send(
+      :resolved_target_and_ignore_or_refusal,
+      entries,
+      { 'persistentId' => '4001' },
+      [
+        { 'persistentId' => '4006' },
+        { 'persistentId' => '4007' },
+        { 'persistentId' => '4008' }
+      ]
+    )
+
+    refute(result.key?(:refusal))
+    assert_equal('401', result.dig(:target_entry, :entity).entityID.to_s)
+    ignored_entity_ids = result.fetch(:ignore_entities).map { |entity| entity.entityID.to_s }
+    assert_equal(%w[406 407 408], ignored_entity_ids)
+    assert_operator(serializer.target_identity_value_calls, :<, entries.length * 2)
+  end
+
+  def test_multi_field_identity_reference_is_not_counted_as_ambiguous
+    adapter = SU_MCP::Adapters::ModelAdapter.new
+    query = MeterIdentitySampleSurfaceQuery.new(serializer: SU_MCP::SceneQuerySerializer.new)
+
+    result = query.send(
+      :resolved_target_and_ignore_or_refusal,
+      adapter.all_entity_paths_recursive,
+      { 'persistentId' => '4001', 'entityId' => '401' },
+      [{ 'persistentId' => '4007', 'entityId' => '407' }]
+    )
+
+    refute(result.key?(:refusal))
+    assert_equal('401', result.dig(:target_entry, :entity).entityID.to_s)
+    assert_equal(['407'], result.fetch(:ignore_entities).map { |entity| entity.entityID.to_s })
   end
 
   def test_refuses_unsupported_target_host_type
