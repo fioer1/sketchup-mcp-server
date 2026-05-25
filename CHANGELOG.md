@@ -2,6 +2,22 @@
 
 <!-- version list -->
 
+## v1.15.0 (2026-05-25)
+
+### Bug Fixes
+
+- **mcp**: Server shutdown and async request parser
+  ([`782cd4e`](https://github.com/SidhNor/sketchup-mcp-server/commit/782cd4ee190c59440311a26bf97919cd71b58472))
+
+- **STI-04**: Perf improvement for sample queries with ignores
+  ([`031f438`](https://github.com/SidhNor/sketchup-mcp-server/commit/031f438ff33ab2aa81da068456b406ef9e5108df))
+
+### Features
+
+- **MTA-43**: Patch aware terrain edits
+  ([`ac7dcc5`](https://github.com/SidhNor/sketchup-mcp-server/commit/ac7dcc5016647aa233ace3354b66919514391336))
+
+
 ## v1.14.0 (2026-05-23)
 
 ### Bug Fixes
