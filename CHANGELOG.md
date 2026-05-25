@@ -2,6 +2,19 @@
 
 <!-- version list -->
 
+## v1.16.0 (2026-05-25)
+
+### Bug Fixes
+
+- **semantic**: Perf improvement for create element under parent
+  ([`4d6571e`](https://github.com/SidhNor/sketchup-mcp-server/commit/4d6571eb573a3ae157f5143b99b9a9e91d6d8b32))
+
+### Features
+
+- **MTA-41**: Triangle quad optimization
+  ([`d869fa1`](https://github.com/SidhNor/sketchup-mcp-server/commit/d869fa1c2ef2971e74fa2847c54f3f4648c242c1))
+
+
 ## v1.15.0 (2026-05-25)
 
 ### Bug Fixes
