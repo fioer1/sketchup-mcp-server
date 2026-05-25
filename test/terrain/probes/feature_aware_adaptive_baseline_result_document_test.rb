@@ -159,6 +159,53 @@ class FeatureAwareAdaptiveBaselineResultDocumentTest < Minitest::Test
     refute_includes(serialized, 'rawPatchIds')
   end
 
+  def test_serializes_aggregate_diagonal_evidence_with_minimal_proof_cell_identifier
+    document = SU_MCP::Terrain::FeatureAwareAdaptiveBaselineResultDocument.new(
+      replay: replay,
+      evidence: {
+        rows: [
+          {
+            rowId: 'diagonal-proof',
+            sourceElementId: 'terrain-main',
+            commandKind: 'edit',
+            timingBuckets: { total: 0.1 },
+            accepted: true,
+            faceCount: 90,
+            vertexCount: 45,
+            diagonalOptimizationSummary: {
+              eligibleCount: 4,
+              changedCount: 1,
+              decisionReasonCounts: { residual: 1, baseline_tie: 3 },
+              proofCell: {
+                rowId: 'diagonal-proof',
+                cellKey: 'c0-r0-c3-r3'
+              },
+              seamAdjacentChangedCount: 0,
+              seamAdjacentResidualDelta: nil,
+              seamAdjacentDihedralDelta: nil,
+              adoptionVerdict: 'adopt',
+              rawCandidateTriangles: [[[0, 0], [1, 0], [1, 1]]]
+            }
+          }
+        ]
+      },
+      replay_path: __FILE__,
+      clock: Struct.new(:now).new(Time.utc(2026, 5, 18)),
+      model: Object.new,
+      include_timing: false
+    ).to_h
+
+    row = document.fetch(:rows).first
+    serialized = JSON.generate(row)
+
+    assert_equal('adopt', row.dig(:diagonalOptimizationSummary, :adoptionVerdict))
+    assert_equal(
+      { rowId: 'diagonal-proof', cellKey: 'c0-r0-c3-r3' },
+      row.dig(:diagonalOptimizationSummary, :proofCell)
+    )
+    refute_includes(serialized, 'rawCandidateTriangles')
+  end
+
   private
 
   def replay

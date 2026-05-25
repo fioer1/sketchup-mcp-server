@@ -613,6 +613,65 @@ class TerrainOutputPlanTest < Minitest::Test # rubocop:disable Metrics/ClassLeng
     )
   end
 
+  def test_v2_feature_aware_diagonal_optimizer_changes_rectangular_emission_without_count_growth
+    state = diagonal_residual_state
+    feature_policy = SU_MCP::Terrain::FeatureAwareAdaptivePolicy.new(
+      feature_geometry: nil,
+      state: state,
+      base_tolerance: 100.0
+    )
+
+    plan = SU_MCP::Terrain::TerrainOutputPlan.full_grid(
+      state: state,
+      terrain_state_summary: { digest: 'diagonal-aware', revision: 1 },
+      feature_aware_adaptive_policy: feature_policy
+    )
+
+    cell = plan.adaptive_cells.fetch(0)
+    assert_equal([[0, 0], [3, 0], [0, 3]], cell.fetch(:emission_triangles).first)
+    assert_equal(2, cell.fetch(:emission_triangles).length)
+    assert_equal(2, plan.face_count)
+    assert_equal(4, plan.vertex_count)
+    assert_equal(1, plan.diagonal_optimization_summary.fetch(:changedCount))
+  end
+
+  def test_v2_feature_aware_diagonal_optimizer_keeps_center_fan_cells_unchanged
+    plan = adaptive_plan(mixed_resolution_state)
+    fan_cell = boundary_fan_cells(plan).first
+
+    refute_nil(fan_cell.fetch(:fan_center))
+    assert(
+      fan_cell.fetch(:emission_triangles).all? do |triangle|
+        triangle.first == fan_cell.fetch(:fan_center)
+      end
+    )
+  end
+
+  def test_diagonal_summary_distinguishes_seam_adjacent_changed_cells
+    cells = [
+      {
+        min_column: 4,
+        min_row: 0,
+        max_column: 8,
+        max_row: 4,
+        diagonal_decision: {
+          selected: :alternate,
+          reason: :residual,
+          residual_improvement: 0.1
+        }
+      }
+    ]
+
+    summary = SU_MCP::Terrain::AdaptiveOutputConformity.diagonal_optimization_summary(
+      cells,
+      seam_adjacent: ->(_cell) { true }
+    )
+
+    assert_equal(1, summary.fetch(:seamAdjacentChangedCount))
+    assert_equal(0.0, summary.fetch(:seamAdjacentResidualDelta))
+    assert_equal(0.0, summary.fetch(:seamAdjacentDihedralDelta))
+  end
+
   def test_v2_fairing_gate_does_not_suppress_overlapping_authoritative_forced_detail
     state = build_v2_state(columns: 17, rows: 17, elevations: Array.new(17 * 17, 0.0))
     feature_policy = SU_MCP::Terrain::FeatureAwareAdaptivePolicy.new(
@@ -1084,6 +1143,22 @@ class TerrainOutputPlanTest < Minitest::Test # rubocop:disable Metrics/ClassLeng
         0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
         0.0, 0.0, 0.0, 0.0, 0.05, 0.0,
         0.0, 0.0, 0.0, 0.0, 0.1, 0.0
+      ]
+    )
+  end
+
+  def diagonal_residual_state
+    build_v2_state(
+      columns: 4,
+      rows: 4,
+      elevations: [
+        -0.43065904845984737, -1.919322888910946, -1.5844052404272593,
+        -0.012052421402118263,
+        0.629466122389446, 1.998888535850278, 0.7005297133345278, 1.4394420044800014,
+        -1.0446665014063536, 0.6426539609187927, 1.5214173138215656,
+        0.42168602867378047,
+        -0.4927838706575516, 1.2585669747468677, -1.8013351314116641,
+        -0.6677658305734515
       ]
     )
   end

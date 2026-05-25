@@ -26,7 +26,7 @@ module SU_MCP
                   :adaptive_patch_policy, :feature_aware_adaptive_policy,
                   :feature_output_policy_diagnostics, :adaptive_seam_records,
                   :adaptive_seam_validations, :sealed_adaptive_seam_plan,
-                  :adaptive_lifecycle_resolution
+                  :adaptive_lifecycle_resolution, :diagonal_optimization_summary
 
       def self.full_grid(
         state:,
@@ -162,10 +162,17 @@ module SU_MCP
           feature_aware_adaptive_policy,
           adaptive_patch_policy
         )
+        diagonal_context = feature_aware_adaptive_policy&.diagonal_optimization_context
         cells = AdaptiveOutputConformity.cells(
           adaptive_cells,
           state: state,
-          collapse_coplanar_edges: !feature_aware_adaptive_policy.nil?
+          collapse_coplanar_edges: !feature_aware_adaptive_policy.nil?,
+          diagonal_context: diagonal_context
+        )
+        diagonal_summary = AdaptiveOutputConformity.diagonal_optimization_summary(
+          cells,
+          context: diagonal_context,
+          seam_adjacent: seam_adjacent_checker(adaptive_patch_policy, state.dimensions)
         )
         seam_artifacts = adaptive_seam_artifacts_for(
           state,
@@ -189,7 +196,8 @@ module SU_MCP
           adaptive_seam_validations: seam_artifacts.fetch(:validations),
           sealed_adaptive_seam_plan: seam_artifacts.fetch(:sealed_plan),
           adaptive_lifecycle_resolution: lifecycle_resolution,
-          feature_output_policy_diagnostics: feature_output_policy_diagnostics
+          feature_output_policy_diagnostics: feature_output_policy_diagnostics,
+          diagonal_optimization_summary: diagonal_summary
         )
       end
 
@@ -319,6 +327,21 @@ module SU_MCP
         return nil unless policy
 
         PatchLifecycle::PatchPlan.new(policy: policy, dimensions: state.dimensions)
+      end
+
+      def self.seam_adjacent_checker(policy, dimensions)
+        return nil unless policy&.hard_patch_boundaries
+
+        lambda do |cell|
+          patch_boundary_value?(cell.fetch(:min_column), policy, dimensions.fetch('columns')) ||
+            patch_boundary_value?(cell.fetch(:max_column), policy, dimensions.fetch('columns')) ||
+            patch_boundary_value?(cell.fetch(:min_row), policy, dimensions.fetch('rows')) ||
+            patch_boundary_value?(cell.fetch(:max_row), policy, dimensions.fetch('rows'))
+        end
+      end
+
+      def self.patch_boundary_value?(value, policy, sample_count)
+        value.positive? && value < (sample_count - 1) && (value % policy.patch_cell_size).zero?
       end
 
       def self.seam_records_for_patch(state, policy, patch, replacement_side)
@@ -941,7 +964,8 @@ module SU_MCP
         adaptive_seam_validations: [],
         sealed_adaptive_seam_plan: nil,
         adaptive_lifecycle_resolution: nil,
-        feature_output_policy_diagnostics: nil
+        feature_output_policy_diagnostics: nil,
+        diagonal_optimization_summary: nil
       )
         @intent = intent
         @window = window
@@ -967,6 +991,7 @@ module SU_MCP
         @sealed_adaptive_seam_plan = sealed_adaptive_seam_plan
         @adaptive_lifecycle_resolution = adaptive_lifecycle_resolution
         @feature_output_policy_diagnostics = feature_output_policy_diagnostics
+        @diagonal_optimization_summary = diagonal_optimization_summary
       end
 
       def to_summary

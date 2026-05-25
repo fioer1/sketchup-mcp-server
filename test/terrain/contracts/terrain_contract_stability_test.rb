@@ -664,7 +664,9 @@ class TerrainContractStabilityTest < Minitest::Test
       maxPromotionRadius over_budget_component retainedBoundary safetyMargin
       retained_boundary safety_margin
       dirty_window feature_boundary_crossing protected_boundary_crossing
-      retained_seam_dependency
+      retained_seam_dependency diagonal diagonalOptimization diagonalOptimizationSummary
+      alternateDiagonal baselineDiagonal proofCell proofRegion optimizer decisionReason
+      residualDelta residualImprovement rawCandidateTriangles candidateDiagonal
     ].each { |term| refute_includes(serialized, term) }
     refute_includes(serialized_output, 'regeneration')
   end

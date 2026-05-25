@@ -47,7 +47,7 @@ module SU_MCP
         regression = regression_reason(row, baseline)
         return ['regressed', regression] if regression
         return ['policy_applied', policy_applied_reason(row, baseline)] if
-          feature_policy_applied?(row) && quality_captured?(row)
+          (feature_policy_applied?(row) || diagonal_adopted?(row)) && quality_captured?(row)
 
         ['neutral', delta_reason(row, baseline)]
       end
@@ -121,6 +121,14 @@ module SU_MCP
         return false if broad_corridor_density_only?(row)
 
         policy_signal_count(row.fetch('adaptivePolicySummary')).positive?
+      end
+
+      def diagonal_adopted?(row)
+        summary = row['diagonalOptimizationSummary'] || {}
+        summary.fetch('changedCount', 0).to_i.positive? &&
+          summary.fetch('residualImprovement', 0.0).to_f.positive? &&
+          summary['proofCell'] &&
+          summary['adoptionVerdict'] == 'adopt'
       end
 
       def policy_signal_count(summary)
@@ -211,8 +219,14 @@ module SU_MCP
           'expectedFallback' => row['expectedFallback'],
           'componentBudgetStatus' => component_budget_status(row),
           'componentFallback' => component_fallback(row),
+          'diagonalAdoptionVerdict' => diagonal_adoption_verdict(row),
           'planarInterior' => planar_interior_comparison(row, baseline)
         }.compact
+      end
+
+      def diagonal_adoption_verdict(row)
+        summary = row['diagonalOptimizationSummary'] || {}
+        summary['adoptionVerdict']
       end
 
       def component_budget_status(row)

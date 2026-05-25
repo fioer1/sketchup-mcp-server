@@ -414,6 +414,61 @@ class FeatureAwareAdaptivePolicyTest < Minitest::Test
     )
   end
 
+  def test_diagonal_context_uses_derived_feature_geometry_with_bounded_exact_checks
+    policy = build_policy(
+      feature_geometry: geometry(
+        protectedRegions: [
+          {
+            'id' => 'protected',
+            'featureId' => 'feature-protected',
+            'role' => 'protected',
+            'primitive' => 'rectangle',
+            'ownerLocalBounds' => [[2.0, 2.0], [6.0, 6.0]]
+          }
+        ],
+        referenceSegments: [
+          reference_segment('side', 'side_transition', [0.0, 6.0], [8.0, 6.0]),
+          reference_segment('unsupported', 'centerline', [0.0, 4.0], [8.0, 4.0])
+        ]
+      )
+    )
+
+    context = policy.diagonal_optimization_context
+    miss = context.safety_for(bounds(10, 10, 12, 12))
+    hit = context.safety_for(bounds(3, 3, 5, 5))
+
+    assert_equal({ baseline: :safe, alternate: :safe }, miss.fetch(:candidate_safety))
+    assert_includes(%i[safe unsafe ambiguous], hit.fetch(:candidate_safety).fetch(:baseline))
+    assert_operator(context.summary.fetch(:exactCheckCount), :>, 0)
+    assert_equal(
+      { unsupported_reference_role: 1 },
+      context.summary.fetch(:skippedInputCounts)
+    )
+  end
+
+  def test_diagonal_context_distinguishes_single_candidate_protected_boundary_crossing
+    policy = build_policy(
+      feature_geometry: geometry(
+        protectedRegions: [
+          {
+            'id' => 'protected-baseline-crossing',
+            'featureId' => 'feature-protected',
+            'role' => 'protected',
+            'primitive' => 'rectangle',
+            'ownerLocalBounds' => [[0.9, 0.9], [1.1, 1.1]]
+          }
+        ]
+      )
+    )
+
+    safety = policy.diagonal_optimization_context
+                   .safety_for(bounds(0, 0, 4, 4))
+                   .fetch(:candidate_safety)
+
+    assert_equal(:unsafe, safety.fetch(:baseline))
+    assert_equal(:safe, safety.fetch(:alternate))
+  end
+
   private
 
   def build_policy(feature_geometry:)

@@ -720,6 +720,29 @@ class TerrainSurfaceCommandsTest < Minitest::Test # rubocop:disable Metrics/Clas
     refute_includes(JSON.generate(result), 'componentPlanSummary')
   end
 
+  def test_baseline_evidence_records_internal_diagonal_optimization_summary
+    model = build_semantic_model
+    managed_terrain_owner(model)
+    commands = build_edit_commands(
+      model: model,
+      repository: EditRepository.new(tiled_state_20x20),
+      mesh_generator: RecordingRegeneratingMeshGenerator.new,
+      grade_editor: SU_MCP::Terrain::BoundedGradeEdit.new,
+      terrain_feature_intent_emitter: RecordingFeatureIntentEmitter.new,
+      terrain_feature_planner: ReplayLikeFeatureWindowPlanner.new
+    )
+
+    result = commands.edit_terrain_surface(edit_request)
+    summary = commands.last_baseline_evidence.fetch(:diagonalOptimizationSummary)
+
+    assert_equal('edited', result.fetch(:outcome))
+    assert_includes(summary.keys, :eligibleCount)
+    assert_includes(summary.keys, :changedCount)
+    assert_includes(summary.keys, :decisionReasonCounts)
+    assert_includes(summary.keys, :adoptionVerdict)
+    refute_includes(JSON.generate(result), 'diagonalOptimizationSummary')
+  end
+
   def test_non_cdt_adaptive_output_requests_selected_feature_geometry_for_policy
     model = build_semantic_model
     managed_terrain_owner(model)

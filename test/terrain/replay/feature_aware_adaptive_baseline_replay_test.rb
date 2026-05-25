@@ -89,7 +89,7 @@ class FeatureAwareAdaptiveBaselineReplayTest < Minitest::Test
       adaptivePolicySummary affectedPatchScope faceCount vertexCount meshType
       simplificationTolerance
       maxSimplificationError renderingSummary planarInteriorMetrics featureQualitySummary
-      seamValidationSummary harnessQualitySeconds timingBuckets
+      seamValidationSummary diagonalOptimizationSummary harnessQualitySeconds timingBuckets
     ].each { |field| assert_includes(row.keys, field) }
     assert_replay_evidence_values(row)
     refute_includes(JSON.generate(row), 'rawTriangles')
@@ -129,10 +129,25 @@ class FeatureAwareAdaptiveBaselineReplayTest < Minitest::Test
       },
       row.fetch(:seamValidationSummary)
     )
+    assert_replay_diagonal_evidence_values(row)
     assert_equal(0.01, row.fetch(:simplificationTolerance))
     assert_equal(0.009, row.fetch(:maxSimplificationError))
     assert_equal(0.02, row.fetch(:timingBuckets).fetch(:commandOutputPlanning))
     assert(row.fetch(:timingBuckets).fetch(:total).positive?)
+  end
+
+  def assert_replay_diagonal_evidence_values(row)
+    assert_equal(
+      {
+        eligibleCount: 1,
+        changedCount: 1,
+        decisionReasonCounts: { residual: 1 },
+        proofCell: { rowId: 'target-local-center', cellKey: 'c0-r0-c3-r3' },
+        seamAdjacentChangedCount: 0,
+        adoptionVerdict: 'adopt'
+      },
+      row.fetch(:diagonalOptimizationSummary)
+    )
   end
 
   def test_replay_runner_records_quality_evidence_outside_command_timing
@@ -504,6 +519,14 @@ class FeatureAwareAdaptiveBaselineReplayTest < Minitest::Test
           seamRecordCount: 16,
           validationCount: 8,
           maxZGap: 0.0
+        },
+        diagonalOptimizationSummary: {
+          eligibleCount: 1,
+          changedCount: 1,
+          decisionReasonCounts: { residual: 1 },
+          proofCell: { rowId: 'target-local-center', cellKey: 'c0-r0-c3-r3' },
+          seamAdjacentChangedCount: 0,
+          adoptionVerdict: 'adopt'
         },
         timingBuckets: {
           commandOutputPlanning: 0.02,

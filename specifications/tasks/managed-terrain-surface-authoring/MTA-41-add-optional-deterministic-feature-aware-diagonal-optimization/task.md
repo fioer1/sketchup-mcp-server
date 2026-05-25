@@ -1,7 +1,7 @@
 # Task: MTA-41 Add Optional Deterministic Feature-Aware Diagonal Optimization
 **Task ID**: `MTA-41`
 **Title**: `Add Optional Deterministic Feature-Aware Diagonal Optimization`
-**Status**: `defined`
+**Status**: `implemented`
 **Priority**: `optional`
 **Date**: `2026-05-15`
 
@@ -53,6 +53,8 @@ Scenario: Optional value is proven before adoption
   When MTA-41 verification completes
   Then every relevant replay row records before/after timing
   And every relevant replay row records before/after face count
+  And any adoption claim is backed by emitted-geometry evidence that diagonal choices actually
+    changed where improvement is claimed
   And every relevant replay row records visual or residual evidence for diagonal quality
   And the task records whether the optimization is adopted, deferred, or rejected
 ```
@@ -92,11 +94,12 @@ Scenario: Optional value is proven before adoption
 
 ## Related Technical Plan
 
-- none yet
+- [Technical Plan](./plan.md)
 
 ## Success Metrics
 
 - Repeated hosted runs produce stable diagonal choices.
 - Protected and forced-boundary ambiguity is handled safely.
 - Replay evidence shows whether visual/residual quality improves without unacceptable timing cost.
+- Adoption evidence includes actual emitted diagonal changes, not only internal diagnostics.
 - The task records an adoption, deferral, or rejection verdict from evidence.

@@ -214,6 +214,52 @@ class FeatureAwareAdaptiveBaselineResultClassifierTest < Minitest::Test
     assert_equal('regressed', unexpected_fallback.fetch('verdict'))
   end
 
+  def test_classifies_adoptable_diagonal_evidence_only_with_changed_geometry_and_metric
+    row = classify(
+      current_row(
+        quality_status: 'captured',
+        diagonal_summary: {
+          'eligibleCount' => 4,
+          'changedCount' => 1,
+          'residualImprovement' => 0.25,
+          'proofCell' => { 'rowId' => 'feature-row', 'cellKey' => 'c0-r0-c3-r3' },
+          'seamAdjacentChangedCount' => 0,
+          'adoptionVerdict' => 'adopt'
+        }
+      )
+    )
+
+    assert_equal('policy_applied', row.fetch('verdict'))
+    assert_equal('adopt', row.fetch('comparison').fetch('diagonalAdoptionVerdict'))
+  end
+
+  def test_keeps_diagonal_evidence_neutral_without_changed_geometry_or_metric
+    no_change = classify(
+      current_row(
+        quality_status: 'captured',
+        diagonal_summary: {
+          'eligibleCount' => 4,
+          'changedCount' => 0,
+          'adoptionVerdict' => 'defer'
+        }
+      )
+    )
+    no_metric = classify(
+      current_row(
+        quality_status: 'captured',
+        diagonal_summary: {
+          'eligibleCount' => 4,
+          'changedCount' => 1,
+          'proofCell' => { 'rowId' => 'feature-row', 'cellKey' => 'c0-r0-c3-r3' },
+          'adoptionVerdict' => 'defer'
+        }
+      )
+    )
+
+    assert_equal('neutral', no_change.fetch('verdict'))
+    assert_equal('neutral', no_metric.fetch('verdict'))
+  end
+
   private
 
   def classify(row, baseline: baseline_row)
@@ -246,7 +292,8 @@ class FeatureAwareAdaptiveBaselineResultClassifierTest < Minitest::Test
     component_budget: nil,
     expected_promotion: false,
     expected_over_budget: false,
-    expected_fallback: false
+    expected_fallback: false,
+    diagonal_summary: nil
   )
     {
       'rowId' => 'feature-row',
@@ -269,7 +316,8 @@ class FeatureAwareAdaptiveBaselineResultClassifierTest < Minitest::Test
       'componentBudget' => component_budget,
       'expectedPromotion' => expected_promotion,
       'expectedOverBudget' => expected_over_budget,
-      'expectedFallback' => expected_fallback
+      'expectedFallback' => expected_fallback,
+      'diagonalOptimizationSummary' => diagonal_summary
     }.compact
   end
 

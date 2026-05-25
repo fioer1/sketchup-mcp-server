@@ -316,6 +316,7 @@ module SU_MCP
           policyFingerprint: diagnostics&.fetch(:policyFingerprint, nil),
           featureContext: feature_context_baseline_summary(diagnostics),
           adaptivePolicySummary: output_plan.feature_aware_adaptive_policy&.summary,
+          diagonalOptimizationSummary: output_plan.diagonal_optimization_summary,
           componentPlanSummary: component_plan_summary(output_plan),
           componentBudget: component_budget_summary(output_plan),
           dirtyWindow: sample_window_baseline_summary(output_plan.window),

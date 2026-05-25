@@ -657,6 +657,36 @@ class TerrainMeshGeneratorTest < Minitest::Test # rubocop:disable Metrics/ClassL
     )
   end
 
+  def test_v2_adaptive_generation_consumes_optimized_diagonal_emission_triangles
+    model = build_semantic_model
+    owner = model.active_entities.add_group
+    state = diagonal_residual_v2_state
+    feature_policy = SU_MCP::Terrain::FeatureAwareAdaptivePolicy.new(
+      feature_geometry: nil,
+      state: state,
+      base_tolerance: 100.0
+    )
+    plan = SU_MCP::Terrain::TerrainOutputPlan.full_grid(
+      state: state,
+      terrain_state_summary: { digest: 'diagonal-aware', revision: 1 },
+      feature_aware_adaptive_policy: feature_policy
+    )
+
+    result = identity_generator.generate(
+      owner: owner,
+      state: state,
+      terrain_state_summary: { digest: 'diagonal-aware', revision: 1 },
+      output_plan: plan
+    )
+
+    assert_equal(2, result.dig(:summary, :derivedMesh, :faceCount))
+    assert_includes(
+      owner.entities.faces.map(&:points),
+      [[0.0, 0.0, -0.43065904845984737], [3.0, 0.0, -0.012052421402118263],
+       [0.0, 3.0, -0.4927838706575516]]
+    )
+  end
+
   def test_v2_adaptive_split_vertices_use_source_grid_sample_elevations
     model = build_semantic_model
     owner = model.active_entities.add_group
@@ -2583,6 +2613,22 @@ class TerrainMeshGeneratorTest < Minitest::Test # rubocop:disable Metrics/ClassL
         0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
         0.0, 0.0, 0.0, 0.0, 0.05, 0.0,
         0.0, 0.0, 0.0, 0.0, 0.1, 0.0
+      ]
+    )
+  end
+
+  def diagonal_residual_v2_state
+    build_v2_state(
+      columns: 4,
+      rows: 4,
+      elevations: [
+        -0.43065904845984737, -1.919322888910946, -1.5844052404272593,
+        -0.012052421402118263,
+        0.629466122389446, 1.998888535850278, 0.7005297133345278, 1.4394420044800014,
+        -1.0446665014063536, 0.6426539609187927, 1.5214173138215656,
+        0.42168602867378047,
+        -0.4927838706575516, 1.2585669747468677, -1.8013351314116641,
+        -0.6677658305734515
       ]
     )
   end

@@ -4,6 +4,8 @@ require 'digest'
 require 'json'
 
 require_relative 'feature_aware_forced_subdivision_mask'
+require_relative 'feature_aware_diagonal_context'
+require_relative 'feature_aware_diagonal_optimizer'
 
 module SU_MCP
   module Terrain
@@ -115,6 +117,14 @@ module SU_MCP
           forcedSubdivisionSummary: forced_subdivision_mask.summary,
           fallbackCounts: fallback_counts
         }.compact
+      end
+
+      def diagonal_optimization_context
+        @diagonal_optimization_context ||= FeatureAwareDiagonalContext.new(
+          feature_geometry: feature_geometry,
+          state: state,
+          config: FeatureAwareDiagonalOptimizer::DEFAULT_CONFIG
+        )
       end
 
       def policy_fingerprint

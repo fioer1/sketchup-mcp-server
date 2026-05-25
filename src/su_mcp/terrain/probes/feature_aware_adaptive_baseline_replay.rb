@@ -17,7 +17,8 @@ module SU_MCP
         adaptivePolicySummary componentPlanSummary componentBudget expectedPromotion
         expectedOverBudget expectedFallback affectedPatchScope faceCount vertexCount meshType
         simplificationTolerance maxSimplificationError renderingSummary planarInteriorMetrics
-        seamValidationSummary featureQualitySummary harnessQualitySeconds timingBuckets
+        seamValidationSummary diagonalOptimizationSummary featureQualitySummary
+        harnessQualitySeconds timingBuckets
       ].freeze
 
       attr_reader :document
@@ -228,6 +229,10 @@ module SU_MCP
           affectedPatchScope: evidence_value(baseline_evidence, :affectedPatchScope),
           planarInteriorMetrics: evidence_value(baseline_evidence, :planarInteriorMetrics),
           seamValidationSummary: evidence_value(baseline_evidence, :seamValidationSummary),
+          diagonalOptimizationSummary: evidence_value(
+            baseline_evidence,
+            :diagonalOptimizationSummary
+          ),
           renderingSummary: evidence_value(baseline_evidence, :renderingSummary) ||
             { status: accepted_result?(result) ? 'captured' : 'not_captured' }
         }

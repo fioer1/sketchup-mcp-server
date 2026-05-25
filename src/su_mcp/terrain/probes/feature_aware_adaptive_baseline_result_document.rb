@@ -116,17 +116,29 @@ module SU_MCP
           timingBuckets: row.fetch(:timingBuckets),
           outcome: row[:outcome] || inferred_outcome(row),
           planarInteriorMetrics: row[:planarInteriorMetrics],
-          adaptivePolicySummary: row[:adaptivePolicySummary],
-          seamValidationSummary: seam_validation_result(row[:seamValidationSummary]),
-          featureQualitySummary: row[:featureQualitySummary],
-          harnessQualitySeconds: row[:harnessQualitySeconds],
           simplificationTolerance: row[:simplificationTolerance],
           maxSimplificationError: row[:maxSimplificationError],
           dirtyWindow: dirty_window_result(row[:dirtyWindow]),
           patchScope: patch_scope_result(row[:affectedPatchScope]),
           refusal: row.fetch(:accepted, false) ? nil : row[:verdict]
         }
-        result.merge(mesh_result_fields(row)).merge(component_result_fields(row)).compact
+        result
+          .merge(mesh_result_fields(row))
+          .merge(internal_evidence_fields(row))
+          .merge(component_result_fields(row))
+          .compact
+      end
+
+      def internal_evidence_fields(row)
+        {
+          adaptivePolicySummary: row[:adaptivePolicySummary],
+          seamValidationSummary: seam_validation_result(row[:seamValidationSummary]),
+          diagonalOptimizationSummary: diagonal_optimization_result(
+            row[:diagonalOptimizationSummary]
+          ),
+          featureQualitySummary: row[:featureQualitySummary],
+          harnessQualitySeconds: row[:harnessQualitySeconds]
+        }
       end
 
       def mesh_result_fields(row)
@@ -219,6 +231,31 @@ module SU_MCP
         return nil unless summary
 
         summary.compact
+      end
+
+      def diagonal_optimization_result(summary)
+        return nil unless summary
+
+        {
+          eligibleCount: value_from(summary, :eligibleCount),
+          changedCount: value_from(summary, :changedCount),
+          decisionReasonCounts: value_from(summary, :decisionReasonCounts),
+          residualImprovement: value_from(summary, :residualImprovement),
+          proofCell: proof_cell_result(value_from(summary, :proofCell)),
+          seamAdjacentChangedCount: value_from(summary, :seamAdjacentChangedCount),
+          seamAdjacentResidualDelta: value_from(summary, :seamAdjacentResidualDelta),
+          seamAdjacentDihedralDelta: value_from(summary, :seamAdjacentDihedralDelta),
+          adoptionVerdict: value_from(summary, :adoptionVerdict)
+        }.compact
+      end
+
+      def proof_cell_result(proof_cell)
+        return nil unless proof_cell
+
+        {
+          rowId: value_from(proof_cell, :rowId),
+          cellKey: value_from(proof_cell, :cellKey)
+        }.compact
       end
 
       def live_geometry_after_run

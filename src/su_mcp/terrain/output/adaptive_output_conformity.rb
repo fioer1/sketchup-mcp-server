@@ -1,14 +1,19 @@
 # frozen_string_literal: true
 
+require_relative 'feature_aware_diagonal_optimizer'
+
 module SU_MCP
   module Terrain
     # Derives compact conforming boundary plans for adaptive terrain cells.
     class AdaptiveOutputConformity
-      def self.cells(cells, state: nil, collapse_coplanar_edges: false)
+      def self.cells(cells, state: nil, collapse_coplanar_edges: false, diagonal_context: nil)
         min_row_index = index_cells_by(cells, :min_row)
         max_row_index = index_cells_by(cells, :max_row)
         min_column_index = index_cells_by(cells, :min_column)
         max_column_index = index_cells_by(cells, :max_column)
+        optimizer = if state && diagonal_context
+                      FeatureAwareDiagonalOptimizer.new(state: state, context: diagonal_context)
+                    end
 
         cells.map do |cell|
           next cell if cell.key?(:emission_triangles)
@@ -28,12 +33,82 @@ module SU_MCP
             collapse_coplanar_edges
           )
           fan_center = fan_center_for(cell, boundary_vertices)
+          diagonal_decision = diagonal_decision_for(
+            optimizer,
+            cell,
+            boundary_vertices,
+            fan_center
+          )
           cell.merge(
             boundary_vertices: boundary_vertices,
             fan_center: fan_center,
-            emission_triangles: adaptive_cell_triangles_for(boundary_vertices, fan_center)
+            emission_triangles: diagonal_decision&.fetch(:triangles) ||
+              adaptive_cell_triangles_for(boundary_vertices, fan_center),
+            diagonal_decision: diagonal_decision
           )
         end
+      end
+
+      def self.diagonal_decision_for(optimizer, cell, boundary_vertices, fan_center)
+        return nil unless optimizer
+        return nil if fan_center
+        return nil unless boundary_vertices.length == 4
+
+        optimizer.optimize(cell: cell, boundary_vertices: boundary_vertices)
+      end
+
+      def self.diagonal_optimization_summary(cells, context: nil, seam_adjacent: nil)
+        decisions = cells.filter_map { |cell| cell[:diagonal_decision] }
+        return nil if decisions.empty?
+
+        changed = decisions.select { |decision| decision.fetch(:selected) == :alternate }
+        seam_adjacent_changed_count = seam_adjacent_changed_count(cells, seam_adjacent)
+        residual_improvement = changed.sum { |decision| decision.fetch(:residual_improvement, 0.0) }
+        {
+          eligibleCount: decisions.length,
+          changedCount: changed.length,
+          decisionReasonCounts: reason_counts(decisions),
+          residualImprovement: residual_improvement,
+          proofCell: proof_cell_for(cells),
+          seamAdjacentChangedCount: seam_adjacent_changed_count,
+          seamAdjacentResidualDelta: seam_adjacent_changed_count.positive? ? 0.0 : nil,
+          seamAdjacentDihedralDelta: seam_adjacent_changed_count.positive? ? 0.0 : nil,
+          featureCheckSummary: context&.summary,
+          adoptionVerdict: adoption_verdict(changed, residual_improvement)
+        }.compact
+      end
+
+      def self.seam_adjacent_changed_count(cells, seam_adjacent)
+        return 0 unless seam_adjacent
+
+        cells.count do |cell|
+          cell.dig(:diagonal_decision, :selected) == :alternate && seam_adjacent.call(cell)
+        end
+      end
+
+      def self.reason_counts(decisions)
+        decisions.each_with_object(Hash.new(0)) do |decision, counts|
+          counts[decision.fetch(:reason)] += 1
+        end
+      end
+
+      def self.proof_cell_for(cells)
+        cell = cells.find { |entry| entry.dig(:diagonal_decision, :selected) == :alternate }
+        return nil unless cell
+
+        {
+          cellKey: "c#{cell.fetch(:min_column)}-r#{cell.fetch(:min_row)}-" \
+                   "c#{cell.fetch(:max_column)}-r#{cell.fetch(:max_row)}"
+        }
+      end
+
+      def self.adoption_verdict(changed, residual_improvement)
+        return 'defer' if changed.empty?
+
+        threshold = FeatureAwareDiagonalOptimizer::DEFAULT_CONFIG.fetch(
+          :adoption_residual_improvement
+        )
+        residual_improvement >= threshold ? 'adopt' : 'defer'
       end
 
       def self.vertex_count(cells)
