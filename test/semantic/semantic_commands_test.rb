@@ -101,6 +101,25 @@ class SemanticCommandsTest < Minitest::Test
     end
   end
 
+  class FakeContainerTargetResolver
+    attr_reader :calls
+
+    def initialize(result)
+      @result = result
+      @calls = []
+    end
+
+    def resolve(query)
+      @calls << [:resolve, query]
+      @result
+    end
+
+    def resolve_container(query)
+      @calls << [:resolve_container, query]
+      @result
+    end
+  end
+
   class FakeSequentialTargetResolver
     attr_reader :calls
 
@@ -893,9 +912,10 @@ class SemanticCommandsTest < Minitest::Test
 
   def test_create_site_element_inserts_structure_under_resolved_group_parent_context
     parent_group = @model.active_entities.add_group
+    target_resolver = FakeContainerTargetResolver.new(resolution: 'unique', entity: parent_group)
     commands = SU_MCP::SemanticCommands.new(
       model: @model,
-      target_resolver: FakeTargetResolver.new(resolution: 'unique', entity: parent_group)
+      target_resolver: target_resolver
     )
 
     result = commands.create_site_element(sectioned_structure_request(
@@ -910,13 +930,18 @@ class SemanticCommandsTest < Minitest::Test
     assert_equal(1, @model.active_entities.groups.length)
     assert_equal(1, parent_group.entities.groups.length)
     assert_equal('shed-001', parent_group.entities.groups.first.get_attribute('su_mcp', 'sourceElementId'))
+    assert_equal(
+      [[:resolve_container, { 'entityId' => 'parent-group-22' }]],
+      target_resolver.calls
+    )
   end
 
   def test_create_site_element_inserts_structure_under_resolved_component_parent_context
     component_parent = build_component_parent_instance
+    target_resolver = FakeTargetResolver.new(resolution: 'unique', entity: component_parent)
     commands = SU_MCP::SemanticCommands.new(
       model: @model,
-      target_resolver: FakeTargetResolver.new(resolution: 'unique', entity: component_parent)
+      target_resolver: target_resolver
     )
 
     result = commands.create_site_element(sectioned_structure_request(
@@ -934,6 +959,7 @@ class SemanticCommandsTest < Minitest::Test
       'shed-001',
       component_parent.definition.entities.groups.first.get_attribute('su_mcp', 'sourceElementId')
     )
+    assert_equal([{ 'entityId' => 'component-parent-11' }], target_resolver.calls)
   end
 
   def test_create_site_element_refuses_parented_create_when_parent_destination_is_not_writable

@@ -41,6 +41,17 @@ module SU_MCP
       result
     end
 
+    def resolve_container(raw_target_reference = nil, field: 'targetReference', **raw_keywords)
+      target_reference_input = raw_keywords.empty? ? raw_target_reference : raw_keywords
+      target_reference = normalized_target_reference(target_reference_input, field: field)
+      matches = lookup_container_matches(target_reference)
+
+      resolution = targeting_query.resolution_for(matches)
+      result = { resolution: resolution }
+      result[:entity] = matches.first if resolution == 'unique'
+      result
+    end
+
     private
 
     attr_reader :adapter, :serializer, :targeting_query
@@ -83,6 +94,29 @@ module SU_MCP
 
     def lookup_matches(target_reference)
       # Native SketchUp identifiers should use model-owned lookup instead of full scene traversal.
+      native_match = native_lookup_match(target_reference)
+      return native_match if native_match
+
+      targeting_query.filter_adapter(adapter, 'identity' => target_reference)
+    end
+
+    def lookup_container_matches(target_reference)
+      native_match = native_lookup_match(target_reference)
+      return native_match.select { |entity| container_entity?(entity) } if native_match
+
+      container_candidates = if adapter.respond_to?(:group_component_entities_recursive)
+                               adapter.group_component_entities_recursive
+                             else
+                               adapter.all_entities_recursive.select do |entity|
+                                 container_entity?(entity)
+                               end
+                             end
+      container_candidates.select do |entity|
+        serializer.target_reference_match?(entity, target_reference)
+      end
+    end
+
+    def native_lookup_match(target_reference)
       if target_reference.keys == ['entityId'] && adapter.respond_to?(:find_entity_by_id)
         return [adapter.find_entity_by_id(target_reference.fetch('entityId'))].compact
       end
@@ -94,7 +128,12 @@ module SU_MCP
         return [entity].compact
       end
 
-      targeting_query.filter_adapter(adapter, 'identity' => target_reference)
+      nil
+    end
+
+    def container_entity?(entity)
+      entity.is_a?(Sketchup::Group) ||
+        entity.is_a?(Sketchup::ComponentInstance)
     end
   end
 end

@@ -67,6 +67,111 @@ class TargetReferenceResolverTest < Minitest::Test
     assert_equal([[:find_entity_by_persistent_id, '8813']], adapter.calls)
   end
 
+  def test_resolve_container_ignores_native_entity_id_match_when_entity_is_not_container
+    face = build_scene_query_face(
+      entity_id: 815,
+      origin_x: 1,
+      layer: FakeLayer.new('Structures'),
+      material: FakeMaterial.new('Timber'),
+      details: { persistent_id: 8815 }
+    )
+    adapter = FastLookupAdapter.new(entity_by_id: face)
+    resolver = SU_MCP::TargetReferenceResolver.new(adapter: adapter)
+
+    result = resolver.resolve_container('entityId' => '815')
+
+    assert_equal('none', result[:resolution])
+    refute_includes(result.keys, :entity)
+    assert_equal([[:find_entity_by_id, '815']], adapter.calls)
+  end
+
+  def test_resolve_container_ignores_native_persistent_id_match_when_entity_is_not_container
+    face = build_scene_query_face(
+      entity_id: 816,
+      origin_x: 1,
+      layer: FakeLayer.new('Structures'),
+      material: FakeMaterial.new('Timber'),
+      details: { persistent_id: 8816 }
+    )
+    adapter = FastLookupAdapter.new(entity_by_persistent_id: face)
+    resolver = SU_MCP::TargetReferenceResolver.new(adapter: adapter)
+
+    result = resolver.resolve_container('persistentId' => '8816')
+
+    assert_equal('none', result[:resolution])
+    refute_includes(result.keys, :entity)
+    assert_equal([[:find_entity_by_persistent_id, '8816']], adapter.calls)
+  end
+
+  def test_resolves_container_source_element_id_without_recursive_entity_scan
+    layer = FakeLayer.new('Structures')
+    material = FakeMaterial.new('Timber')
+    parent = build_scene_query_group(
+      entity_id: 814,
+      origin_x: 0,
+      layer: layer,
+      material: material,
+      details: {
+        persistent_id: 8814,
+        attributes: { 'su_mcp' => { 'sourceElementId' => 'parent-container-001' } }
+      }
+    )
+    lower_level_duplicate = build_scene_query_face(
+      entity_id: 815,
+      origin_x: 1,
+      layer: layer,
+      material: material,
+      details: {
+        persistent_id: 8815,
+        attributes: { 'su_mcp' => { 'sourceElementId' => 'parent-container-001' } }
+      }
+    )
+    adapter = FastLookupAdapter.new(
+      container_entities: [parent],
+      recursive_entities: [parent, lower_level_duplicate]
+    )
+    resolver = SU_MCP::TargetReferenceResolver.new(adapter: adapter)
+
+    result = resolver.resolve_container('sourceElementId' => 'parent-container-001')
+
+    assert_equal('unique', result[:resolution])
+    assert_same(parent, result.fetch(:entity))
+    assert_equal([:group_component_entities_recursive], adapter.calls)
+  end
+
+  def test_resolve_container_preserves_ambiguity_for_duplicate_container_source_element_ids
+    layer = FakeLayer.new('Structures')
+    material = FakeMaterial.new('Timber')
+    first_parent = build_scene_query_group(
+      entity_id: 817,
+      origin_x: 0,
+      layer: layer,
+      material: material,
+      details: {
+        persistent_id: 8817,
+        attributes: { 'su_mcp' => { 'sourceElementId' => 'duplicate-parent-001' } }
+      }
+    )
+    second_parent = build_scene_query_group(
+      entity_id: 818,
+      origin_x: 2,
+      layer: layer,
+      material: material,
+      details: {
+        persistent_id: 8818,
+        attributes: { 'su_mcp' => { 'sourceElementId' => 'duplicate-parent-001' } }
+      }
+    )
+    adapter = FastLookupAdapter.new(container_entities: [first_parent, second_parent])
+    resolver = SU_MCP::TargetReferenceResolver.new(adapter: adapter)
+
+    result = resolver.resolve_container('sourceElementId' => 'duplicate-parent-001')
+
+    assert_equal('ambiguous', result[:resolution])
+    refute_includes(result.keys, :entity)
+    assert_equal([:group_component_entities_recursive], adapter.calls)
+  end
+
   def test_verifies_unique_container_source_element_id_with_recursive_scan
     adapter = FastLookupAdapter.new(entity_by_source_element_id: @model.entities.last)
     resolver = SU_MCP::TargetReferenceResolver.new(adapter: adapter)
@@ -109,11 +214,15 @@ class TargetReferenceResolverTest < Minitest::Test
     def initialize(
       entity_by_id: nil,
       entity_by_persistent_id: nil,
-      entity_by_source_element_id: nil
+      entity_by_source_element_id: nil,
+      container_entities: nil,
+      recursive_entities: nil
     )
       @entity_by_id = entity_by_id
       @entity_by_persistent_id = entity_by_persistent_id
       @entity_by_source_element_id = entity_by_source_element_id
+      @container_entities = container_entities
+      @recursive_entities = recursive_entities
       @calls = []
     end
 
@@ -129,12 +238,12 @@ class TargetReferenceResolverTest < Minitest::Test
 
     def all_entities_recursive
       @calls << :all_entities_recursive
-      [@entity_by_source_element_id].compact
+      @recursive_entities || [@entity_by_source_element_id].compact
     end
 
     def group_component_entities_recursive
       @calls << :group_component_entities_recursive
-      [@entity_by_source_element_id].compact
+      @container_entities || [@entity_by_source_element_id].compact
     end
   end
 

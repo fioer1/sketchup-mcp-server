@@ -327,7 +327,19 @@ module SU_MCP
       return nil unless params.dig('placement', 'mode') == 'parented'
       return nil unless params.dig('placement', 'parent').is_a?(Hash)
 
-      resolve_v2_target_entity(params.dig('placement', 'parent'), section: 'placement')
+      resolve_v2_parent_entity(params.dig('placement', 'parent'))
+    end
+
+    def resolve_v2_parent_entity(parent_reference)
+      resolution = if target_resolver.respond_to?(:resolve_container)
+                     target_resolver.resolve_container(parent_reference)
+                   else
+                     target_resolver.resolve(parent_reference)
+                   end
+      refusal_response = v2_resolution_refusal(resolution, 'placement')
+      return refusal_response if refusal_response
+
+      resolution.fetch(:entity)
     end
 
     def resolve_v2_new_context(params)
