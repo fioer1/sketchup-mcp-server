@@ -26,6 +26,9 @@ module SU_MCP
 
     def stop
       backend.stop
+    rescue StandardError => e
+      logger.call("MCP runtime failed to stop cleanly: #{e.message}")
+    ensure
       @running = false
     end
 

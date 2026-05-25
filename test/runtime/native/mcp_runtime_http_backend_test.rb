@@ -12,10 +12,31 @@ class McpRuntimeHttpBackendTest < Minitest::Test
       @host = host
       @port = port
       @closed = false
+      @clients = []
+    end
+
+    def enqueue(client)
+      @clients << client
+    end
+
+    # rubocop:disable Naming/PredicateMethod
+    def wait_readable(_timeout)
+      !@clients.empty?
+    end
+    # rubocop:enable Naming/PredicateMethod
+
+    def accept_nonblock
+      raise IO::WaitReadable if @clients.empty?
+
+      @clients.shift
     end
 
     def close
       @closed = true
+    end
+
+    def closed?
+      @closed
     end
   end
 
@@ -23,11 +44,32 @@ class McpRuntimeHttpBackendTest < Minitest::Test
     attr_reader :writes
     attr_accessor :closed
 
-    def initialize(request_text)
+    def initialize(request_text = '', read_chunk_size: nil, write_chunk_size: nil)
       @request_text = request_text
       @writes = []
       @closed = false
       @position = 0
+      @read_chunk_size = read_chunk_size
+      @write_chunk_size = write_chunk_size
+    end
+
+    def feed(text)
+      @request_text << text
+    end
+
+    # rubocop:disable Naming/PredicateMethod
+    def wait_readable(_timeout)
+      @position < @request_text.bytesize
+    end
+    # rubocop:enable Naming/PredicateMethod
+
+    def read_nonblock(max_length)
+      raise IO::WaitReadable unless wait_readable(0)
+
+      length = [max_length, @request_text.bytesize - @position, @read_chunk_size || max_length].min
+      chunk = @request_text.byteslice(@position, length)
+      @position += chunk.bytesize
+      chunk
     end
 
     def gets(separator = $INPUT_RECORD_SEPARATOR)
@@ -49,7 +91,42 @@ class McpRuntimeHttpBackendTest < Minitest::Test
       @writes << data
     end
 
+    # rubocop:disable Naming/PredicateMethod
+    def wait_writable(_timeout)
+      true
+    end
+    # rubocop:enable Naming/PredicateMethod
+
+    def write_nonblock(data)
+      length = [data.bytesize, @write_chunk_size || data.bytesize].min
+      @writes << data.byteslice(0, length)
+      length
+    end
+
     def flush; end
+
+    def close
+      @closed = true
+    end
+
+    def closed?
+      @closed
+    end
+  end
+
+  class ClosingApp
+    attr_reader :calls
+    attr_accessor :closed
+
+    def initialize
+      @calls = []
+      @closed = false
+    end
+
+    def call(env)
+      @calls << env
+      [200, { 'Content-Type' => 'application/json' }, ['{"ok":true}']]
+    end
 
     def close
       @closed = true
@@ -78,23 +155,29 @@ class McpRuntimeHttpBackendTest < Minitest::Test
   end
 
   # rubocop:disable Metrics/AbcSize
-  def test_process_client_translates_http_into_a_rack_call_and_writes_a_response
+  def test_poll_translates_http_into_a_rack_call_and_writes_a_response
     app_calls = []
     app = lambda do |env|
       app_calls << env
       [200, { 'Content-Type' => 'application/json' }, ['{"ok":true}']]
     end
+    timer_blocks = []
+    tcp_server = FakeTcpServer.new('127.0.0.1', 9877)
     backend = build_backend(
       app_builder: ->(_handlers) { app },
-      server_factory: ->(host, port) { FakeTcpServer.new(host, port) },
-      timer_starter: ->(_interval, _repeat, &_block) { :timer_one },
+      server_factory: ->(_host, _port) { tcp_server },
+      timer_starter: lambda do |_interval, _repeat, &block|
+        timer_blocks << block
+        :timer_one
+      end,
       timer_stopper: ->(_timer_id) {},
       logger: ->(_message) {}
     )
     backend.start(host: '127.0.0.1', port: 9877, handlers: {})
     client = FakeClient.new(http_post_request('{"jsonrpc":"2.0","id":1,"method":"ping"}'))
+    tcp_server.enqueue(client)
 
-    backend.send(:process_client, client)
+    timer_blocks.first.call
 
     assert_equal('POST', app_calls.first['REQUEST_METHOD'])
     assert_equal('/mcp', app_calls.first['PATH_INFO'])
@@ -106,48 +189,101 @@ class McpRuntimeHttpBackendTest < Minitest::Test
   end
   # rubocop:enable Metrics/AbcSize
 
-  def test_process_client_reads_lowercase_content_length_headers
+  def test_poll_reads_lowercase_content_length_headers
     app_calls = []
     app = lambda do |env|
       app_calls << env
       [200, { 'Content-Type' => 'application/json' }, ['{"ok":true}']]
     end
+    timer_blocks = []
+    tcp_server = FakeTcpServer.new('127.0.0.1', 9877)
     backend = build_backend(
       app_builder: ->(_handlers) { app },
-      server_factory: ->(host, port) { FakeTcpServer.new(host, port) },
-      timer_starter: ->(_interval, _repeat, &_block) { :timer_one },
+      server_factory: ->(_host, _port) { tcp_server },
+      timer_starter: lambda do |_interval, _repeat, &block|
+        timer_blocks << block
+        :timer_one
+      end,
       timer_stopper: ->(_timer_id) {},
       logger: ->(_message) {}
     )
     backend.start(host: '127.0.0.1', port: 9877, handlers: {})
     client = FakeClient.new(http_post_request('{"jsonrpc":"2.0","id":1}', lowercase_headers: true))
+    tcp_server.enqueue(client)
 
-    backend.send(:process_client, client)
+    timer_blocks.first.call
 
     assert_equal('application/json', app_calls.first['CONTENT_TYPE'])
     assert_equal('{"jsonrpc":"2.0","id":1}', app_calls.first['rack.input'].read)
   end
 
-  def test_process_client_reads_chunked_request_bodies
+  def test_poll_reads_chunked_request_bodies
     app_calls = []
     app = lambda do |env|
       app_calls << env
       [200, { 'Content-Type' => 'application/json' }, ['{"ok":true}']]
     end
+    timer_blocks = []
+    tcp_server = FakeTcpServer.new('127.0.0.1', 9877)
     backend = build_backend(
       app_builder: ->(_handlers) { app },
-      server_factory: ->(host, port) { FakeTcpServer.new(host, port) },
-      timer_starter: ->(_interval, _repeat, &_block) { :timer_one },
+      server_factory: ->(_host, _port) { tcp_server },
+      timer_starter: lambda do |_interval, _repeat, &block|
+        timer_blocks << block
+        :timer_one
+      end,
       timer_stopper: ->(_timer_id) {},
       logger: ->(_message) {}
     )
     backend.start(host: '127.0.0.1', port: 9877, handlers: {})
     client = FakeClient.new(http_chunked_post_request('{"jsonrpc":"2.0","id":1,"method":"ping"}'))
+    tcp_server.enqueue(client)
 
-    backend.send(:process_client, client)
+    timer_blocks.first.call
 
     assert_equal('chunked', app_calls.first['HTTP_TRANSFER_ENCODING'])
     assert_equal('{"jsonrpc":"2.0","id":1,"method":"ping"}', app_calls.first['rack.input'].read)
+  end
+
+  def test_poll_keeps_partial_requests_without_blocking_the_timer
+    app = ClosingApp.new
+    tcp_server = FakeTcpServer.new('127.0.0.1', 9877)
+    backend, timer_blocks = build_polled_backend(app: app, tcp_server: tcp_server)
+    request = http_post_request('{"jsonrpc":"2.0","id":1}')
+    split_index = request.index("\r\n\r\n") + 4
+    client = FakeClient.new(request.byteslice(0, split_index))
+    tcp_server.enqueue(client)
+    backend.start(host: '127.0.0.1', port: 9877, handlers: {})
+
+    timer_blocks.first.call
+    client.feed(request.byteslice(split_index..))
+    timer_blocks.first.call
+
+    assert_equal(1, app.calls.length)
+    assert_equal(true, client.closed)
+    assert_includes(client.writes.join, 'HTTP/1.1 200 OK')
+  end
+
+  def test_poll_closes_client_when_app_dispatch_raises
+    timer_blocks = []
+    tcp_server = FakeTcpServer.new('127.0.0.1', 9877)
+    backend = build_backend(
+      app_builder: ->(_handlers) { ->(_env) { raise 'rack failure' } },
+      server_factory: ->(_host, _port) { tcp_server },
+      timer_starter: lambda do |_interval, _repeat, &block|
+        timer_blocks << block
+        :timer_one
+      end,
+      timer_stopper: ->(_timer_id) {},
+      logger: ->(_message) {}
+    )
+    client = FakeClient.new(http_post_request('{"jsonrpc":"2.0","id":1}'))
+    backend.start(host: '127.0.0.1', port: 9877, handlers: {})
+    tcp_server.enqueue(client)
+
+    timer_blocks.first.call
+
+    assert_equal(true, client.closed)
   end
 
   def test_stop_closes_socket_and_timer
@@ -169,6 +305,34 @@ class McpRuntimeHttpBackendTest < Minitest::Test
     assert_equal(true, tcp_server.closed)
   end
 
+  def test_stop_closes_active_clients_and_the_rack_app
+    stopped = []
+    app = ClosingApp.new
+    timer_blocks = []
+    tcp_server = FakeTcpServer.new('127.0.0.1', 9877)
+    backend = build_backend(
+      app_builder: ->(_handlers) { app },
+      server_factory: ->(_host, _port) { tcp_server },
+      timer_starter: lambda do |_interval, _repeat, &block|
+        timer_blocks << block
+        :timer_one
+      end,
+      timer_stopper: ->(timer_id) { stopped << timer_id },
+      logger: ->(_message) {}
+    )
+    client = FakeClient.new("POST /mcp HTTP/1.1\r\n")
+    backend.start(host: '127.0.0.1', port: 9877, handlers: {})
+    tcp_server.enqueue(client)
+    timer_blocks.first.call
+
+    backend.stop
+
+    assert_equal([:timer_one], stopped)
+    assert_equal(true, tcp_server.closed)
+    assert_equal(true, client.closed)
+    assert_equal(true, app.closed)
+  end
+
   private
 
   def build_backend(app_builder:, server_factory:, timer_starter:, timer_stopper:, logger:)
@@ -179,6 +343,22 @@ class McpRuntimeHttpBackendTest < Minitest::Test
       timer_stopper: timer_stopper,
       logger: logger
     )
+  end
+
+  def build_polled_backend(app:, tcp_server:)
+    timer_blocks = []
+    backend = build_backend(
+      app_builder: ->(_handlers) { app },
+      server_factory: ->(_host, _port) { tcp_server },
+      timer_starter: lambda do |_interval, _repeat, &block|
+        timer_blocks << block
+        :timer_one
+      end,
+      timer_stopper: ->(_timer_id) {},
+      logger: ->(_message) {}
+    )
+
+    [backend, timer_blocks]
   end
 
   def http_post_request(body, lowercase_headers: false)

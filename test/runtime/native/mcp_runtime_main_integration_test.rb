@@ -5,11 +5,12 @@ require_relative '../../../src/su_mcp/main'
 
 class McpRuntimeMainIntegrationTest < Minitest::Test
   class StubRuntimeServer
-    attr_reader :start_calls
+    attr_reader :start_calls, :stop_calls
 
     def initialize(available:)
       @available = available
       @start_calls = 0
+      @stop_calls = 0
     end
 
     def status
@@ -18,6 +19,10 @@ class McpRuntimeMainIntegrationTest < Minitest::Test
 
     def start
       @start_calls += 1
+    end
+
+    def stop
+      @stop_calls += 1
     end
   end
 
@@ -75,6 +80,30 @@ class McpRuntimeMainIntegrationTest < Minitest::Test
     SU_MCP::Main.send(:start_native_runtime_if_available)
     assert_equal(0, unavailable_server.start_calls)
   ensure
+    SU_MCP::Main.remove_instance_variable(:@native_runtime_server) if
+      SU_MCP::Main.instance_variable_defined?(:@native_runtime_server)
+  end
+
+  def test_lifecycle_observer_registers_once_and_stops_native_runtime_on_quit
+    observers = []
+    original_add_observer = Sketchup.method(:add_observer)
+    Sketchup.define_singleton_method(:add_observer) do |observer|
+      observers << observer
+      true
+    end
+    server = StubRuntimeServer.new(available: true)
+    SU_MCP::Main.instance_variable_set(:@native_runtime_server, server)
+
+    SU_MCP::Main.send(:install_lifecycle_observer)
+    SU_MCP::Main.send(:install_lifecycle_observer)
+    observers.first.onQuit
+
+    assert_equal(1, observers.length)
+    assert_equal(1, server.stop_calls)
+  ensure
+    Sketchup.define_singleton_method(:add_observer, original_add_observer)
+    SU_MCP::Main.remove_instance_variable(:@lifecycle_observer) if
+      SU_MCP::Main.instance_variable_defined?(:@lifecycle_observer)
     SU_MCP::Main.remove_instance_variable(:@native_runtime_server) if
       SU_MCP::Main.instance_variable_defined?(:@native_runtime_server)
   end

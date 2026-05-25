@@ -6,6 +6,7 @@ require_relative '../../../src/su_mcp/runtime/native/mcp_runtime_server'
 class McpRuntimeServerTest < Minitest::Test
   class RecordingBackend
     attr_reader :start_calls, :stop_calls
+    attr_writer :stop_error
 
     def initialize
       @start_calls = []
@@ -18,6 +19,7 @@ class McpRuntimeServerTest < Minitest::Test
 
     def stop
       @stop_calls += 1
+      raise @stop_error if @stop_error
     end
   end
 
@@ -101,6 +103,25 @@ class McpRuntimeServerTest < Minitest::Test
 
     assert_equal(1, backend.stop_calls)
     assert_equal(false, server.running?)
+  end
+
+  def test_stop_logs_backend_failures_and_still_marks_server_stopped
+    backend = RecordingBackend.new
+    backend.stop_error = IOError.new('socket already closed')
+    logger = RecordingLogger.new
+    server = SU_MCP::McpRuntimeServer.new(
+      config: Struct.new(:host, :port).new('127.0.0.1', 9877),
+      runtime_loader: RecordingRuntimeLoader.new,
+      backend: backend,
+      facade: Object.new,
+      logger: logger.method(:call)
+    )
+    server.start
+
+    server.stop
+
+    assert_equal(false, server.running?)
+    assert_includes(logger.messages.last, 'socket already closed')
   end
 
   def test_start_logs_and_re_raises_runtime_loading_failures

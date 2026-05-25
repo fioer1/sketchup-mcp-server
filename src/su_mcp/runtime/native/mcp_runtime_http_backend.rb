@@ -3,10 +3,16 @@
 require 'socket'
 require 'stringio'
 
+require_relative 'mcp_runtime_http_request_parser'
+
 module SU_MCP
   # Local HTTP listener for the staged Ruby-native MCP runtime.
   class McpRuntimeHttpBackend
     DEFAULT_POLL_INTERVAL = 0.1
+    CLIENT_IDLE_TIMEOUT = 5.0
+    MAX_ACCEPTS_PER_POLL = 4
+    MAX_ACTIVE_CLIENTS = 16
+    READ_CHUNK_BYTES = 16 * 1024
 
     def initialize(app_builder:, server_factory:, timer_starter:, timer_stopper:, logger:)
       @app_builder = app_builder
@@ -20,6 +26,8 @@ module SU_MCP
       @timer_id = nil
       @host = nil
       @port = nil
+      @clients = {}
+      @request_parser = McpRuntimeHttpRequestParser.new
     end
 
     def start(host:, port:, handlers:)
@@ -27,6 +35,7 @@ module SU_MCP
 
       @host = host
       @port = port
+      @clients = {}
       @app = app_builder.call(handlers)
       @server = server_factory.call(host, port)
       @running = true
@@ -35,13 +44,13 @@ module SU_MCP
     end
 
     def stop
-      return unless @server || @timer_id || @running
+      return unless @server || @timer_id || @running || @app || @clients.any?
 
-      timer_stopper.call(@timer_id) if @timer_id
-      @timer_id = nil
-      @server&.close
+      stop_timer
+      close_socket(@server)
       @server = nil
-      @app = nil
+      close_clients
+      close_app
       @running = false
       log 'MCP runtime stopped'
     end
@@ -66,64 +75,89 @@ module SU_MCP
       logger.call(message)
     end
 
+    def stop_timer
+      timer_stopper.call(@timer_id) if @timer_id
+    rescue StandardError => e
+      log "MCP runtime timer stop failed: #{e.message}"
+    ensure
+      @timer_id = nil
+    end
+
     def poll_for_connections
       return unless running?
-      return unless @server&.wait_readable(0)
 
-      client = @server.accept_nonblock
-      process_client(client)
-    rescue IO::WaitReadable
-      nil
+      accept_pending_clients
+      service_clients
+      close_idle_clients
     rescue StandardError => e
       log "MCP runtime poll error: #{e.message}"
     end
 
-    def process_client(client)
-      request = read_request(client)
-      return unless request
+    def accept_pending_clients
+      accepted = 0
 
-      status, headers, body = @app.call(build_env(request))
-      response_body = collect_body(body)
-      write_response(client, status, headers, response_body)
-    ensure
-      client.close
+      while accepted < MAX_ACCEPTS_PER_POLL && @server&.wait_readable(0)
+        client = @server.accept_nonblock
+        accepted += 1
+        register_client(client)
+      end
+    rescue IO::WaitReadable
+      nil
     end
 
-    def read_request(client)
-      request_line = client.gets("\r\n")
-      return nil unless request_line
+    def register_client(client)
+      if @clients.length >= MAX_ACTIVE_CLIENTS
+        close_socket(client)
+        return
+      end
 
-      method, target, _http_version = request_line.strip.split(' ', 3)
-      headers = read_headers(client)
-      body = read_body(client, headers)
-
-      {
-        method: method,
-        target: target,
-        headers: headers,
-        body: body
+      @clients[client] = {
+        input: ''.b,
+        output: nil,
+        last_active_at: monotonic_time
       }
     end
 
-    def read_headers(client)
-      {}.tap do |headers|
-        loop do
-          line = client.gets("\r\n")
-          break if line.nil? || line == "\r\n"
+    def service_clients
+      @clients.each_key.to_a.each do |client|
+        state = @clients[client]
+        next unless state
 
-          key, value = line.sub(/\r\n\z/, '').split(':', 2)
-          headers[key.downcase] = value.strip
-        end
+        state[:output] ? flush_client_output(client, state) : read_client_input(client, state)
       end
     end
 
-    def read_body(client, headers)
-      return read_chunked_body(client) if headers['transfer-encoding'] == 'chunked'
+    def read_client_input(client, state)
+      return unless client.wait_readable(0)
 
-      length = headers.fetch('content-length', '0').to_i
-      return '' if length <= 0
+      loop do
+        state[:input] << client.read_nonblock(READ_CHUNK_BYTES)
+        state[:last_active_at] = monotonic_time
+        request = @request_parser.parse(state[:input])
+        next unless request
 
-      client.read(length)
+        dispatch_request_safely(client, state, request)
+        return
+      end
+    rescue IO::WaitReadable
+      nil
+    rescue IOError, SystemCallError
+      close_client(client)
+    end
+
+    def dispatch_request_safely(client, state, request)
+      dispatch_request(client, state, request)
+    rescue StandardError
+      close_client(client)
+      raise
+    end
+
+    def dispatch_request(client, state, request)
+      status, headers, body = @app.call(build_env(request))
+      response_body = collect_body(body)
+      state[:output] = response_text(status, headers, response_body)
+      state[:last_active_at] = monotonic_time
+      flush_client_output(client, state)
     end
 
     def build_env(request)
@@ -156,50 +190,76 @@ module SU_MCP
       end
     end
 
-    def read_chunked_body(client)
-      chunks = []
-
-      loop do
-        size_line = client.gets("\r\n")
-        break if size_line.nil?
-
-        size = size_line.strip.to_i(16)
-        break if size.zero?
-
-        chunks << client.read(size)
-        client.read(2)
-      end
-
-      consume_trailer_headers(client)
-      chunks.join
-    end
-
-    def consume_trailer_headers(client)
-      loop do
-        line = client.gets("\r\n")
-        break if line.nil? || line == "\r\n"
-      end
-    end
-
     def collect_body(body)
       body.each.to_a.join
     ensure
       body.close if body.respond_to?(:close)
     end
 
-    def write_response(client, status, headers, body)
+    def response_text(status, headers, body)
       response_headers = headers.merge(
         'Content-Length' => body.bytesize.to_s,
         'Connection' => 'close'
       )
 
-      client.write("HTTP/1.1 #{status} #{reason_phrase(status)}\r\n")
+      response = +"HTTP/1.1 #{status} #{reason_phrase(status)}\r\n"
       response_headers.each do |key, value|
-        client.write("#{key}: #{value}\r\n")
+        response << "#{key}: #{value}\r\n"
       end
-      client.write("\r\n")
-      client.write(body)
-      client.flush
+      response << "\r\n"
+      response << body
+    end
+
+    def flush_client_output(client, state)
+      return unless state[:output]
+      return unless client.wait_writable(0)
+
+      until state[:output].empty?
+        written = client.write_nonblock(state[:output])
+        state[:output] = state[:output].byteslice(written..).to_s
+        state[:last_active_at] = monotonic_time
+        return unless client.wait_writable(0)
+      end
+
+      close_client(client)
+    rescue IO::WaitWritable
+      nil
+    rescue IOError, SystemCallError
+      close_client(client)
+    end
+
+    def close_idle_clients
+      now = monotonic_time
+      @clients.each_pair.to_a.each do |client, state|
+        close_client(client) if now - state.fetch(:last_active_at) > CLIENT_IDLE_TIMEOUT
+      end
+    end
+
+    def close_clients
+      @clients.each_key.to_a.each { |client| close_client(client) }
+    end
+
+    def close_client(client)
+      @clients.delete(client)
+      close_socket(client)
+    end
+
+    def close_socket(socket)
+      socket&.close unless socket&.closed?
+    rescue IOError, SystemCallError
+      nil
+    end
+
+    def close_app
+      @app.close if @app.respond_to?(:close)
+    rescue StandardError => e
+      log "MCP runtime app close failed: #{e.message}"
+    ensure
+      @app = nil
+    end
+
+    def monotonic_time
+      Process.clock_gettime(Process::CLOCK_MONOTONIC)
     end
 
     def reason_phrase(status)

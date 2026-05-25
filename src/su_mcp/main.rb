@@ -4,6 +4,7 @@ require 'sketchup'
 require_relative 'runtime/native/mcp_runtime_config'
 require_relative 'runtime/native/mcp_runtime_facade'
 require_relative 'runtime/native/mcp_runtime_http_backend'
+require_relative 'runtime/native/mcp_runtime_lifecycle_observer'
 require_relative 'runtime/native/mcp_runtime_loader'
 require_relative 'runtime/native/mcp_runtime_server'
 require_relative 'runtime/runtime_logger'
@@ -22,6 +23,7 @@ module SU_MCP
 
     def activate
       install_menu
+      install_lifecycle_observer
       start_native_runtime_if_available
       log("Extension loaded (v#{VERSION}).")
     end
@@ -65,7 +67,7 @@ module SU_MCP
         ],
         ["Start #{MCP_SERVER_MENU_PREFIX}", -> { native_runtime_server.start }],
         ["Restart #{MCP_SERVER_MENU_PREFIX}", -> { restart_native_runtime }],
-        ["Stop #{MCP_SERVER_MENU_PREFIX}", -> { native_runtime_server.stop }]
+        ["Stop #{MCP_SERVER_MENU_PREFIX}", -> { shutdown_native_runtime('menu stop') }]
       ]
     end
 
@@ -119,8 +121,26 @@ module SU_MCP
     end
 
     def restart_native_runtime
-      native_runtime_server.stop
+      shutdown_native_runtime('restart')
       native_runtime_server.start
+    end
+
+    def shutdown_native_runtime(reason)
+      return unless @native_runtime_server
+
+      @native_runtime_server.stop
+      log("MCP runtime shutdown requested by #{reason}.")
+    end
+
+    def install_lifecycle_observer
+      return if @lifecycle_observer
+
+      @lifecycle_observer = McpRuntimeLifecycleObserver.new(
+        extension_name: MENU_NAME,
+        shutdown_callback: method(:shutdown_native_runtime),
+        logger: method(:log)
+      )
+      Sketchup.add_observer(@lifecycle_observer)
     end
 
     def start_native_runtime_if_available
@@ -158,6 +178,8 @@ module SU_MCP
       :build_menu,
       :menu_actions,
       :restart_native_runtime,
+      :shutdown_native_runtime,
+      :install_lifecycle_observer,
       :start_native_runtime_if_available,
       :native_runtime_status_message,
       :build_native_runtime_server,
