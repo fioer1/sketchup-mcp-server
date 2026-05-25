@@ -1,0 +1,929 @@
+{
+  "summaryKind": "mta43_fresh_packaged_three_run_performance_summary",
+  "capturedAt": "2026-05-25T08:38:34Z",
+  "sourceRunPaths": [
+    "test/terrain/replay/feature_aware_adaptive_baseline_results_mta43_component_timing_fresh_perf_run_1.json",
+    "test/terrain/replay/feature_aware_adaptive_baseline_results_mta43_component_timing_fresh_perf_run_2.json",
+    "test/terrain/replay/feature_aware_adaptive_baseline_results_mta43_component_timing_fresh_perf_run_3.json"
+  ],
+  "aggregate": {
+    "runCount": 3,
+    "rowCount": 18,
+    "refusedRowsPerRun": [
+      0,
+      0,
+      0
+    ],
+    "componentRows": [
+      15
+    ],
+    "overBudgetRows": [
+      6
+    ],
+    "meanTotalSeconds": 78.291227,
+    "stdevTotalSeconds": 1.049852,
+    "meanTimingTotals": {
+      "commandOutputPlanning": 30.085913,
+      "featureSelectionDiagnostics": 0.090788,
+      "componentPlanning": 0.028851,
+      "dirtyWindowMapping": 0.00105,
+      "adaptivePlanning": 7.366014,
+      "mutation": 21.202518,
+      "total": 78.291227
+    }
+  },
+  "runs": [
+    {
+      "run": 1,
+      "path": "test/terrain/replay/feature_aware_adaptive_baseline_results_mta43_component_timing_fresh_perf_run_1.json",
+      "rowCount": 18,
+      "refused": 0,
+      "componentRows": 15,
+      "overBudgetRows": 6,
+      "totalSeconds": 76.806513,
+      "timingTotals": {
+        "commandOutputPlanning": 29.514209,
+        "featureSelectionDiagnostics": 0.091914,
+        "componentPlanning": 0.021808,
+        "dirtyWindowMapping": 0.000941,
+        "adaptivePlanning": 7.24419,
+        "mutation": 20.758524,
+        "total": 76.806513
+      }
+    },
+    {
+      "run": 2,
+      "path": "test/terrain/replay/feature_aware_adaptive_baseline_results_mta43_component_timing_fresh_perf_run_2.json",
+      "rowCount": 18,
+      "refused": 0,
+      "componentRows": 15,
+      "overBudgetRows": 6,
+      "totalSeconds": 79.034794,
+      "timingTotals": {
+        "commandOutputPlanning": 30.620197,
+        "featureSelectionDiagnostics": 0.090232,
+        "componentPlanning": 0.023002,
+        "dirtyWindowMapping": 0.001243,
+        "adaptivePlanning": 7.390578,
+        "mutation": 21.110163,
+        "total": 79.034794
+      }
+    },
+    {
+      "run": 3,
+      "path": "test/terrain/replay/feature_aware_adaptive_baseline_results_mta43_component_timing_fresh_perf_run_3.json",
+      "rowCount": 18,
+      "refused": 0,
+      "componentRows": 15,
+      "overBudgetRows": 6,
+      "totalSeconds": 79.032373,
+      "timingTotals": {
+        "commandOutputPlanning": 30.123333,
+        "featureSelectionDiagnostics": 0.090218,
+        "componentPlanning": 0.041742,
+        "dirtyWindowMapping": 0.000966,
+        "adaptivePlanning": 7.463273,
+        "mutation": 21.738866,
+        "total": 79.032373
+      }
+    }
+  ],
+  "comparisons": {
+    "mta46": {
+      "baselinePath": "test/terrain/replay/feature_aware_adaptive_baseline_results_mta46_perf_run_2.json",
+      "baselineTotalSeconds": 78.793862,
+      "meanTotalSeconds": 78.291227,
+      "secondsDelta": -0.502635,
+      "percentDelta": -0.638,
+      "worstRowsBySecondsDelta": [
+        {
+          "rowId": "large-varied-corridor-diagonal-timing",
+          "baselineSeconds": 12.483094,
+          "meanSeconds": 12.627951,
+          "secondsDelta": 0.144857,
+          "percentDelta": 1.16,
+          "componentBudgetStatus": "over_budget",
+          "promotedCount": 0
+        },
+        {
+          "rowId": "large-varied-survey-control-timing",
+          "baselineSeconds": 12.200365,
+          "meanSeconds": 12.335019,
+          "secondsDelta": 0.134654,
+          "percentDelta": 1.104,
+          "componentBudgetStatus": "over_budget",
+          "promotedCount": 131
+        },
+        {
+          "rowId": "feature-aware-baseline-terrain-large-timing-create",
+          "baselineSeconds": 8.689202,
+          "meanSeconds": 8.806445,
+          "secondsDelta": 0.117243,
+          "percentDelta": 1.349
+        },
+        {
+          "rowId": "feature-aware-baseline-terrain-wide-timing-create",
+          "baselineSeconds": 3.218317,
+          "meanSeconds": 3.260762,
+          "secondsDelta": 0.042445,
+          "percentDelta": 1.319
+        },
+        {
+          "rowId": "large-varied-local-target-timing",
+          "baselineSeconds": 2.863473,
+          "meanSeconds": 2.881145,
+          "secondsDelta": 0.017672,
+          "percentDelta": 0.617,
+          "componentBudgetStatus": "within_budget",
+          "promotedCount": 0
+        },
+        {
+          "rowId": "large-varied-planar-pad-timing",
+          "baselineSeconds": 11.604755,
+          "meanSeconds": 11.612215,
+          "secondsDelta": 0.00746,
+          "percentDelta": 0.064,
+          "componentBudgetStatus": "over_budget",
+          "promotedCount": 96
+        },
+        {
+          "rowId": "create-baseline",
+          "baselineSeconds": 0.063696,
+          "meanSeconds": 0.070199,
+          "secondsDelta": 0.006503,
+          "percentDelta": 10.209
+        },
+        {
+          "rowId": "planar-pad-intersect",
+          "baselineSeconds": 0.181047,
+          "meanSeconds": 0.184738,
+          "secondsDelta": 0.003691,
+          "percentDelta": 2.039,
+          "componentBudgetStatus": "within_budget",
+          "promotedCount": 8
+        }
+      ]
+    },
+    "mta42": {
+      "baselinePath": "test/terrain/replay/feature_aware_adaptive_baseline_results_mta42_perf_run_2.json",
+      "baselineTotalSeconds": 78.058778,
+      "meanTotalSeconds": 78.291227,
+      "secondsDelta": 0.232449,
+      "percentDelta": 0.298,
+      "worstRowsBySecondsDelta": [
+        {
+          "rowId": "wide-varied-half-corridor-timing",
+          "baselineSeconds": 5.365699,
+          "meanSeconds": 5.556416,
+          "secondsDelta": 0.190717,
+          "percentDelta": 3.554,
+          "componentBudgetStatus": "over_budget",
+          "promotedCount": 0
+        },
+        {
+          "rowId": "feature-aware-baseline-terrain-large-timing-create",
+          "baselineSeconds": 8.683518,
+          "meanSeconds": 8.806445,
+          "secondsDelta": 0.122927,
+          "percentDelta": 1.416
+        },
+        {
+          "rowId": "wide-varied-fairing-large-timing",
+          "baselineSeconds": 6.489067,
+          "meanSeconds": 6.556553,
+          "secondsDelta": 0.067486,
+          "percentDelta": 1.04,
+          "componentBudgetStatus": "over_budget",
+          "promotedCount": 0
+        },
+        {
+          "rowId": "feature-aware-baseline-terrain-wide-timing-create",
+          "baselineSeconds": 3.205463,
+          "meanSeconds": 3.260762,
+          "secondsDelta": 0.055299,
+          "percentDelta": 1.725
+        },
+        {
+          "rowId": "large-varied-planar-pad-timing",
+          "baselineSeconds": 11.560904,
+          "meanSeconds": 11.612215,
+          "secondsDelta": 0.051311,
+          "percentDelta": 0.444,
+          "componentBudgetStatus": "over_budget",
+          "promotedCount": 96
+        },
+        {
+          "rowId": "large-varied-local-target-timing",
+          "baselineSeconds": 2.840422,
+          "meanSeconds": 2.881145,
+          "secondsDelta": 0.040723,
+          "percentDelta": 1.434,
+          "componentBudgetStatus": "within_budget",
+          "promotedCount": 0
+        },
+        {
+          "rowId": "target-local-center",
+          "baselineSeconds": 0.129542,
+          "meanSeconds": 0.137822,
+          "secondsDelta": 0.00828,
+          "percentDelta": 6.391,
+          "componentBudgetStatus": "within_budget",
+          "promotedCount": 0
+        },
+        {
+          "rowId": "fairing-envelope-intersect",
+          "baselineSeconds": 0.202162,
+          "meanSeconds": 0.207561,
+          "secondsDelta": 0.005399,
+          "percentDelta": 2.671,
+          "componentBudgetStatus": "within_budget",
+          "promotedCount": 5
+        }
+      ]
+    }
+  },
+  "rowAggregates": [
+    {
+      "rowId": "create-baseline",
+      "meanSeconds": 0.070199,
+      "stdevSeconds": 0.001384,
+      "faceCount": 1173,
+      "patchScope": {
+        "affectedPatchCount": 9,
+        "replacementPatchCount": 9,
+        "conformanceRing": 1
+      },
+      "timingMeans": {
+        "commandOutputPlanning": 0.028955,
+        "featureSelectionDiagnostics": 0.002212,
+        "componentPlanning": 0.0,
+        "dirtyWindowMapping": 2.8e-05,
+        "adaptivePlanning": 0.004433,
+        "mutation": 0.025943,
+        "total": 0.070199
+      }
+    },
+    {
+      "rowId": "target-local-center",
+      "meanSeconds": 0.137822,
+      "stdevSeconds": 0.011189,
+      "faceCount": 1257,
+      "patchScope": {
+        "affectedPatchCount": 1,
+        "replacementPatchCount": 9,
+        "conformanceRing": 1
+      },
+      "componentPlanSummary": {
+        "componentCount": 1,
+        "maxComponentSize": 1,
+        "promotedCount": 0,
+        "roleCounts": {
+          "affected": 1,
+          "replacement": 9,
+          "conformance": 8,
+          "retained_boundary": 0,
+          "safety_margin": 0
+        },
+        "graphReasons": [
+          "dirty_window"
+        ]
+      },
+      "componentBudget": {
+        "status": "within_budget",
+        "maxReplacementPatchCount": 25,
+        "maxPromotionRadius": 2
+      },
+      "timingMeans": {
+        "commandOutputPlanning": 0.029443,
+        "featureSelectionDiagnostics": 0.000528,
+        "componentPlanning": 0.000151,
+        "dirtyWindowMapping": 2.0e-06,
+        "adaptivePlanning": 0.004666,
+        "mutation": 0.051981,
+        "total": 0.137822
+      }
+    },
+    {
+      "rowId": "target-adjacent-east",
+      "meanSeconds": 0.145571,
+      "stdevSeconds": 0.005439,
+      "faceCount": 1331,
+      "patchScope": {
+        "affectedPatchCount": 2,
+        "replacementPatchCount": 9,
+        "conformanceRing": 1
+      },
+      "componentPlanSummary": {
+        "componentCount": 1,
+        "maxComponentSize": 2,
+        "promotedCount": 0,
+        "roleCounts": {
+          "affected": 2,
+          "replacement": 9,
+          "conformance": 7,
+          "retained_boundary": 0,
+          "safety_margin": 0
+        },
+        "graphReasons": [
+          "dirty_window",
+          "feature_boundary_crossing"
+        ]
+      },
+      "componentBudget": {
+        "status": "within_budget",
+        "maxReplacementPatchCount": 25,
+        "maxPromotionRadius": 2
+      },
+      "timingMeans": {
+        "commandOutputPlanning": 0.03356,
+        "featureSelectionDiagnostics": 0.000757,
+        "componentPlanning": 0.00019,
+        "dirtyWindowMapping": 1.0e-06,
+        "adaptivePlanning": 0.004925,
+        "mutation": 0.054379,
+        "total": 0.145571
+      }
+    },
+    {
+      "rowId": "target-repeat-center",
+      "meanSeconds": 0.148321,
+      "stdevSeconds": 0.006981,
+      "faceCount": 1331,
+      "patchScope": {
+        "affectedPatchCount": 1,
+        "replacementPatchCount": 9,
+        "conformanceRing": 1
+      },
+      "componentPlanSummary": {
+        "componentCount": 1,
+        "maxComponentSize": 2,
+        "promotedCount": 1,
+        "roleCounts": {
+          "affected": 1,
+          "replacement": 9,
+          "conformance": 7,
+          "retained_boundary": 0,
+          "safety_margin": 0
+        },
+        "graphReasons": [
+          "dirty_window",
+          "feature_boundary_crossing",
+          "conformance"
+        ]
+      },
+      "componentBudget": {
+        "status": "within_budget",
+        "maxReplacementPatchCount": 25,
+        "maxPromotionRadius": 2
+      },
+      "timingMeans": {
+        "commandOutputPlanning": 0.031476,
+        "featureSelectionDiagnostics": 0.000918,
+        "componentPlanning": 0.000185,
+        "dirtyWindowMapping": 1.0e-06,
+        "adaptivePlanning": 0.005422,
+        "mutation": 0.057759,
+        "total": 0.148321
+      }
+    },
+    {
+      "rowId": "corridor-diagonal-intersect",
+      "meanSeconds": 0.179289,
+      "stdevSeconds": 0.008276,
+      "faceCount": 1689,
+      "patchScope": {
+        "affectedPatchCount": 9,
+        "replacementPatchCount": 9,
+        "conformanceRing": 1
+      },
+      "componentPlanSummary": {
+        "componentCount": 1,
+        "maxComponentSize": 9,
+        "promotedCount": 0,
+        "roleCounts": {
+          "affected": 9,
+          "replacement": 9,
+          "conformance": 0,
+          "retained_boundary": 0,
+          "safety_margin": 0
+        },
+        "graphReasons": [
+          "dirty_window",
+          "feature_boundary_crossing"
+        ]
+      },
+      "componentBudget": {
+        "status": "within_budget",
+        "maxReplacementPatchCount": 25,
+        "maxPromotionRadius": 2
+      },
+      "timingMeans": {
+        "commandOutputPlanning": 0.051124,
+        "featureSelectionDiagnostics": 0.001433,
+        "componentPlanning": 0.000317,
+        "dirtyWindowMapping": 1.0e-06,
+        "adaptivePlanning": 0.006374,
+        "mutation": 0.066768,
+        "total": 0.179289
+      }
+    },
+    {
+      "rowId": "planar-pad-intersect",
+      "meanSeconds": 0.184738,
+      "stdevSeconds": 0.006859,
+      "faceCount": 1549,
+      "patchScope": {
+        "affectedPatchCount": 1,
+        "replacementPatchCount": 9,
+        "conformanceRing": 1
+      },
+      "componentPlanSummary": {
+        "componentCount": 1,
+        "maxComponentSize": 9,
+        "promotedCount": 8,
+        "roleCounts": {
+          "affected": 1,
+          "replacement": 9,
+          "conformance": 0,
+          "retained_boundary": 0,
+          "safety_margin": 0
+        },
+        "graphReasons": [
+          "dirty_window",
+          "feature_boundary_crossing"
+        ]
+      },
+      "componentBudget": {
+        "status": "within_budget",
+        "maxReplacementPatchCount": 25,
+        "maxPromotionRadius": 2
+      },
+      "timingMeans": {
+        "commandOutputPlanning": 0.042772,
+        "featureSelectionDiagnostics": 0.001889,
+        "componentPlanning": 0.000298,
+        "dirtyWindowMapping": 1.0e-06,
+        "adaptivePlanning": 0.005782,
+        "mutation": 0.069604,
+        "total": 0.184738
+      }
+    },
+    {
+      "rowId": "survey-control-intersect",
+      "meanSeconds": 0.2198,
+      "stdevSeconds": 0.004553,
+      "faceCount": 1583,
+      "patchScope": {
+        "affectedPatchCount": 1,
+        "replacementPatchCount": 9,
+        "conformanceRing": 1
+      },
+      "componentPlanSummary": {
+        "componentCount": 1,
+        "maxComponentSize": 9,
+        "promotedCount": 8,
+        "roleCounts": {
+          "affected": 1,
+          "replacement": 9,
+          "conformance": 0,
+          "retained_boundary": 0,
+          "safety_margin": 0
+        },
+        "graphReasons": [
+          "dirty_window",
+          "feature_boundary_crossing"
+        ]
+      },
+      "componentBudget": {
+        "status": "within_budget",
+        "maxReplacementPatchCount": 25,
+        "maxPromotionRadius": 2
+      },
+      "timingMeans": {
+        "commandOutputPlanning": 0.046195,
+        "featureSelectionDiagnostics": 0.002278,
+        "componentPlanning": 0.000369,
+        "dirtyWindowMapping": 1.0e-06,
+        "adaptivePlanning": 0.005873,
+        "mutation": 0.067144,
+        "total": 0.2198
+      }
+    },
+    {
+      "rowId": "fairing-envelope-intersect",
+      "meanSeconds": 0.207561,
+      "stdevSeconds": 0.007178,
+      "faceCount": 1773,
+      "patchScope": {
+        "affectedPatchCount": 4,
+        "replacementPatchCount": 9,
+        "conformanceRing": 1
+      },
+      "componentPlanSummary": {
+        "componentCount": 1,
+        "maxComponentSize": 9,
+        "promotedCount": 5,
+        "roleCounts": {
+          "affected": 4,
+          "replacement": 9,
+          "conformance": 0,
+          "retained_boundary": 0,
+          "safety_margin": 0
+        },
+        "graphReasons": [
+          "dirty_window",
+          "feature_boundary_crossing"
+        ]
+      },
+      "componentBudget": {
+        "status": "within_budget",
+        "maxReplacementPatchCount": 25,
+        "maxPromotionRadius": 2
+      },
+      "timingMeans": {
+        "commandOutputPlanning": 0.052183,
+        "featureSelectionDiagnostics": 0.002386,
+        "componentPlanning": 0.000372,
+        "dirtyWindowMapping": 1.0e-06,
+        "adaptivePlanning": 0.006688,
+        "mutation": 0.073829,
+        "total": 0.207561
+      }
+    },
+    {
+      "rowId": "feature-aware-baseline-terrain-large-timing-create",
+      "meanSeconds": 8.806445,
+      "stdevSeconds": 0.174391,
+      "faceCount": 76191,
+      "patchScope": {
+        "affectedPatchCount": 196,
+        "replacementPatchCount": 196,
+        "conformanceRing": 1
+      },
+      "timingMeans": {
+        "commandOutputPlanning": 5.127108,
+        "featureSelectionDiagnostics": 0.039077,
+        "componentPlanning": 0.0,
+        "dirtyWindowMapping": 0.000537,
+        "adaptivePlanning": 1.369343,
+        "mutation": 2.065626,
+        "total": 8.806445
+      }
+    },
+    {
+      "rowId": "large-varied-local-target-timing",
+      "meanSeconds": 2.881145,
+      "stdevSeconds": 0.061279,
+      "faceCount": 18770,
+      "patchScope": {
+        "affectedPatchCount": 9,
+        "replacementPatchCount": 25,
+        "conformanceRing": 1
+      },
+      "componentPlanSummary": {
+        "componentCount": 1,
+        "maxComponentSize": 9,
+        "promotedCount": 0,
+        "roleCounts": {
+          "affected": 9,
+          "replacement": 25,
+          "conformance": 16,
+          "retained_boundary": 0,
+          "safety_margin": 0
+        },
+        "graphReasons": [
+          "dirty_window",
+          "feature_boundary_crossing"
+        ]
+      },
+      "componentBudget": {
+        "status": "within_budget",
+        "maxReplacementPatchCount": 25,
+        "maxPromotionRadius": 2
+      },
+      "timingMeans": {
+        "commandOutputPlanning": 0.747437,
+        "featureSelectionDiagnostics": 0.000563,
+        "componentPlanning": 0.000841,
+        "dirtyWindowMapping": 2.0e-06,
+        "adaptivePlanning": 0.065929,
+        "mutation": 0.874916,
+        "total": 2.881145
+      }
+    },
+    {
+      "rowId": "large-varied-corridor-diagonal-timing",
+      "meanSeconds": 12.627951,
+      "stdevSeconds": 0.011188,
+      "faceCount": 71925,
+      "patchScope": {
+        "affectedPatchCount": 132,
+        "replacementPatchCount": 169,
+        "conformanceRing": 1
+      },
+      "componentPlanSummary": {
+        "componentCount": 1,
+        "maxComponentSize": 132,
+        "promotedCount": 0,
+        "roleCounts": {
+          "affected": 132,
+          "replacement": 169,
+          "conformance": 37,
+          "retained_boundary": 0,
+          "safety_margin": 0
+        },
+        "graphReasons": [
+          "dirty_window",
+          "feature_boundary_crossing"
+        ]
+      },
+      "componentBudget": {
+        "status": "over_budget",
+        "maxReplacementPatchCount": 25,
+        "maxPromotionRadius": 2
+      },
+      "timingMeans": {
+        "commandOutputPlanning": 5.267544,
+        "featureSelectionDiagnostics": 0.001126,
+        "componentPlanning": 0.003105,
+        "dirtyWindowMapping": 2.0e-06,
+        "adaptivePlanning": 1.191961,
+        "mutation": 3.554057,
+        "total": 12.627951
+      }
+    },
+    {
+      "rowId": "large-varied-planar-pad-timing",
+      "meanSeconds": 11.612215,
+      "stdevSeconds": 0.109816,
+      "faceCount": 66523,
+      "patchScope": {
+        "affectedPatchCount": 36,
+        "replacementPatchCount": 169,
+        "conformanceRing": 1
+      },
+      "componentPlanSummary": {
+        "componentCount": 1,
+        "maxComponentSize": 132,
+        "promotedCount": 96,
+        "roleCounts": {
+          "affected": 36,
+          "replacement": 169,
+          "conformance": 37,
+          "retained_boundary": 0,
+          "safety_margin": 0
+        },
+        "graphReasons": [
+          "dirty_window",
+          "feature_boundary_crossing",
+          "conformance"
+        ]
+      },
+      "componentBudget": {
+        "status": "over_budget",
+        "maxReplacementPatchCount": 25,
+        "maxPromotionRadius": 2
+      },
+      "timingMeans": {
+        "commandOutputPlanning": 4.595226,
+        "featureSelectionDiagnostics": 0.001614,
+        "componentPlanning": 0.002821,
+        "dirtyWindowMapping": 2.0e-06,
+        "adaptivePlanning": 1.109059,
+        "mutation": 3.323433,
+        "total": 11.612215
+      }
+    },
+    {
+      "rowId": "large-varied-survey-control-timing",
+      "meanSeconds": 12.335019,
+      "stdevSeconds": 0.211916,
+      "faceCount": 67888,
+      "patchScope": {
+        "affectedPatchCount": 1,
+        "replacementPatchCount": 169,
+        "conformanceRing": 1
+      },
+      "componentPlanSummary": {
+        "componentCount": 1,
+        "maxComponentSize": 132,
+        "promotedCount": 131,
+        "roleCounts": {
+          "affected": 1,
+          "replacement": 169,
+          "conformance": 37,
+          "retained_boundary": 0,
+          "safety_margin": 0
+        },
+        "graphReasons": [
+          "dirty_window",
+          "feature_boundary_crossing",
+          "conformance"
+        ]
+      },
+      "componentBudget": {
+        "status": "over_budget",
+        "maxReplacementPatchCount": 25,
+        "maxPromotionRadius": 2
+      },
+      "timingMeans": {
+        "commandOutputPlanning": 4.758832,
+        "featureSelectionDiagnostics": 0.001816,
+        "componentPlanning": 0.002542,
+        "dirtyWindowMapping": 2.0e-06,
+        "adaptivePlanning": 1.168903,
+        "mutation": 3.254382,
+        "total": 12.335019
+      }
+    },
+    {
+      "rowId": "large-varied-fairing-envelope-timing",
+      "meanSeconds": 12.087467,
+      "stdevSeconds": 0.16466,
+      "faceCount": 55097,
+      "patchScope": {
+        "affectedPatchCount": 196,
+        "replacementPatchCount": 196,
+        "conformanceRing": 1
+      },
+      "componentPlanSummary": {
+        "componentCount": 1,
+        "maxComponentSize": 196,
+        "promotedCount": 0,
+        "roleCounts": {
+          "affected": 196,
+          "replacement": 196,
+          "conformance": 0,
+          "retained_boundary": 0,
+          "safety_margin": 0
+        },
+        "graphReasons": [
+          "dirty_window",
+          "feature_boundary_crossing"
+        ]
+      },
+      "componentBudget": {
+        "status": "over_budget",
+        "maxReplacementPatchCount": 25,
+        "maxPromotionRadius": 2
+      },
+      "timingMeans": {
+        "commandOutputPlanning": 3.700296,
+        "featureSelectionDiagnostics": 0.002266,
+        "componentPlanning": 0.004423,
+        "dirtyWindowMapping": 2.0e-06,
+        "adaptivePlanning": 1.061918,
+        "mutation": 3.335786,
+        "total": 12.087467
+      }
+    },
+    {
+      "rowId": "feature-aware-baseline-terrain-wide-timing-create",
+      "meanSeconds": 3.260762,
+      "stdevSeconds": 0.035462,
+      "faceCount": 31734,
+      "patchScope": {
+        "affectedPatchCount": 144,
+        "replacementPatchCount": 144,
+        "conformanceRing": 1
+      },
+      "timingMeans": {
+        "commandOutputPlanning": 1.763038,
+        "featureSelectionDiagnostics": 0.028678,
+        "componentPlanning": 0.0,
+        "dirtyWindowMapping": 0.000464,
+        "adaptivePlanning": 0.504669,
+        "mutation": 0.837742,
+        "total": 3.260762
+      }
+    },
+    {
+      "rowId": "wide-varied-local-target-timing",
+      "meanSeconds": 1.273952,
+      "stdevSeconds": 0.048104,
+      "faceCount": 8367,
+      "patchScope": {
+        "affectedPatchCount": 4,
+        "replacementPatchCount": 16,
+        "conformanceRing": 1
+      },
+      "componentPlanSummary": {
+        "componentCount": 1,
+        "maxComponentSize": 4,
+        "promotedCount": 0,
+        "roleCounts": {
+          "affected": 4,
+          "replacement": 16,
+          "conformance": 12,
+          "retained_boundary": 0,
+          "safety_margin": 0
+        },
+        "graphReasons": [
+          "dirty_window",
+          "feature_boundary_crossing"
+        ]
+      },
+      "componentBudget": {
+        "status": "within_budget",
+        "maxReplacementPatchCount": 25,
+        "maxPromotionRadius": 2
+      },
+      "timingMeans": {
+        "commandOutputPlanning": 0.273716,
+        "featureSelectionDiagnostics": 0.000581,
+        "componentPlanning": 0.000627,
+        "dirtyWindowMapping": 1.0e-06,
+        "adaptivePlanning": 0.023632,
+        "mutation": 0.353446,
+        "total": 1.273952
+      }
+    },
+    {
+      "rowId": "wide-varied-half-corridor-timing",
+      "meanSeconds": 5.556416,
+      "stdevSeconds": 0.2749,
+      "faceCount": 31677,
+      "patchScope": {
+        "affectedPatchCount": 110,
+        "replacementPatchCount": 132,
+        "conformanceRing": 1
+      },
+      "componentPlanSummary": {
+        "componentCount": 1,
+        "maxComponentSize": 110,
+        "promotedCount": 0,
+        "roleCounts": {
+          "affected": 110,
+          "replacement": 132,
+          "conformance": 22,
+          "retained_boundary": 0,
+          "safety_margin": 0
+        },
+        "graphReasons": [
+          "dirty_window",
+          "feature_boundary_crossing"
+        ]
+      },
+      "componentBudget": {
+        "status": "over_budget",
+        "maxReplacementPatchCount": 25,
+        "maxPromotionRadius": 2
+      },
+      "timingMeans": {
+        "commandOutputPlanning": 2.040084,
+        "featureSelectionDiagnostics": 0.001125,
+        "componentPlanning": 0.009182,
+        "dirtyWindowMapping": 1.0e-06,
+        "adaptivePlanning": 0.449695,
+        "mutation": 1.6511,
+        "total": 5.556416
+      }
+    },
+    {
+      "rowId": "wide-varied-fairing-large-timing",
+      "meanSeconds": 6.556553,
+      "stdevSeconds": 0.227177,
+      "faceCount": 24360,
+      "patchScope": {
+        "affectedPatchCount": 144,
+        "replacementPatchCount": 144,
+        "conformanceRing": 1
+      },
+      "componentPlanSummary": {
+        "componentCount": 1,
+        "maxComponentSize": 144,
+        "promotedCount": 0,
+        "roleCounts": {
+          "affected": 144,
+          "replacement": 144,
+          "conformance": 0,
+          "retained_boundary": 0,
+          "safety_margin": 0
+        },
+        "graphReasons": [
+          "dirty_window",
+          "feature_boundary_crossing"
+        ]
+      },
+      "componentBudget": {
+        "status": "over_budget",
+        "maxReplacementPatchCount": 25,
+        "maxPromotionRadius": 2
+      },
+      "timingMeans": {
+        "commandOutputPlanning": 1.496925,
+        "featureSelectionDiagnostics": 0.00154,
+        "componentPlanning": 0.003427,
+        "dirtyWindowMapping": 1.0e-06,
+        "adaptivePlanning": 0.376742,
+        "mutation": 1.484623,
+        "total": 6.556553
+      }
+    }
+  ],
+  "notes": [
+    "Captured after user deployed a fresh packaged extension.",
+    "include_timing=true, include_quality=false, clear_existing=true for each pass.",
+    "Rows are command-path hosted SketchUp executions through TerrainSurfaceCommands."
+  ]
+}

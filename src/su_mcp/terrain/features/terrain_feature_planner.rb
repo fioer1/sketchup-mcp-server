@@ -93,6 +93,8 @@ module SU_MCP
           featureGeometryDigest: geometry.feature_geometry_digest,
           featureSelectionDigest: feature_selection_digest(selected_ids, lifecycle_resolution),
           terrainStateDigest: terrain_state_summary.fetch(:digest),
+          componentPlanSummary: lifecycle_resolution.fetch(:componentPlanSummary, nil),
+          componentBudget: lifecycle_resolution.fetch(:componentBudget, nil),
           counts: {
             selectedFeatures: selected_features.length,
             patchBundles: bundles.length

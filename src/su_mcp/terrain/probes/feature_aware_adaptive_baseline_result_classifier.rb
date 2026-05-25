@@ -44,15 +44,27 @@ module SU_MCP
         validation_failure = validation_failure_reason(row)
         return ['failed', validation_failure] if validation_failure
 
-        return ['regressed', 'dirty window or patch scope changed'] if scope_changed?(row, baseline)
-        return ['regressed', 'timing exceeded regression threshold'] if
-          timing_delta_percent(row, baseline) > TIMING_REGRESSION_PERCENT
-        return ['regressed', 'face-count growth exceeded density threshold'] if
-          face_delta_percent(row, baseline) > FACE_GROWTH_REGRESSION_PERCENT
+        regression = regression_reason(row, baseline)
+        return ['regressed', regression] if regression
         return ['policy_applied', policy_applied_reason(row, baseline)] if
           feature_policy_applied?(row) && quality_captured?(row)
 
         ['neutral', delta_reason(row, baseline)]
+      end
+
+      def regression_reason(row, baseline)
+        unexpected_fallback = unexpected_component_fallback_reason(row)
+        return unexpected_fallback if unexpected_fallback
+        return 'dirty window or patch scope changed' if
+          scope_changed?(row, baseline) && !expected_component_change?(row)
+        return 'timing exceeded regression threshold' if
+          timing_delta_percent(row, baseline) > TIMING_REGRESSION_PERCENT &&
+          !expected_component_change?(row)
+        return 'face-count growth exceeded density threshold' if
+          face_delta_percent(row, baseline) > FACE_GROWTH_REGRESSION_PERCENT &&
+          !expected_component_change?(row)
+
+        nil
       end
 
       def validation_failure_reason(row)
@@ -61,6 +73,13 @@ module SU_MCP
           forced_subdivision_skipped?(row)
 
         nil
+      end
+
+      def unexpected_component_fallback_reason(row)
+        return nil unless component_fallback(row)
+        return nil if row['expectedFallback']
+
+        "unexpected component fallback #{component_fallback(row)}"
       end
 
       def accepted_mesh_row?(row)
@@ -75,6 +94,27 @@ module SU_MCP
       def scope_changed?(row, baseline)
         row['dirtyWindow'] != baseline['dirtyWindow'] ||
           patch_scope(row) != patch_scope(baseline)
+      end
+
+      def expected_component_change?(row)
+        expected_component_promotion?(row) ||
+          expected_component_over_budget?(row) ||
+          expected_component_fallback?(row)
+      end
+
+      def expected_component_promotion?(row)
+        return false unless row['expectedPromotion']
+
+        summary = row['componentPlanSummary'] || {}
+        summary.fetch('promotedCount', 0).to_i.positive?
+      end
+
+      def expected_component_fallback?(row)
+        row['expectedFallback'] && component_fallback(row)
+      end
+
+      def expected_component_over_budget?(row)
+        row['expectedOverBudget'] && component_budget_status(row) == 'over_budget'
       end
 
       def feature_policy_applied?(row)
@@ -166,8 +206,23 @@ module SU_MCP
           'secondsDeltaPercent' => timing_delta_percent(row, baseline).round(1),
           'dirtyWindowChanged' => row['dirtyWindow'] != baseline['dirtyWindow'],
           'patchScopeChanged' => patch_scope(row) != patch_scope(baseline),
+          'expectedPromotion' => row['expectedPromotion'],
+          'expectedOverBudget' => row['expectedOverBudget'],
+          'expectedFallback' => row['expectedFallback'],
+          'componentBudgetStatus' => component_budget_status(row),
+          'componentFallback' => component_fallback(row),
           'planarInterior' => planar_interior_comparison(row, baseline)
         }.compact
+      end
+
+      def component_budget_status(row)
+        budget = row['componentBudget'] || {}
+        budget['status']
+      end
+
+      def component_fallback(row)
+        budget = row['componentBudget'] || {}
+        budget['fallbackCategory']
       end
 
       def planar_interior_comparison(row, baseline)

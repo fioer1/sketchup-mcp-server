@@ -695,6 +695,31 @@ class TerrainSurfaceCommandsTest < Minitest::Test # rubocop:disable Metrics/Clas
     refute_includes(JSON.generate(result), 'planned_cell_centroid')
   end
 
+  def test_baseline_evidence_records_component_summary_from_sealed_lifecycle_resolution
+    model = build_semantic_model
+    managed_terrain_owner(model)
+    mesh_generator = RecordingRegeneratingMeshGenerator.new
+    commands = build_edit_commands(
+      model: model,
+      repository: EditRepository.new(tiled_state_20x20),
+      mesh_generator: mesh_generator,
+      grade_editor: SU_MCP::Terrain::BoundedGradeEdit.new,
+      terrain_feature_intent_emitter: RecordingFeatureIntentEmitter.new,
+      terrain_feature_planner: CrossPatchFeatureWindowPlanner.new
+    )
+
+    result = commands.edit_terrain_surface(edit_request)
+    plan = mesh_generator.last_regenerate_args.fetch(:output_plan)
+    evidence = commands.last_baseline_evidence
+
+    assert_equal('edited', result.fetch(:outcome))
+    assert_cross_patch_component_promotion(plan)
+    assert_same(plan.adaptive_lifecycle_resolution.fetch(:componentPlanSummary),
+                evidence.fetch(:componentPlanSummary))
+    assert_operator(evidence.dig(:timingBuckets, :componentPlanning), :>=, 0.0)
+    refute_includes(JSON.generate(result), 'componentPlanSummary')
+  end
+
   def test_non_cdt_adaptive_output_requests_selected_feature_geometry_for_policy
     model = build_semantic_model
     managed_terrain_owner(model)
@@ -793,6 +818,34 @@ class TerrainSurfaceCommandsTest < Minitest::Test # rubocop:disable Metrics/Clas
     assert_equal(1, geometry.pressure_regions.length)
     assert_equal({ hard: 0, firm: 0, soft: 1 }, diagnostics.fetch(:includedByStrength))
     assert_equal({ hard: 1, firm: 0, soft: 0 }, diagnostics.fetch(:excludedByStrength))
+  end
+
+  def test_cdt_patch_feature_context_uses_sealed_lifecycle_resolution
+    model = build_semantic_model
+    managed_terrain_owner(model)
+    mesh_generator = RecordingRegeneratingMeshGenerator.new(cdt_enabled: true)
+    commands = build_edit_commands(
+      model: model,
+      repository: EditRepository.new(tiled_state_20x20),
+      mesh_generator: mesh_generator,
+      grade_editor: SU_MCP::Terrain::BoundedGradeEdit.new,
+      terrain_feature_intent_emitter: PatchRelevantFeatureIntentEmitter.new,
+      terrain_feature_planner: SU_MCP::Terrain::TerrainFeaturePlanner.new
+    )
+
+    result = commands.edit_terrain_surface(edit_request)
+    plan = mesh_generator.last_regenerate_args.fetch(:output_plan)
+    feature_context = mesh_generator.last_regenerate_args.fetch(:feature_context)
+    patch_plan = feature_context.fetch(:patchFeaturePlan)
+
+    assert_equal('edited', result.fetch(:outcome))
+    assert_equal(
+      plan.adaptive_lifecycle_resolution.dig(:componentPlanSummary, :roleCounts),
+      patch_plan.fetch(:componentPlanSummary).fetch(:roleCounts)
+    )
+    assert_includes(patch_plan.fetch(:patchFeatureBundles).values.flat_map do |bundle|
+      bundle.fetch(:inclusionReasons)
+    end, 'replacement')
   end
 
   def test_valid_edit_succeeds_when_feature_planner_skips_cdt_participation
@@ -1005,6 +1058,14 @@ class TerrainSurfaceCommandsTest < Minitest::Test # rubocop:disable Metrics/Clas
       SU_MCP::Terrain::TerrainFeatureGeometry,
       provider.last_build_args.fetch(:feature_geometry)
     )
+  end
+
+  def assert_cross_patch_component_promotion(plan)
+    summary = plan.adaptive_lifecycle_resolution.fetch(:componentPlanSummary)
+    graph_reasons = summary.fetch(:graphReasons)
+    assert_includes(graph_reasons, 'feature_boundary_crossing')
+    assert_includes(graph_reasons, 'protected_boundary_crossing')
+    assert_operator(summary.fetch(:promotedCount), :>, 0)
   end
 
   def assert_real_mta33_context_reached_provider(provider)
@@ -1844,6 +1905,30 @@ class TerrainSurfaceCommandsTest < Minitest::Test # rubocop:disable Metrics/Clas
         max_column: max_column,
         max_row: max_row
       }
+    end
+  end
+
+  class CrossPatchFeatureWindowPlanner < ReplayLikeFeatureWindowPlanner
+    def prepare(state:, terrain_state_summary:, include_feature_geometry: false,
+                selection_window: nil)
+      prepared = super
+      _state = state
+      _terrain_state_summary = terrain_state_summary
+      _include_feature_geometry = include_feature_geometry
+      _selection_window = selection_window
+      prepared.fetch(:context)[:selectedFeatures] = [
+        feature('feature-corridor-crossing', 'linear_corridor', 'firm', bounds(15, 1, 17, 1)),
+        protected_feature('feature-protected-crossing', bounds(15, 15, 17, 17))
+      ]
+      prepared
+    end
+
+    private
+
+    def protected_feature(id, bounds)
+      feature(id, 'fixed_control', 'hard', bounds).merge(
+        'roles' => %w[control protected]
+      )
     end
   end
 

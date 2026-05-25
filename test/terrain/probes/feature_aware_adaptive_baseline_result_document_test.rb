@@ -88,6 +88,77 @@ class FeatureAwareAdaptiveBaselineResultDocumentTest < Minitest::Test
     )
   end
 
+  def test_serializes_component_summary_without_raw_patch_identifiers
+    document = SU_MCP::Terrain::FeatureAwareAdaptiveBaselineResultDocument.new(
+      replay: replay,
+      evidence: {
+        rows: [
+          {
+            rowId: 'cross-patch-feature',
+            sourceElementId: 'terrain-main',
+            commandKind: 'edit',
+            timingBuckets: { total: 0.1, componentPlanning: 0.004 },
+            accepted: true,
+            faceCount: 90,
+            vertexCount: 45,
+            componentPlanSummary: {
+              componentCount: 1,
+              maxComponentSize: 4,
+              promotedCount: 2,
+              roleCounts: {
+                affected: 1,
+                replacement: 4,
+                conformance: 3,
+                retained_boundary: 1,
+                safety_margin: 0
+              },
+              graphReasons: %w[dirty_window feature_boundary_crossing],
+              rawPatchIds: %w[adaptive-patch-v1-c0-r0]
+            },
+            componentBudget: {
+              status: 'within_budget',
+              maxReplacementPatchCount: 25,
+              maxPromotionRadius: 2
+            },
+            expectedPromotion: true,
+            expectedOverBudget: false,
+            expectedFallback: false
+          }
+        ]
+      },
+      replay_path: __FILE__,
+      clock: Struct.new(:now).new(Time.utc(2026, 5, 18)),
+      model: Object.new,
+      include_timing: false
+    ).to_h
+
+    row = document.fetch(:rows).first
+    serialized = JSON.generate(row)
+
+    assert_equal(
+      {
+        componentCount: 1,
+        maxComponentSize: 4,
+        promotedCount: 2,
+        roleCounts: {
+          affected: 1,
+          replacement: 4,
+          conformance: 3,
+          retained_boundary: 1,
+          safety_margin: 0
+        },
+        graphReasons: %w[dirty_window feature_boundary_crossing]
+      },
+      row.fetch(:componentPlanSummary)
+    )
+    assert_equal('within_budget', row.fetch(:componentBudget).fetch(:status))
+    assert_equal(true, row.fetch(:expectedPromotion))
+    assert_equal(false, row.fetch(:expectedOverBudget))
+    assert_equal(false, row.fetch(:expectedFallback))
+    refute_includes(serialized, 'adaptive-patch-v1')
+    refute_includes(serialized, 'rawPatchIds')
+  end
+
   private
 
   def replay

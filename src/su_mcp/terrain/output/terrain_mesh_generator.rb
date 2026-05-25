@@ -854,13 +854,8 @@ module SU_MCP
           output_plan.intent != :dirty_window
 
         timing = PatchLifecycle::PatchTiming.new
-        resolver = PatchLifecycle::PatchWindowResolver.new(
-          policy: output_plan.adaptive_patch_policy,
-          dimensions: state.dimensions
-        )
-        resolution = timing.measure(:dirtyWindowMapping) do
-          resolver.resolve(cell_window: output_plan.cell_window)
-        end
+        resolution = dirty_adaptive_lifecycle_resolution(timing, output_plan, state)
+
         mesh = adaptive_patch_mesh(owner.entities)
         unless mesh
           return generate_adaptive_patches(owner: owner, state: state, output_plan: output_plan)
@@ -918,6 +913,24 @@ module SU_MCP
         end
         @last_adaptive_patch_timing = timing.to_h
         generated_result(output_plan)
+      end
+
+      def dirty_adaptive_lifecycle_resolution(timing, output_plan, state)
+        timing.measure(:dirtyWindowMapping) do
+          adaptive_lifecycle_resolution_for(output_plan, state)
+        end
+      end
+
+      def adaptive_lifecycle_resolution_for(output_plan, state)
+        if output_plan.respond_to?(:adaptive_lifecycle_resolution) &&
+           output_plan.adaptive_lifecycle_resolution
+          return output_plan.adaptive_lifecycle_resolution
+        end
+
+        PatchLifecycle::PatchWindowResolver.new(
+          policy: output_plan.adaptive_patch_policy,
+          dimensions: state.dimensions
+        ).resolve(cell_window: output_plan.cell_window)
       end
 
       def adaptive_patch_mesh(entities)

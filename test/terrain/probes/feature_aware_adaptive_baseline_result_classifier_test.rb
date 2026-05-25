@@ -142,6 +142,78 @@ class FeatureAwareAdaptiveBaselineResultClassifierTest < Minitest::Test
     assert_includes(row.fetch('verdictReason'), 'seam')
   end
 
+  def test_expected_component_promotion_is_not_patch_scope_regression
+    row = classify(
+      current_row(
+        patch_scope: { 'affectedPatchCount' => 1, 'replacementPatchCount' => 12 },
+        component_summary: component_summary(promoted_count: 3),
+        expected_promotion: true,
+        quality_status: 'captured'
+      ),
+      baseline: current_row(policy: nil)
+    )
+
+    refute_equal('regressed', row.fetch('verdict'))
+    assert_equal(true, row.fetch('comparison').fetch('expectedPromotion'))
+    assert_equal(true, row.fetch('comparison').fetch('patchScopeChanged'))
+  end
+
+  def test_expected_over_budget_verdict_is_not_regression_with_mesh_evidence
+    row = classify(
+      current_row(
+        face_count: 140,
+        patch_scope: { 'affectedPatchCount' => 1, 'replacementPatchCount' => 16 },
+        component_summary: component_summary(promoted_count: 15),
+        component_budget: {
+          'status' => 'over_budget'
+        },
+        expected_over_budget: true,
+        quality_status: 'captured'
+      ),
+      baseline: current_row(policy: nil)
+    )
+
+    refute_equal('regressed', row.fetch('verdict'))
+    assert_equal(true, row.fetch('comparison').fetch('expectedOverBudget'))
+    assert_equal('over_budget', row.fetch('comparison').fetch('componentBudgetStatus'))
+    refute_includes(row.fetch('comparison'), 'componentFallback')
+  end
+
+  def test_expected_fallback_annotation_without_component_fallback_remains_regression
+    row = classify(
+      current_row(
+        patch_scope: { 'affectedPatchCount' => 1, 'replacementPatchCount' => 16 },
+        expected_fallback: true
+      ),
+      baseline: current_row(policy: nil)
+    )
+
+    assert_equal('regressed', row.fetch('verdict'))
+  end
+
+  def test_unexpected_component_expansion_or_fallback_remains_regression
+    unexpected_expansion = classify(
+      current_row(
+        patch_scope: { 'affectedPatchCount' => 1, 'replacementPatchCount' => 16 },
+        component_summary: component_summary(promoted_count: 15)
+      ),
+      baseline: current_row(policy: nil)
+    )
+    unexpected_fallback = classify(
+      current_row(
+        component_budget: {
+          'status' => 'over_budget',
+          'fallbackCategory' => 'unsafe_existing_output'
+        },
+        expected_fallback: false
+      ),
+      baseline: current_row(policy: nil)
+    )
+
+    assert_equal('regressed', unexpected_expansion.fetch('verdict'))
+    assert_equal('regressed', unexpected_fallback.fetch('verdict'))
+  end
+
   private
 
   def classify(row, baseline: baseline_row)
@@ -168,7 +240,13 @@ class FeatureAwareAdaptiveBaselineResultClassifierTest < Minitest::Test
     forced_summary: nil,
     quality_summary: nil,
     planar_interior_metrics: nil,
-    seam_summary: nil
+    seam_summary: nil,
+    patch_scope: { 'affectedPatchCount' => 1, 'replacementPatchCount' => 9 },
+    component_summary: nil,
+    component_budget: nil,
+    expected_promotion: false,
+    expected_over_budget: false,
+    expected_fallback: false
   )
     {
       'rowId' => 'feature-row',
@@ -177,7 +255,7 @@ class FeatureAwareAdaptiveBaselineResultClassifierTest < Minitest::Test
       'faceCount' => face_count,
       'vertexCount' => vertex_count,
       'dirtyWindow' => { 'columns' => 9, 'rows' => 9 },
-      'patchScope' => { 'affectedPatchCount' => 1, 'replacementPatchCount' => 9 },
+      'patchScope' => patch_scope,
       'adaptivePolicySummary' => policy_summary(
         policy,
         density_hits,
@@ -186,8 +264,29 @@ class FeatureAwareAdaptiveBaselineResultClassifierTest < Minitest::Test
       ),
       'featureQualitySummary' => quality_payload(quality_summary, quality_status),
       'planarInteriorMetrics' => planar_interior_metrics,
-      'seamValidationSummary' => seam_summary
+      'seamValidationSummary' => seam_summary,
+      'componentPlanSummary' => component_summary,
+      'componentBudget' => component_budget,
+      'expectedPromotion' => expected_promotion,
+      'expectedOverBudget' => expected_over_budget,
+      'expectedFallback' => expected_fallback
     }.compact
+  end
+
+  def component_summary(promoted_count:)
+    {
+      'componentCount' => 1,
+      'maxComponentSize' => promoted_count + 1,
+      'promotedCount' => promoted_count,
+      'roleCounts' => {
+        'affected' => 1,
+        'replacement' => promoted_count + 1,
+        'conformance' => 3,
+        'retained_boundary' => 0,
+        'safety_margin' => 0
+      },
+      'graphReasons' => %w[dirty_window feature_boundary_crossing]
+    }
   end
 
   def quality_payload(explicit_summary, status)

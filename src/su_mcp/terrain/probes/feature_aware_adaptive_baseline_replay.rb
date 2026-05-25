@@ -8,13 +8,14 @@ module SU_MCP
     # rubocop:disable Metrics/ClassLength
     class FeatureAwareAdaptiveBaselineReplay
       EVIDENCE_TIMING_BUCKETS = %i[
-        commandOutputPlanning featureSelectionDiagnostics dirtyWindowMapping adaptivePlanning
-        mutation total
+        commandOutputPlanning featureSelectionDiagnostics componentPlanning dirtyWindowMapping
+        adaptivePlanning mutation total
       ].freeze
       EVIDENCE_ROW_KEYS = %i[
         rowId sequenceId replaySpec commandKind sourceElementId featureContextClass accepted
         verdict outcome stateRevision featureViewDigest policyFingerprint featureContext dirtyWindow
-        adaptivePolicySummary affectedPatchScope faceCount vertexCount meshType
+        adaptivePolicySummary componentPlanSummary componentBudget expectedPromotion
+        expectedOverBudget expectedFallback affectedPatchScope faceCount vertexCount meshType
         simplificationTolerance maxSimplificationError renderingSummary planarInteriorMetrics
         seamValidationSummary featureQualitySummary harnessQualitySeconds timingBuckets
       ].freeze
@@ -217,6 +218,11 @@ module SU_MCP
           policyFingerprint: evidence_value(baseline_evidence, :policyFingerprint),
           featureContext: evidence_value(baseline_evidence, :featureContext),
           adaptivePolicySummary: evidence_value(baseline_evidence, :adaptivePolicySummary),
+          componentPlanSummary: evidence_value(baseline_evidence, :componentPlanSummary),
+          componentBudget: evidence_value(baseline_evidence, :componentBudget),
+          expectedPromotion: row['expectedPromotion'],
+          expectedOverBudget: row['expectedOverBudget'],
+          expectedFallback: row['expectedFallback'],
           dirtyWindow: evidence_value(baseline_evidence, :dirtyWindow) ||
             row['dirtyWindowExpectation'],
           affectedPatchScope: evidence_value(baseline_evidence, :affectedPatchScope),

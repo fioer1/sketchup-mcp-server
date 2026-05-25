@@ -238,7 +238,7 @@ module SU_MCP
           :commandOutputPlanning,
           legacy_bucket: cdt_output_enabled? ? :command_prep : nil
         ) do
-          edit_output_plan(context, saved, feature_plan, output_state)
+          edit_output_plan(context, saved, feature_plan, output_state, timing: timing)
         end
         record_baseline_evidence(output_plan, state: feature_state)
         feature_context = cdt_feature_context(feature_plan, feature_state)
@@ -272,11 +272,7 @@ module SU_MCP
         return feature_context unless output_plan.intent == :dirty_window
         return feature_context unless terrain_feature_planner.respond_to?(:prepare_patch_batch)
 
-        resolver = PatchLifecycle::PatchWindowResolver.new(
-          policy: output_plan.adaptive_patch_policy,
-          dimensions: state.dimensions
-        )
-        resolution = resolver.resolve(cell_window: output_plan.cell_window)
+        resolution = adaptive_lifecycle_resolution_for(output_plan, state)
         feature_context.merge(
           patchFeaturePlan: measure_baseline_timing(
             timing,
@@ -320,6 +316,8 @@ module SU_MCP
           policyFingerprint: diagnostics&.fetch(:policyFingerprint, nil),
           featureContext: feature_context_baseline_summary(diagnostics),
           adaptivePolicySummary: output_plan.feature_aware_adaptive_policy&.summary,
+          componentPlanSummary: component_plan_summary(output_plan),
+          componentBudget: component_budget_summary(output_plan),
           dirtyWindow: sample_window_baseline_summary(output_plan.window),
           affectedPatchScope: affected_patch_scope_summary(output_plan, state),
           renderingSummary: output_plan_baseline_summary(output_plan),
@@ -369,6 +367,7 @@ module SU_MCP
             :featureSelectionDiagnostics,
             :feature_selection
           ),
+          componentPlanning: bucket_seconds(buckets, :componentPlanning),
           dirtyWindowMapping: bucket_seconds(buckets, :dirtyWindowMapping, :dirty_window_mapping),
           adaptivePlanning: bucket_seconds(buckets, :adaptivePlanning, :adaptive_planning),
           mutation: bucket_seconds(buckets, :mutation),
@@ -408,10 +407,7 @@ module SU_MCP
         return nil unless output_plan.adaptive_patch_policy && output_plan.cell_window
         return nil if output_plan.cell_window.empty?
 
-        resolution = PatchLifecycle::PatchWindowResolver.new(
-          policy: output_plan.adaptive_patch_policy,
-          dimensions: state.dimensions
-        ).resolve(cell_window: output_plan.cell_window)
+        resolution = adaptive_lifecycle_resolution_for(output_plan, state)
         {
           affectedPatchCount: resolution.fetch(:affectedPatchIds).length,
           replacementPatchCount: resolution.fetch(:replacementPatchIds).length,
@@ -419,6 +415,28 @@ module SU_MCP
           replacementPatchIds: resolution.fetch(:replacementPatchIds),
           conformanceRing: resolution.fetch(:conformanceRing)
         }
+      end
+
+      def adaptive_lifecycle_resolution_for(output_plan, state)
+        if output_plan.respond_to?(:adaptive_lifecycle_resolution) &&
+           output_plan.adaptive_lifecycle_resolution
+          return output_plan.adaptive_lifecycle_resolution
+        end
+
+        PatchLifecycle::PatchWindowResolver.new(
+          policy: output_plan.adaptive_patch_policy,
+          dimensions: state.dimensions
+        ).resolve(cell_window: output_plan.cell_window)
+      end
+
+      def component_plan_summary(output_plan)
+        output_plan.adaptive_lifecycle_resolution&.fetch(:componentPlanSummary, nil) if
+          output_plan.respond_to?(:adaptive_lifecycle_resolution)
+      end
+
+      def component_budget_summary(output_plan)
+        output_plan.adaptive_lifecycle_resolution&.fetch(:componentBudget, nil) if
+          output_plan.respond_to?(:adaptive_lifecycle_resolution)
       end
 
       def output_plan_baseline_summary(output_plan)
@@ -644,7 +662,7 @@ module SU_MCP
         TiledHeightmapState.from_heightmap_state(state)
       end
 
-      def edit_output_plan(context, saved, feature_plan, state)
+      def edit_output_plan(context, saved, feature_plan, state, timing: nil)
         policy = adaptive_patch_policy_for(state)
         feature_policy = feature_aware_adaptive_policy_for(state, feature_plan)
         if full_grid_feature_reconciliation?(feature_plan)
@@ -663,8 +681,20 @@ module SU_MCP
           )
         end
 
-        window = feature_planned_window(feature_plan) ||
-                 changed_region_window(context.fetch(:edit_result).fetch(:diagnostics))
+        changed_window = changed_region_window(context.fetch(:edit_result).fetch(:diagnostics))
+        window = if component_planned_adaptive_output?(state, policy)
+                   changed_window
+                 else
+                   feature_planned_window(feature_plan) || changed_window
+                 end
+        component_sources = component_sources_for(feature_plan)
+        lifecycle_resolution = component_lifecycle_resolution_for(
+          state: state,
+          policy: policy,
+          window: window,
+          sources: component_sources,
+          timing: timing
+        )
         TerrainOutputPlan.dirty_window(
           state: state,
           terrain_state_summary: saved.fetch(:summary),
@@ -672,6 +702,8 @@ module SU_MCP
           window: window,
           adaptive_patch_policy: policy,
           feature_aware_adaptive_policy: feature_policy,
+          component_sources: component_sources,
+          adaptive_lifecycle_resolution: lifecycle_resolution,
           feature_output_policy_diagnostics: feature_output_policy_diagnostics_for(
             feature_plan: feature_plan,
             selection_window: window,
@@ -679,6 +711,57 @@ module SU_MCP
             adaptive_patch_policy: policy
           )
         )
+      end
+
+      def component_lifecycle_resolution_for(state:, policy:, window:, sources:, timing:)
+        return nil unless component_planned_adaptive_output?(state, policy)
+
+        cell_window = TerrainOutputCellWindow.from_sample_window(window: window, state: state)
+        measure_baseline_timing(timing, :componentPlanning) do
+          TerrainOutputPlan.adaptive_lifecycle_resolution_for(
+            state,
+            policy,
+            :dirty_window,
+            cell_window,
+            sources
+          )
+        end
+      end
+
+      def component_planned_adaptive_output?(state, policy)
+        TerrainOutputPlan.adaptive_state?(state) && policy&.hard_patch_boundaries
+      end
+
+      def component_sources_for(feature_plan)
+        context = feature_plan.fetch(:context, {})
+        selected_features = Array(context[:selectedFeatures] || context['selectedFeatures'])
+        constraints = Array(context[:constraints] || context['constraints'])
+        constraint_windows = constraints.filter_map { |constraint| feature_window_for(constraint) }
+        feature_windows = selected_features.filter_map { |feature| feature_window_for(feature) }
+        protected_windows = selected_features
+                            .select { |feature| protected_component_feature?(feature) }
+                            .filter_map { |feature| feature_window_for(feature) }
+        {
+          feature_windows: (feature_windows + constraint_windows).uniq,
+          protected_windows: protected_windows.uniq,
+          local_detail_windows: []
+        }
+      end
+
+      def feature_window_for(feature)
+        feature.fetch(:affectedWindow) do
+          feature.fetch('affectedWindow') do
+            feature.fetch(:relevanceWindow) do
+              feature.fetch('relevanceWindow', nil)
+            end
+          end
+        end
+      end
+
+      def protected_component_feature?(feature)
+        roles = Array(feature.fetch(:roles) { feature.fetch('roles', []) }).map(&:to_s)
+        roles.include?('protected') ||
+          feature.fetch(:kind) { feature.fetch('kind', nil) } == 'preserve_region'
       end
 
       def feature_geometry_required_for_output?(state)

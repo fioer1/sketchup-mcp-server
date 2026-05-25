@@ -107,7 +107,7 @@ module SU_MCP
       end
 
       def result_row(row)
-        {
+        result = {
           rowId: row.fetch(:rowId),
           sourceElementId: row.fetch(:sourceElementId),
           commandKind: row.fetch(:commandKind),
@@ -115,9 +115,6 @@ module SU_MCP
           seconds: row.fetch(:timingBuckets).fetch(:total),
           timingBuckets: row.fetch(:timingBuckets),
           outcome: row[:outcome] || inferred_outcome(row),
-          meshType: row[:meshType] || row.dig(:renderingSummary, :meshType),
-          faceCount: row[:faceCount],
-          vertexCount: row[:vertexCount],
           planarInteriorMetrics: row[:planarInteriorMetrics],
           adaptivePolicySummary: row[:adaptivePolicySummary],
           seamValidationSummary: seam_validation_result(row[:seamValidationSummary]),
@@ -128,7 +125,16 @@ module SU_MCP
           dirtyWindow: dirty_window_result(row[:dirtyWindow]),
           patchScope: patch_scope_result(row[:affectedPatchScope]),
           refusal: row.fetch(:accepted, false) ? nil : row[:verdict]
-        }.compact
+        }
+        result.merge(mesh_result_fields(row)).merge(component_result_fields(row)).compact
+      end
+
+      def mesh_result_fields(row)
+        {
+          meshType: row[:meshType] || row.dig(:renderingSummary, :meshType),
+          faceCount: row[:faceCount],
+          vertexCount: row[:vertexCount]
+        }
       end
 
       def inferred_outcome(row)
@@ -170,6 +176,43 @@ module SU_MCP
             scope.fetch('conformanceRing', nil)
           end
         }.compact
+      end
+
+      def component_result_fields(row)
+        {
+          componentPlanSummary: component_plan_result(row[:componentPlanSummary]),
+          componentBudget: component_budget_result(row[:componentBudget]),
+          expectedPromotion: row[:expectedPromotion],
+          expectedOverBudget: row[:expectedOverBudget],
+          expectedFallback: row[:expectedFallback]
+        }
+      end
+
+      def component_plan_result(summary)
+        return nil unless summary
+
+        {
+          componentCount: value_from(summary, :componentCount),
+          maxComponentSize: value_from(summary, :maxComponentSize),
+          promotedCount: value_from(summary, :promotedCount),
+          roleCounts: value_from(summary, :roleCounts),
+          graphReasons: value_from(summary, :graphReasons)
+        }.compact
+      end
+
+      def component_budget_result(budget)
+        return nil unless budget
+
+        {
+          status: value_from(budget, :status),
+          fallbackCategory: value_from(budget, :fallbackCategory),
+          maxReplacementPatchCount: value_from(budget, :maxReplacementPatchCount),
+          maxPromotionRadius: value_from(budget, :maxPromotionRadius)
+        }.compact
+      end
+
+      def value_from(hash, key)
+        hash.fetch(key) { hash.fetch(key.to_s, nil) }
       end
 
       def seam_validation_result(summary)

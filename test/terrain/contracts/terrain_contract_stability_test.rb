@@ -377,6 +377,37 @@ class TerrainContractStabilityTest < Minitest::Test
     ].each { |term| refute_includes(JSON.generate(result), term) }
   end
 
+  def test_public_response_hides_patch_component_planning_internals
+    result = edit_evidence_result(
+      diagnostics: edit_diagnostics.merge(
+        componentPlanSummary: {
+          componentCount: 2,
+          maxComponentSize: 4,
+          promotedCount: 3,
+          roleCounts: {
+            affected: 1,
+            replacement: 4,
+            conformance: 3,
+            retainedBoundary: 1,
+            safetyMargin: 1
+          },
+          graphReasons: %w[
+            dirty_window feature_boundary_crossing protected_boundary_crossing
+            retained_seam_dependency conformance
+          ]
+        },
+        componentBudget: {
+          status: 'over_budget',
+          fallbackCategory: 'over_budget_component',
+          maxReplacementPatchCount: 25,
+          maxPromotionRadius: 2
+        }
+      )
+    )
+
+    refute_internal_output_vocabulary(result)
+  end
+
   def test_public_response_hides_feature_output_policy_diagnostics
     result = edit_evidence_result(
       diagnostics: edit_diagnostics.merge(
@@ -628,7 +659,12 @@ class TerrainContractStabilityTest < Minitest::Test
       chainDigest retainedSpan retainedNeighborSpan replacementSide promotedPatchIds
       seamDigest seamChain seamLattice maxZGap topology_mismatch z_mismatch
       schema_version_mismatch owner_edge_identity_mismatch promotionBudget
-      second_order_dependency
+      second_order_dependency componentPlanSummary componentBudget roleCounts
+      componentCount maxComponentSize promotedCount graphReasons maxReplacementPatchCount
+      maxPromotionRadius over_budget_component retainedBoundary safetyMargin
+      retained_boundary safety_margin
+      dirty_window feature_boundary_crossing protected_boundary_crossing
+      retained_seam_dependency
     ].each { |term| refute_includes(serialized, term) }
     refute_includes(serialized_output, 'regeneration')
   end

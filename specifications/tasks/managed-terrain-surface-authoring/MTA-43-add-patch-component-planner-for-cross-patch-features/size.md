@@ -2,13 +2,13 @@
 
 **Task ID**: MTA-43  
 **Title**: Add Patch Component Planner For Cross-Patch Features  
-**Status**: challenged  
+**Status**: calibrated
 **Created**: 2026-05-15  
-**Last Updated**: 2026-05-22  
+**Last Updated**: 2026-05-25
 
 **Related Task**: [task.md](./task.md)  
 **Related Plan**: none yet  
-**Related Summary**: none yet  
+**Related Summary**: [summary.md](./summary.md)
 
 ---
 
@@ -174,7 +174,17 @@ No material drift recorded yet.
 <!-- SIZE:ACTUAL:START -->
 ## Actual Profile
 
-Not filled yet.
+| Dimension | Actual (0-4) | Evidence Notes |
+|---|---:|---|
+| Functional Scope | 3 | Delivered real bounded component planning, sealed lifecycle ownership, over-budget verdict behavior, replay/classifier evidence, and promoted-patch replacement proof without public contract changes. |
+| Technical Change Surface | 4 | Cross-cut PatchLifecycle, `TerrainOutputPlan`, command evidence, feature patch batching, mesh mutation, registry/readback, replay artifacts, classifier behavior, no-leak contracts, and hosted performance evidence. |
+| Actual Implementation Friction | 3 | Work followed the broad plan, but Step 6 exposed two meaningful corrections: over-budget had been implemented as forced full adaptive fallback, and the replay corpus did not actually prove expanded replacement mutation. |
+| Actual Validation Burden | 3 | Exceeded repo baseline through external review follow-up, hosted checks, a material fix/reload/retest loop, targeted promoted-patch proof, and a fresh packaged three-pass performance rerun. Not `4`: validation did not force redesign/revert or repeated unstable blocker loops. |
+| Actual Dependency Drag | 3 | Relied on MTA-36 lifecycle, MTA-38 evidence, MTA-40 feature pressure, MTA-42 seam behavior, MTA-46 residual assumptions, and active SketchUp hosted access. |
+| Actual Discovery Encountered | 3 | Discovery materially changed confidence: the planned over-budget fallback interpretation was wrong, and replay promotion metadata did not imply actual extra patch regeneration. Both required evidence-backed correction. |
+| Actual Scope Volatility | 1 | Task boundary stayed stable; corrections returned implementation to MTA-43's intended bounded component behavior rather than adding a new acceptance target. |
+| Actual Rework | 3 | Meaningful revisiting occurred after apparently green work: removed forced full adaptive fallback, separated over-budget from actual fallback evidence, strengthened mutation tests, and added targeted hosted proof. |
+| Final Confidence in Completeness | 3 | Strong automated, review, package, and hosted evidence exists; confidence is not 4 because hosted retained-seam mismatch/no-delete and retained-Z hard gating remain explicit gaps. |
 <!-- SIZE:ACTUAL:END -->
 
 ---
@@ -182,7 +192,24 @@ Not filled yet.
 <!-- SIZE:VALIDATION-EVIDENCE:START -->
 ## Validation Evidence Summary
 
-Not filled yet.
+Validation classification: expanded hosted/performance matrix with one material correction loop and
+a targeted hosted proof.
+
+- Full Ruby suite, lint, package verification, focused integration tests, and `git diff --check`
+  passed after final fixes.
+- PAL `grok-4.3` review completed; accepted findings were fixed and rerun through focused and broad
+  validation.
+- Hosted SketchUp rows covered local no-promotion, cross feature/protected promotion, over-budget
+  bounded replacement, repeated edit/readback, public no-leak checks, timing buckets, seam
+  summaries, and owner-level registry/readback.
+- A targeted hosted proof compared legacy dirty scope (`9` patches) to MTA-43 component scope
+  (`12` patches), proving the `3` extra promoted patches were actually regenerated while an
+  outside patch remained untouched.
+- A fresh packaged three-pass performance capture ended effectively neutral against MTA-42/MTA-46:
+  mean `78.291227s`, `0` refused rows, `15` component rows, `6` over-budget rows,
+  `0.028851s` mean component planning, `7.366014s` mean adaptive planning.
+- Retained seam mismatch/no-delete live forcing and retained-Z hard pre-erase gating remain
+  recorded gaps rather than hidden validation.
 <!-- SIZE:VALIDATION-EVIDENCE:END -->
 
 ---
@@ -190,7 +217,46 @@ Not filled yet.
 <!-- SIZE:DELTA:START -->
 ## Estimation Delta Review
 
-Not filled yet.
+### Inflation Check
+
+- Validation did exceed repo baseline because hosted evidence found one real underimplementation and
+  required fix/reload/retest, targeted promoted-patch proof, and fresh packaged perf capture. It did
+  not dominate delivery or force redesign/revert, so it stays `3`, not `4`.
+- Rework was meaningful after apparent green state, but it was localized to over-budget routing,
+  replay/classifier evidence, and mutation proof rather than a broad rewrite.
+- Scope did not materially change; the implementation returned to the finalized plan's bounded
+  component intent rather than adding a new acceptance target.
+- No `4` actual score is used except Technical Change Surface, where breadth across runtime,
+  evidence, mutation, registry, and contract surfaces was the dominant driver.
+- Confidence is capped at `3` because retained seam mismatch/no-delete and retained-Z hard gating
+  are not fully hosted-proven.
+
+### Underestimated
+
+- The hardest risk was not the pure component graph; it was proving that one sealed lifecycle
+  resolution affected real mutation, not only internal metadata.
+- The replay corpus was insufficiently shaped for the core promotion claim: it recorded promoted
+  counts, but its replacement envelopes were already broad enough that no row proved additional
+  patch regeneration over the legacy dirty resolver.
+- The over-budget planning language was ambiguous. "Do not reject a valid mesh" was implemented as
+  forced full adaptive fallback at first, but the correct behavior is bounded dirty replacement when
+  ownership, registry, and seam checks are safe.
+
+### Overestimated
+
+- The sealed-resolution carrier avoided a broader `TerrainOutputPlan` or mesh generator redesign.
+- Full adaptive fallback was not needed for over-budget component scope and was actively harmful to
+  performance evidence.
+- Fresh packaged performance was effectively neutral against MTA-42/MTA-46 once forced full
+  fallback was removed.
+
+### Future Analog Lesson
+
+For future managed-terrain component, seam, or sparse-local-detail tasks, estimate the pure planner
+as the smaller slice. The dominant risk is proving the public command, evidence, mutation routing,
+registry/readback, and hosted replay rows all observe the same sealed lifecycle resolution. Replay
+metadata is not enough; include at least one fixture where new planning increases actual mutation
+scope over the legacy path.
 <!-- SIZE:DELTA:END -->
 
 ---
@@ -200,17 +266,16 @@ Not filled yet.
 
 - `archetype:performance-sensitive`
 - `scope:managed-terrain`
+- `systems:command-layer`
 - `systems:terrain-output`
 - `systems:terrain-mesh-generator`
-- `systems:managed-object-metadata`
-- `systems:validation-service`
+- `systems:terrain-repository`
 - `validation:hosted-matrix`
 - `validation:performance`
-- `validation:persistence`
-- `host:routine-matrix`
+- `host:single-fix-loop`
 - `contract:no-public-shape-change`
-- `risk:performance-scaling`
 - `risk:partial-state`
-- `volatility:high`
-- `confidence:medium`
+- `risk:performance-scaling`
+- `rework:medium`
+- `confidence:high`
 <!-- SIZE:TAGS:END -->

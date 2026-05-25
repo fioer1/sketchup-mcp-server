@@ -2217,6 +2217,112 @@ class TerrainMeshGeneratorTest < Minitest::Test # rubocop:disable Metrics/ClassL
     assert_equal('digest-1', terrain_attribute(preserved_face, 'terrainStateDigest'))
   end
 
+  def test_v2_adaptive_dirty_replacement_uses_sealed_lifecycle_without_resolver_recompute
+    model = build_semantic_model
+    owner = model.active_entities.add_group
+    state = build_v2_state(columns: 17, rows: 17, elevations: Array.new(289, 1.0))
+    policy = SU_MCP::Terrain::AdaptivePatches::AdaptivePatchPolicy.new(patch_cell_size: 4)
+    generator = identity_generator
+    generator.generate(
+      owner: owner,
+      state: state,
+      terrain_state_summary: { digest: 'digest-1', revision: 1 },
+      output_plan: adaptive_full_plan(state, 'digest-1', policy)
+    )
+    mesh = owner.entities.groups.first
+    old_faces_by_patch = adaptive_faces_by_patch(mesh.entities.faces)
+    dirty = adaptive_dirty_plan_with_resolution(
+      state,
+      'digest-2',
+      policy,
+      dirty_window(5, 5, 5, 5),
+      sealed_resolution_with_extra_promoted_patch(policy, state.dimensions)
+    )
+    legacy_replacement_ids = SU_MCP::Terrain::PatchLifecycle::PatchWindowResolver.new(
+      policy: policy,
+      dimensions: state.dimensions
+    ).resolve(cell_window: dirty_window(5, 5, 5, 5)).fetch(:replacementPatchIds)
+    promoted_replacement_ids =
+      dirty.adaptive_lifecycle_resolution.fetch(:replacementPatchIds) - legacy_replacement_ids
+
+    refute_empty(promoted_replacement_ids)
+
+    result = with_patch_window_resolver_disabled do
+      generator.regenerate(
+        owner: owner,
+        state: state,
+        terrain_state_summary: { digest: 'digest-2', revision: 2 },
+        output_plan: dirty
+      )
+    end
+
+    assert_equal('generated', result.fetch(:outcome))
+    sealed_replacement_ids = dirty.adaptive_lifecycle_resolution.fetch(:replacementPatchIds)
+    sealed_replacement_ids.each do |patch_id|
+      Array(old_faces_by_patch[patch_id]).each do |face|
+        refute_includes(owner.entities.groups.first.entities.faces, face)
+      end
+    end
+    promoted_replacement_ids.each do |patch_id|
+      Array(old_faces_by_patch[patch_id]).each do |face|
+        refute_includes(owner.entities.groups.first.entities.faces, face)
+      end
+    end
+    Array(old_faces_by_patch['patch-v1-r0-c0']).each do |face|
+      assert_includes(owner.entities.groups.first.entities.faces, face)
+    end
+  end
+
+  def test_v2_over_budget_component_verdict_still_uses_dirty_partial_path
+    model = build_semantic_model
+    owner = model.active_entities.add_group
+    state = build_v2_state(columns: 17, rows: 17, elevations: Array.new(289, 1.0))
+    policy = SU_MCP::Terrain::AdaptivePatches::AdaptivePatchPolicy.new(patch_cell_size: 4)
+    generator = RecordingOverBudgetGenerator.new(
+      length_converter: ScalingLengthConverter.new(multiplier: 1.0)
+    )
+    generator.generate(
+      owner: owner,
+      state: state,
+      terrain_state_summary: { digest: 'digest-1', revision: 1 },
+      output_plan: adaptive_full_plan(state, 'digest-1', policy)
+    )
+    generator.reset_recorded_calls!
+    mesh = owner.entities.groups.first
+    old_faces = mesh.entities.faces.dup
+    dirty = adaptive_dirty_plan_with_sources(
+      state,
+      'digest-2',
+      policy,
+      dirty_window(5, 5, 5, 5),
+      feature_windows: [dirty_window(0, 0, 15, 15)],
+      budget: { maxReplacementPatchCount: 2, maxPromotionRadius: 1 }
+    )
+
+    assert_equal('over_budget', dirty.adaptive_lifecycle_resolution.dig(:componentBudget, :status))
+    result = generator.regenerate(
+      owner: owner,
+      state: state,
+      terrain_state_summary: { digest: 'digest-2', revision: 2 },
+      output_plan: dirty
+    )
+
+    assert_equal('generated', result.fetch(:outcome))
+    assert_includes(generator.partial_path_calls, :ownership_lookup)
+    assert_includes(generator.partial_path_calls, :seam_gate)
+    assert_includes(generator.partial_path_calls, :partial_erase)
+    assert_equal([], generator.full_rebuild_calls)
+    old_faces.each do |face|
+      next unless face.get_attribute(
+        SU_MCP::Terrain::TerrainMeshGenerator::DERIVED_OUTPUT_DICTIONARY,
+        SU_MCP::Terrain::TerrainMeshGenerator::ADAPTIVE_PATCH_ID_KEY
+      ) == 'patch-v1-r1-c1'
+
+      refute_includes(owner.entities.groups.first.entities.faces, face)
+    end
+    assert_equal(16, adaptive_registry(owner).fetch(:patches).length)
+  end
+
   private
 
   def assert_derived_output(entity)
@@ -2517,6 +2623,103 @@ class TerrainMeshGeneratorTest < Minitest::Test # rubocop:disable Metrics/ClassL
     SU_MCP::Terrain::TerrainOutputPlan.dirty_window(**options)
   end
 
+  def adaptive_dirty_plan_with_resolution(state, digest, policy, window, resolution)
+    SU_MCP::Terrain::TerrainOutputPlan.dirty_window(
+      state: state,
+      terrain_state_summary: { digest: digest, revision: state.revision },
+      window: window,
+      adaptive_patch_policy: policy,
+      adaptive_lifecycle_resolution: resolution
+    )
+  end
+
+  def adaptive_faces_by_patch(faces)
+    faces.each_with_object(Hash.new { |hash, key| hash[key] = [] }) do |face, grouped|
+      patch_id = face.get_attribute(
+        SU_MCP::Terrain::TerrainMeshGenerator::DERIVED_OUTPUT_DICTIONARY,
+        SU_MCP::Terrain::TerrainMeshGenerator::ADAPTIVE_PATCH_ID_KEY
+      )
+      grouped[patch_id] << face if patch_id
+    end
+  end
+
+  def adaptive_dirty_plan_with_sources(state, digest, policy, window, sources)
+    SU_MCP::Terrain::TerrainOutputPlan.dirty_window(
+      state: state,
+      terrain_state_summary: { digest: digest, revision: state.revision },
+      window: window,
+      adaptive_patch_policy: policy,
+      component_sources: sources
+    )
+  end
+
+  def sealed_resolution_for(policy, dimensions)
+    affected = [policy.patch_domain(1, 1, dimensions)]
+    replacement = [
+      policy.patch_domain(1, 1, dimensions),
+      policy.patch_domain(2, 1, dimensions),
+      policy.patch_domain(1, 2, dimensions),
+      policy.patch_domain(2, 2, dimensions)
+    ]
+    {
+      affectedPatchIds: affected.map { |patch| patch.fetch(:patchId) },
+      replacementPatchIds: replacement.map { |patch| patch.fetch(:patchId) },
+      affectedPatches: affected,
+      replacementPatches: replacement,
+      conformanceRing: policy.conformance_ring,
+      retainedBoundaryPatchIds: [],
+      retainedBoundaryPatches: [],
+      safetyMarginPatchIds: [],
+      safetyMarginPatches: [],
+      componentPlanSummary: {
+        componentCount: 1,
+        maxComponentSize: 4,
+        promotedCount: 3,
+        roleCounts: {
+          affected: 1,
+          replacement: 4,
+          conformance: 0,
+          retained_boundary: 0,
+          safety_margin: 0
+        },
+        graphReasons: %w[dirty_window feature_boundary_crossing]
+      },
+      componentBudget: {
+        status: 'within_budget',
+        maxReplacementPatchCount: 25,
+        maxPromotionRadius: 2
+      }
+    }
+  end
+
+  def sealed_resolution_with_extra_promoted_patch(policy, dimensions)
+    resolution = sealed_resolution_for(policy, dimensions)
+    extra_patch = policy.patch_domain(3, 1, dimensions)
+    extra_patch_id = extra_patch.fetch(:patchId)
+    resolution.merge(
+      replacementPatchIds: resolution.fetch(:replacementPatchIds) + [extra_patch_id],
+      replacementPatches: resolution.fetch(:replacementPatches) + [extra_patch],
+      componentPlanSummary: resolution.fetch(:componentPlanSummary).merge(
+        maxComponentSize: 5,
+        promotedCount: 4,
+        roleCounts: resolution.fetch(:componentPlanSummary).fetch(:roleCounts).merge(
+          replacement: 5
+        )
+      )
+    )
+  end
+
+  def with_patch_window_resolver_disabled
+    resolver = SU_MCP::Terrain::PatchLifecycle::PatchWindowResolver
+    original = resolver.instance_method(:resolve)
+    resolver.define_method(:resolve) do |*|
+      raise 'PatchWindowResolver must not be recomputed after lifecycle resolution is sealed'
+    end
+    yield
+  ensure
+    resolver.define_method(:resolve, original) if original
+  end
+
   def canonical_replay_non_interference_rows
     state = build_v2_state(
       columns: 49,
@@ -2784,6 +2987,43 @@ class TerrainMeshGeneratorTest < Minitest::Test # rubocop:disable Metrics/ClassL
 
     def adaptive_vertex_for_planned_point(state, point)
       @adaptive_vertex_call_count += 1
+      super
+    end
+  end
+
+  class RecordingOverBudgetGenerator < SU_MCP::Terrain::TerrainMeshGenerator
+    attr_reader :partial_path_calls, :full_rebuild_calls
+
+    def initialize(...)
+      super
+      @partial_path_calls = []
+      @full_rebuild_calls = []
+    end
+
+    def reset_recorded_calls!
+      @partial_path_calls.clear
+      @full_rebuild_calls.clear
+    end
+
+    private
+
+    def generate_adaptive_patches(...)
+      @full_rebuild_calls << :generate_adaptive_patches
+      super
+    end
+
+    def owned_adaptive_patch_faces(...)
+      @partial_path_calls << :ownership_lookup
+      super
+    end
+
+    def validate_adaptive_seam_plan_before_mutation(...)
+      @partial_path_calls << :seam_gate
+      super
+    end
+
+    def erase_partial_output(...)
+      @partial_path_calls << :partial_erase
       super
     end
   end

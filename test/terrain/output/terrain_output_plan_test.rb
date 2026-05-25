@@ -804,6 +804,137 @@ class TerrainOutputPlanTest < Minitest::Test # rubocop:disable Metrics/ClassLeng
     assert_operator(elevations.read_count, :<, 25)
   end
 
+  def test_v2_dirty_component_plan_carries_sealed_lifecycle_resolution
+    state = build_v2_state(columns: 17, rows: 17, elevations: Array.new(17 * 17, 0.0))
+    policy = SU_MCP::Terrain::AdaptivePatches::AdaptivePatchPolicy.new(patch_cell_size: 4)
+    window = SU_MCP::Terrain::SampleWindow.new(
+      min_column: 5,
+      min_row: 5,
+      max_column: 5,
+      max_row: 5
+    )
+
+    plan = SU_MCP::Terrain::TerrainOutputPlan.dirty_window(
+      state: state,
+      terrain_state_summary: { digest: 'component-digest', revision: 2 },
+      previous_terrain_state_summary: { digest: 'baseline', revision: 1 },
+      window: window,
+      adaptive_patch_policy: policy,
+      component_sources: {
+        feature_windows: [
+          SU_MCP::Terrain::SampleWindow.new(
+            min_column: 3,
+            min_row: 3,
+            max_column: 5,
+            max_row: 5
+          )
+        ]
+      }
+    )
+
+    resolution = plan.adaptive_lifecycle_resolution
+    assert_includes(resolution.dig(:componentPlanSummary, :graphReasons),
+                    'feature_boundary_crossing')
+    assert_equal(
+      resolution.fetch(:replacementPatchIds).sort,
+      plan.sealed_adaptive_seam_plan.replacement_patch_ids.sort
+    )
+    refute_includes(JSON.generate(plan.to_summary), 'componentPlanSummary')
+  end
+
+  def test_v2_dirty_component_plan_does_not_recompute_patch_window_resolver
+    state = build_v2_state(columns: 17, rows: 17, elevations: Array.new(17 * 17, 0.0))
+    policy = SU_MCP::Terrain::AdaptivePatches::AdaptivePatchPolicy.new(patch_cell_size: 4)
+
+    plan = with_patch_window_resolver_disabled do
+      SU_MCP::Terrain::TerrainOutputPlan.dirty_window(
+        state: state,
+        terrain_state_summary: { digest: 'component-digest', revision: 2 },
+        previous_terrain_state_summary: { digest: 'baseline', revision: 1 },
+        window: SU_MCP::Terrain::SampleWindow.new(
+          min_column: 5,
+          min_row: 5,
+          max_column: 5,
+          max_row: 5
+        ),
+        adaptive_patch_policy: policy,
+        component_sources: {
+          feature_windows: [
+            SU_MCP::Terrain::SampleWindow.new(
+              min_column: 3,
+              min_row: 3,
+              max_column: 5,
+              max_row: 5
+            )
+          ]
+        }
+      )
+    end
+
+    assert_includes(
+      plan.adaptive_lifecycle_resolution.dig(:componentPlanSummary, :graphReasons),
+      'feature_boundary_crossing'
+    )
+  end
+
+  def test_v2_dirty_component_plan_records_over_budget_verdict_from_sources
+    state = build_v2_state(columns: 17, rows: 17, elevations: Array.new(17 * 17, 0.0))
+    policy = SU_MCP::Terrain::AdaptivePatches::AdaptivePatchPolicy.new(patch_cell_size: 4)
+
+    plan = SU_MCP::Terrain::TerrainOutputPlan.dirty_window(
+      state: state,
+      terrain_state_summary: { digest: 'component-digest', revision: 2 },
+      previous_terrain_state_summary: { digest: 'baseline', revision: 1 },
+      window: SU_MCP::Terrain::SampleWindow.new(
+        min_column: 5,
+        min_row: 5,
+        max_column: 5,
+        max_row: 5
+      ),
+      adaptive_patch_policy: policy,
+      component_sources: {
+        feature_windows: [
+          SU_MCP::Terrain::SampleWindow.new(
+            min_column: 0,
+            min_row: 0,
+            max_column: 15,
+            max_row: 15
+          )
+        ],
+        budget: { maxReplacementPatchCount: 2, maxPromotionRadius: 1 }
+      }
+    )
+
+    assert_equal('over_budget', plan.adaptive_lifecycle_resolution.dig(:componentBudget, :status))
+    refute_includes(plan.adaptive_lifecycle_resolution.fetch(:componentBudget).keys, :fallbackPath)
+  end
+
+  def test_v2_dirty_plan_accepts_presealed_lifecycle_resolution_without_resolver_recompute
+    state = build_v2_state(columns: 17, rows: 17, elevations: Array.new(17 * 17, 0.0))
+    policy = SU_MCP::Terrain::AdaptivePatches::AdaptivePatchPolicy.new(patch_cell_size: 4)
+    resolution = sealed_resolution_for(policy, state.dimensions)
+
+    plan = with_patch_window_resolver_disabled do
+      SU_MCP::Terrain::TerrainOutputPlan.dirty_window(
+        state: state,
+        terrain_state_summary: { digest: 'component-digest', revision: 2 },
+        previous_terrain_state_summary: { digest: 'baseline', revision: 1 },
+        window: SU_MCP::Terrain::SampleWindow.new(
+          min_column: 5,
+          min_row: 5,
+          max_column: 5,
+          max_row: 5
+        ),
+        adaptive_patch_policy: policy,
+        adaptive_lifecycle_resolution: resolution
+      )
+    end
+
+    assert_equal(resolution, plan.adaptive_lifecycle_resolution)
+    assert(plan.adaptive_cells.all? { |cell| cell_within_patch_range?(cell, 0..3, 0..3) })
+    refute(plan.adaptive_cells.any? { |cell| cell_within_patch_range?(cell, 4..4, 4..4) })
+  end
+
   private
 
   class CountingElevations
@@ -843,6 +974,56 @@ class TerrainOutputPlanTest < Minitest::Test # rubocop:disable Metrics/ClassLeng
       affected_window: nil,
       adaptive_patch_policy: nil
     )
+  end
+
+  def sealed_resolution_for(policy, dimensions)
+    affected = [policy.patch_domain(1, 1, dimensions)]
+    replacement = [
+      policy.patch_domain(1, 1, dimensions),
+      policy.patch_domain(2, 1, dimensions),
+      policy.patch_domain(1, 2, dimensions),
+      policy.patch_domain(2, 2, dimensions)
+    ]
+    {
+      affectedPatchIds: affected.map { |patch| patch.fetch(:patchId) },
+      replacementPatchIds: replacement.map { |patch| patch.fetch(:patchId) },
+      affectedPatches: affected,
+      replacementPatches: replacement,
+      conformanceRing: policy.conformance_ring,
+      retainedBoundaryPatchIds: [],
+      retainedBoundaryPatches: [],
+      safetyMarginPatchIds: [],
+      safetyMarginPatches: [],
+      componentPlanSummary: {
+        componentCount: 1,
+        maxComponentSize: 4,
+        promotedCount: 3,
+        roleCounts: {
+          affected: 1,
+          replacement: 4,
+          conformance: 0,
+          retained_boundary: 0,
+          safety_margin: 0
+        },
+        graphReasons: %w[dirty_window feature_boundary_crossing]
+      },
+      componentBudget: {
+        status: 'within_budget',
+        maxReplacementPatchCount: 25,
+        maxPromotionRadius: 2
+      }
+    }
+  end
+
+  def with_patch_window_resolver_disabled
+    resolver = SU_MCP::Terrain::PatchLifecycle::PatchWindowResolver
+    original = resolver.instance_method(:resolve)
+    resolver.define_method(:resolve) do |*|
+      raise 'PatchWindowResolver must not be recomputed after lifecycle resolution is sealed'
+    end
+    yield
+  ensure
+    resolver.define_method(:resolve, original) if original
   end
 
   def state

@@ -25,10 +25,12 @@ generation.
   feature patch bundles, command evidence, mesh mutation, and registry/readback.
 - Preserve current local dirty-window behavior when no cross-patch dependency requires promotion.
 - Promote connected patches only when correctness or seam contracts require it.
-- Route over-budget local component scope to the existing full adaptive generation path instead of
-  refusing a valid heightmap solely because local replacement exceeded budget.
+- Record over-budget local component scope without refusing a valid heightmap solely because local
+  replacement exceeded budget; keep using the existing bounded dirty adaptive replacement path when
+  ownership, registry, and seam validation are safe.
 - Extend internal replay/result/classifier evidence for component summaries, expected promotion,
-  expected fallback, timing, face/vertex counts, and no-leak checks.
+  expected over-budget verdicts, actual fallback status, timing, face/vertex counts, and no-leak
+  checks.
 
 ## Non-Goals
 
@@ -69,9 +71,10 @@ generation.
   shape instead of inventing unrelated role names.
 - `TerrainOutputPlan` currently builds adaptive cells and seam artifacts from resolver-derived
   replacement patches; component resolution must drive those before mutation.
-- `TerrainMeshGenerator` already has an existing full adaptive generation path used for valid
-  terrain when dirty patch replacement cannot proceed. Over-budget component scope should select
-  that path before dirty partial mutation.
+- `TerrainMeshGenerator` already has an existing dirty adaptive replacement path for valid terrain.
+  Over-budget component scope is a budget verdict, not by itself proof that dirty patch replacement
+  cannot proceed. Full adaptive generation remains reserved for existing unsafe fallback cases such
+  as missing ownership or unsupported existing output.
 - Seam pre-erase validation currently strips Z values. MTA-43 should handle topology/digest
   promotion-or-refusal and carry retained-Z hard gating with hosted/post-emit evidence unless a
   small safe hook is found during implementation.
@@ -86,8 +89,9 @@ generation.
   `affectedPatchIds`, `replacementPatchIds`, `affectedPatches`, `replacementPatches`, and
   `conformanceRing`.
 - Add internal fields for `retainedBoundaryPatchIds`, `retainedBoundaryPatches`,
-  `safetyMarginPatchIds`, `safetyMarginPatches`, `componentPlanSummary`, `componentBudget`, and a
-  fallback/promotion verdict.
+  `safetyMarginPatchIds`, `safetyMarginPatches`, `componentPlanSummary`, `componentBudget`,
+  promotion verdicts, over-budget verdicts, and actual fallback status when a fallback path is
+  used.
 - Include graph reasons from the bounded set: `dirty_window`, `feature_boundary_crossing`,
   `protected_boundary_crossing`, `retained_seam_dependency`, and `conformance`.
 - Include local-detail boundary input as a shape-compatible future source that defaults empty and
@@ -125,22 +129,23 @@ Not applicable by design.
 
 ### Error Handling
 
-- Over-budget local component scope is not a public refusal when the heightmap is valid. It exits
-  dirty partial replacement and uses the existing full adaptive generation path, recording internal
-  `fallbackCategory: over_budget_component`.
+- Over-budget local component scope is not a public refusal when the heightmap is valid. It records
+  an internal over-budget verdict and continues through bounded dirty adaptive replacement when
+  ownership, registry, and seam checks pass.
 - Registry invalidity, ownership mismatch, unsupported child entities, seam topology/digest
-  mismatch, invalid output, or independent full-generation failure may still refuse before erase
+  mismatch, invalid output, or independent unsafe fallback failure may still refuse before erase
   through existing sanitized public refusal behavior.
 - Retained seam validation failure should not trigger mutation-time component replan/retry.
-- Internal diagnostics should include counts, radius, reason, role counts, and fallback/promotion
-  verdicts without raw patch IDs in public-facing result summaries.
+- Internal diagnostics should include counts, radius, reason, role counts, promotion verdicts,
+  over-budget verdicts, and actual fallback status without raw patch IDs in public-facing result
+  summaries.
 
 ### State Management
 
 - Component plans are derived output-planning metadata, not durable terrain source state.
 - Patch identity and SketchUp mutation remain owned by PatchLifecycle and `TerrainMeshGenerator`.
-- Registry writes must reflect the final replacement path: component-planned dirty replacement or
-  full adaptive fallback.
+- Registry writes must reflect the final replacement path: component-planned dirty replacement, or
+  an existing unsafe fallback path when dirty replacement cannot proceed safely.
 - Old output must remain until the selected replacement path has enough validated output to mutate
   safely.
 
@@ -152,8 +157,9 @@ Not applicable by design.
   resolution.
 - `TerrainFeaturePlanner#prepare_patch_batch` consumes the sealed lifecycle resolution for role
   bundles.
-- `TerrainMeshGenerator` consumes the sealed replacement set for dirty mutation or routes
-  over-budget scope to full adaptive generation.
+- `TerrainMeshGenerator` consumes the sealed replacement set for dirty mutation. Over-budget scope
+  remains on that path when ownership, registry, and seam validation are safe; existing unsafe
+  fallback paths remain reserved for independent existing-output problems.
 - `FeatureAwareAdaptiveBaselineReplay`, result document, and classifier consume component evidence
   and expected promotion/fallback semantics.
 
@@ -183,9 +189,9 @@ flowchart TD
   MeshGenerator --> Ownership[Patch ownership and registry lookup]
   MeshGenerator --> SeamGate[Pre-erase retained seam validation]
   MeshGenerator --> Mutation[SketchUp mutation: erase/emit/register]
-  MeshGenerator --> FullFallback[Existing full adaptive generation path]
+  MeshGenerator --> UnsafeFallback[Existing unsafe fallback path]
   Mutation --> SketchUp[(SketchUp model entities)]
-  FullFallback --> SketchUp
+  UnsafeFallback --> SketchUp
   Evidence --> Replay[FeatureAwareAdaptiveBaselineReplay]
   Replay --> ResultDoc[Result document]
   ResultDoc --> Classifier[Result classifier]
@@ -220,15 +226,15 @@ flowchart TD
   retained neighbors, while registry/seam topology or digest mismatches discovered before erase
   refuse through the existing sanitized no-delete path and leave old output intact.
 - Component scope that exceeds the local replacement budget does not refuse a valid heightmap. It
-  exits dirty partial replacement and uses the existing full adaptive generation path, while
-  recording an internal over-budget fallback verdict with counts/radius/reason and no raw patch IDs.
+  records an internal over-budget verdict with counts/radius/reason and no raw patch IDs, while
+  continuing through bounded dirty replacement when ownership, registry, and seam checks pass.
 - The component-planned lifecycle resolution is the successful-path source of truth for dirty
   adaptive output; evidence, seam artifacts, feature bundles, mutation, and registry writes do not
   recompute divergent patch resolution. Implementation must include a structural or behavioral
   invariant that fails if successful component-planned paths call the old resolver independently.
 - The lifecycle resolution preserves existing keys consumed by current feature and patch code while
   adding component summary, retained-boundary role, safety-margin role metadata, budget verdict,
-  and fallback/promotion diagnostics.
+  promotion diagnostics, and actual fallback diagnostics only when a fallback path is used.
 - Safety-margin patches do not expand replacement scope in MTA-43. Future local-detail boundary
   inputs are accepted as empty shape-compatible placeholders only; non-empty local-detail sources
   remain unsupported, and no local-detail state, composed height oracle, CDT island, or native
@@ -237,31 +243,33 @@ flowchart TD
   success payloads remain unchanged. Public responses do not expose component roles, raw patch IDs,
   seam records, registry records, budget internals, or fallback internals.
 - Internal replay/result evidence records component role counts, component count, maximum component
-  size, promoted count, budget status, fallback category, expected-promotion/fallback status,
-  dirty-window scope, patch scope, face/vertex counts, and timing buckets.
-- Replay classification treats expected bounded promotion and expected over-budget full fallback as
-  non-regression outcomes, while broad unexplained patch-scope expansion, unexpected fallback, seam
-  validation failure, missing mesh evidence, or public leakage are failures/regressions.
+  size, promoted count, budget status, actual fallback category when present, expected-promotion
+  status, expected over-budget status, dirty-window scope, patch scope, face/vertex counts, and
+  timing buckets.
+- Replay classification treats expected bounded promotion and expected over-budget component
+  verdicts as non-regression outcomes, while broad unexplained patch-scope expansion, unexpected
+  fallback, seam validation failure, missing mesh evidence, or public leakage are
+  failures/regressions.
 - MTA-46 residual-probe reuse remains intact: component planning and promoted adaptive domains do
   not add duplicate residual/error probes for the same split decision.
 - Hosted validation covers local no-promotion, cross-patch feature/protected promotion, retained
-  seam promotion-or-refusal, over-budget full adaptive fallback, repeated edit/readback, and timing
-  comparison. Hosted seam evidence either covers z-inclusive validation through a small safe hook
-  or explicitly records the retained-Z limitation.
+  seam promotion-or-refusal, over-budget bounded dirty replacement, repeated edit/readback, and
+  timing comparison. Hosted seam evidence either covers z-inclusive validation through a small safe
+  hook or explicitly records the retained-Z limitation.
 
 ## Test Strategy
 
 ### TDD Approach
 
 Start with pure planner tests because they define component graph behavior, role classification,
-budget verdicts, and fallback decisions without SketchUp. Then wire the sealed resolution into
+budget verdicts, and fallback evidence without SketchUp. Then wire the sealed resolution into
 `TerrainOutputPlan`, evidence/feature bundles, and `TerrainMeshGenerator` in dependency order.
-Replay/result/classifier changes should land before hosted closeout so expected promotion/fallback
-can be distinguished from regressions.
+Replay/result/classifier changes should land before hosted closeout so expected promotion,
+expected over-budget verdicts, and actual fallback behavior can be distinguished from regressions.
 
 Likely first failing target: `test/terrain/output/patch_lifecycle/patch_component_planner_test.rb`
 covering local no-promotion, feature crossing promotion, retained seam dependency, placeholder
-local-detail source, and over-budget fallback verdict.
+local-detail source, and over-budget budget verdict.
 
 ### Required Test Coverage
 
@@ -270,11 +278,11 @@ local-detail source, and over-budget fallback verdict.
 | 1 | Local dirty edit stays local | Avoid scope inflation | Planner core | PatchLifecycle | Single dirty window resolves current affected/replacement/conformance scope and no promotion | Output plan uses sealed scope without far-patch expansion | Public response unchanged | n/a | Existing local rows remain local | Synthetic patch domains | Planner to output plan | `bundle exec ruby -Itest test/terrain/output/patch_lifecycle/patch_component_planner_test.rb` | `bundle exec rake ruby:test` | Planner file does not exist yet |
 | 2 | Feature/protected boundary crossing promotes | Core product behavior | Planner core | PatchLifecycle | Feature/protected window crossing graph reasons and role counts | Output plan cells, seam plan, and feature bundles consume promoted scope | No component data in public response | n/a | Targeted cross-patch corridor/protected row | Synthetic feature windows; hosted replay row | Feature planner to output plan | planner test plus `test/terrain/output/terrain_output_plan_test.rb` | `bundle exec rake ruby:test` | Hosted row construction deferred to implementation |
 | 3 | Retained seam dependency promotes/refuses safely | Seam safety | Planner plus mutation gate | PatchLifecycle / TerrainMeshGenerator | Retained seam dependency source adds promotion candidate | Generator uses sealed scope; promotion plus registry mismatch fails before erase and preserves old output/registry | Existing sanitized refusal shape | Registry/seam invalidity no-delete refusal | Targeted retained seam row proves promotion/refusal and old-output survival | Seam registry fixtures | Seam plan to generator | `bundle exec ruby -Itest test/terrain/output/terrain_mesh_generator_test.rb` | `bundle exec rake ruby:test` | Retained-Z hard gate carried with hosted evidence |
-| 4 | Over-budget uses full adaptive fallback | Valid mesh still generated | Budget/fallback slice | TerrainOutputPlan / TerrainMeshGenerator | Budget breach returns full-generation fallback verdict | Dirty edit routes to existing full adaptive generation before partial erase; test asserts dirty erase path is not reached and old output/registry survive until full generation succeeds | Public command succeeds if full generation succeeds | Full generation failure uses existing refusal | Hosted over-budget row records fallback, timing/face impact, and topology comparison against clean full adaptive baseline | Synthetic broad component; hosted broad row | Planner to generator fallback | output plan/generator tests | `bundle exec rake ruby:test` | none |
+| 4 | Over-budget records verdict without forcing full fallback | Valid mesh still generated | Budget verdict slice | TerrainOutputPlan / TerrainMeshGenerator | Budget breach returns over-budget verdict | Dirty edit continues through sealed bounded replacement when ownership, registry, and seam checks pass; full fallback remains for independent unsafe existing-output conditions | Public command succeeds when dirty replacement succeeds | Unsafe existing-output failures keep existing sanitized refusal/fallback behavior | Hosted over-budget row records verdict, timing/face impact, and bounded replacement behavior | Synthetic broad component; hosted broad row | Planner to generator dirty replacement | output plan/generator tests | `bundle exec rake ruby:test` | none |
 | 5 | Sealed scope is source of truth | Prevent drift | Output-plan integration | TerrainOutputPlan / commands / generator | Resolution preserves old keys plus component summaries | Evidence, seams, feature bundles, mutation, registry consume same resolution; structural or behavioral invariant fails on successful-path resolver recompute | No leak | n/a | Replay component summary matches emitted registry/readback | Existing patch lifecycle fixtures | Commands, output plan, generator | output plan, command, generator tests | `bundle exec rake ruby:test` | none |
 | 6 | Future local detail shape only | Avoid MTA-44 scope bleed | Planner core | PatchLifecycle | Empty placeholder input accepted without behavior; non-empty local-detail source is unsupported in MTA-43 | No local-detail state/oracle introduced | No public controls | Non-empty local-detail source fails fast in tests rather than activating behavior | No behavior change required | Synthetic empty and non-empty source | Planner interface | planner test | `bundle exec rake ruby:test` | none |
 | 7 | MTA-46 residual-probe guard | Performance regression | Output-plan integration | TerrainOutputPlan | Existing duplicate-probe guard remains | Promoted domains do not duplicate split probes | n/a | n/a | Timing evidence separates component planning from residual cost | Existing MTA-46 tests | Output plan adaptive split path | `bundle exec ruby -Itest test/terrain/output/terrain_output_plan_test.rb` | `bundle exec rake ruby:test` | none |
-| 8 | Replay/classifier handles promotion/fallback | Evidence must not misclassify expected behavior | Replay artifact slice | Probes | Result document fields omit raw IDs | Command evidence includes component summary; classifier treats expected promotion/fallback as non-regression | No-leak tests | Unexpected fallback/expansion is regression | Annotated MTA-43 result pack | Replay result fixtures | Replay/result/classifier | probe result document/classifier tests | `bundle exec rake ruby:test` | Hosted result rows added during implementation |
+| 8 | Replay/classifier handles promotion, over-budget, and fallback evidence | Evidence must not misclassify expected behavior | Replay artifact slice | Probes | Result document fields omit raw IDs | Command evidence includes component summary; classifier treats expected promotion and expected over-budget verdicts as non-regression | No-leak tests | Unexpected fallback/expansion is regression | Annotated MTA-43 result pack | Replay result fixtures | Replay/result/classifier | probe result document/classifier tests | `bundle exec rake ruby:test` | Hosted result rows added during implementation |
 | 9 | Retained-Z limitation explicit | Avoid false seam safety claim | Hosted validation | Generator/probes | No required unit unless small hook found | Pre-erase validation remains z-stripped or hook is covered | No seam-Z leak | n/a | Hosted seam evidence states z-inclusive coverage or limitation | Hosted seam row | Generator to hosted replay | generator/probe tests | hosted replay plus `bundle exec rake ruby:test` | Carried-with-gate |
 
 Suggested focused commands:
@@ -296,14 +304,16 @@ Suggested broader commands:
 ## Instrumentation and Operational Signals
 
 - Internal `componentPlanSummary`: component count, max component size, role counts, promoted count,
-  graph reasons, budget status, fallback category, expected promotion/fallback.
+  graph reasons, budget status, expected promotion, expected over-budget status, and actual
+  fallback status when present.
 - Internal timing bucket for component planning, while retaining comparable command-output,
   dirty-window, adaptive-planning, mutation, and total timing buckets.
-- Replay/result fields for component summaries and expected promotion/fallback verdicts.
-- Classifier comparison fields for dirty-window changed, patch-scope changed, component fallback,
-  and expected promotion.
+- Replay/result fields for component summaries, expected promotion, expected over-budget verdicts,
+  and actual fallback verdicts when a fallback path is used.
+- Classifier comparison fields for dirty-window changed, patch-scope changed, component budget
+  status, component fallback, expected over-budget, and expected promotion.
 - Hosted evidence rows for local no-promotion, cross-patch promotion, retained seam behavior,
-  over-budget full fallback, and repeated edit/readback.
+  over-budget bounded dirty replacement, and repeated edit/readback.
 
 ## Implementation Phases
 
@@ -311,11 +321,11 @@ Suggested broader commands:
 2. Wire planner into `TerrainOutputPlan` before adaptive cells and seam artifact creation.
 3. Make command evidence, feature patch bundles, and timing evidence consume the sealed resolution
    without successful-path resolver recomputes.
-4. Make mesh mutation use the sealed component resolution; route over-budget component scope to the
-   existing full adaptive generation path before dirty partial mutation; keep registry/seam
-   invalidity as pre-erase refusal.
+4. Make mesh mutation use the sealed component resolution; keep over-budget component scope on the
+   bounded dirty replacement path when ownership, registry, and seam validation are safe; keep
+   registry/seam invalidity as pre-erase refusal or existing unsafe fallback behavior.
 5. Extend replay/result/classifier artifacts and no-leak coverage for component summaries,
-   expected promotion, and over-budget full fallback.
+   expected promotion, and over-budget component verdicts.
 6. Run hosted replay, targeted no-delete/refusal/fallback smoke, readback/reload, and performance
    evidence.
 
@@ -324,8 +334,9 @@ Suggested broader commands:
 - Keep behavior internal to the adaptive output path with no public selector.
 - Default-enable within the current adaptive path only after local tests, replay artifacts, no-leak
   checks, and hosted rows pass.
-- Treat over-budget full fallback as an explicit internal verdict, not a public failure.
-- Preserve existing full adaptive fallback for missing ownership.
+- Treat over-budget component scope as an explicit internal verdict, not a public failure.
+- Preserve existing full adaptive fallback for missing ownership and other independent unsafe
+  existing-output cases.
 - Do not enable any local-detail/CDT/native source behavior in this task.
 
 ## Risks and Controls
@@ -334,9 +345,9 @@ Suggested broader commands:
   testing all consumers against it.
 - Over-broad promotion: prevent with max replacement count and max promotion radius gates; detect
   through component evidence and classifier rules.
-- Full fallback mutation safety: route fallback before dirty partial erase; add a test that proves
-  the dirty erase path is not reached on over-budget fallback; validate with hosted no-delete,
-  full-baseline comparison, and readback rows.
+- Over-budget mutation safety: do not let the budget verdict force full regeneration; add a test
+  that proves over-budget component scope still uses sealed dirty replacement when ownership,
+  registry, and seam checks pass; validate with hosted timing and readback rows.
 - Seam safety gap: promote planned retained dependencies; refuse registry/seam mismatch before
   erase; carry retained-Z with explicit hosted evidence.
 - Feature source over-union: use individual source windows and graph reasons, not only the unioned
@@ -371,8 +382,8 @@ Status: WARN
 
 - Added a hard invariant that successful component-planned paths must not independently recompute
   old resolver scope.
-- Strengthened over-budget fallback coverage to prove dirty partial erase is not reached before the
-  existing full adaptive generation path is selected.
+- Strengthened over-budget coverage to prove budget overflow is recorded without refusing a valid
+  heightmap.
 - Added retained seam promotion-plus-mismatch ordering coverage to prove clean no-delete refusal and
   old registry/output survival.
 - Tightened local-detail placeholder handling: non-empty local-detail sources are unsupported in
@@ -388,21 +399,21 @@ Status: WARN
     Z. Absorbing z-inclusive validation would expand MTA-43 into a seam-validation rewrite.
   - Required validation: Hosted/post-emit seam evidence must either cover a small safe z-inclusive
     hook found during implementation or explicitly record the retained-Z limitation.
-- Risk: Over-budget fallback may be slower than dirty replacement.
+- Risk: Over-budget component scope may be slower than a narrow dirty edit.
   - Class: Paper Tiger
-  - Why accepted: The product constraint is that valid heightmaps must still generate meshes; the
-    full adaptive path already exists and is semantically safer than refusing budget overflow.
-  - Required validation: Replay evidence must tag the fallback, compare timing/face impact, and
-    keep unexplained fallback or topology divergence as a regression.
+  - Why accepted: The product constraint is that valid heightmaps must still generate meshes, while
+    budget overflow alone is not evidence that dirty replacement is unsafe.
+  - Required validation: Replay evidence must tag the over-budget verdict, compare timing/face
+    impact, and keep unexplained fallback or topology divergence as a regression.
 
 ### Carried Validation Items
 
 - Structural or behavioral invariant that successful component-planned paths do not call the old
   resolver independently.
-- Over-budget fallback test proving dirty partial erase is not reached and full adaptive generation
-  is selected before mutation.
+- Over-budget test proving sealed dirty replacement is still used when ownership, registry, and
+  seam checks pass.
 - Hosted retained seam row covering promotion-or-refusal and old-output survival.
-- Hosted over-budget fallback row comparing output against a clean full adaptive baseline.
+- Hosted over-budget row comparing timing and scope against the prior baseline.
 - Contract/no-leak checks for public responses and checked-in result summaries.
 
 ### Implementation Guardrails

@@ -1,0 +1,73 @@
+{
+  "proofKind": "mta43_promoted_patch_replacement_proof",
+  "capturedAt": "2026-05-25",
+  "runtime": "su_ruby_live_sketchup",
+  "ownerName": "MTA-43 promoted patch proof x=50m valid-control",
+  "ownerPersistentId": 147728907,
+  "originMeters": {
+    "x": 50.0,
+    "y": 20.0,
+    "z": 0.0
+  },
+  "legacyReplacementCount": 9,
+  "componentReplacementCount": 12,
+  "legacyReplacementPatchIds": [
+    "adaptive-patch-v1-c0-r0",
+    "adaptive-patch-v1-c0-r1",
+    "adaptive-patch-v1-c0-r2",
+    "adaptive-patch-v1-c1-r0",
+    "adaptive-patch-v1-c1-r1",
+    "adaptive-patch-v1-c1-r2",
+    "adaptive-patch-v1-c2-r0",
+    "adaptive-patch-v1-c2-r1",
+    "adaptive-patch-v1-c2-r2"
+  ],
+  "extraReplacementPatchIds": [
+    "adaptive-patch-v1-c3-r0",
+    "adaptive-patch-v1-c3-r1",
+    "adaptive-patch-v1-c3-r2"
+  ],
+  "promotedCount": 2,
+  "graphReasons": [
+    "dirty_window",
+    "feature_boundary_crossing",
+    "conformance"
+  ],
+  "oldExtraPatchFacesBefore": {
+    "adaptive-patch-v1-c3-r0": 2,
+    "adaptive-patch-v1-c3-r1": 2,
+    "adaptive-patch-v1-c3-r2": 2
+  },
+  "oldExtraPatchSurvivorsAfter": {
+    "adaptive-patch-v1-c3-r0": 0,
+    "adaptive-patch-v1-c3-r1": 0,
+    "adaptive-patch-v1-c3-r2": 0
+  },
+  "oldComponentPatchSurvivorsAfter": {
+    "adaptive-patch-v1-c0-r0": 0,
+    "adaptive-patch-v1-c0-r1": 0,
+    "adaptive-patch-v1-c0-r2": 0,
+    "adaptive-patch-v1-c1-r0": 0,
+    "adaptive-patch-v1-c1-r1": 0,
+    "adaptive-patch-v1-c1-r2": 0,
+    "adaptive-patch-v1-c2-r0": 0,
+    "adaptive-patch-v1-c2-r1": 0,
+    "adaptive-patch-v1-c2-r2": 0,
+    "adaptive-patch-v1-c3-r0": 0,
+    "adaptive-patch-v1-c3-r1": 0,
+    "adaptive-patch-v1-c3-r2": 0
+  },
+  "outsidePatchId": "adaptive-patch-v1-c0-r3",
+  "outsidePatchFacesBefore": 2,
+  "outsidePatchSurvivorsAfter": 2,
+  "registryPatchCount": 16,
+  "seamStatus": "planned",
+  "verdict": "passed",
+  "notes": [
+    "The fixture used dirty window column=5,row=5 and feature source columns=9..13,row=5.",
+    "Legacy PatchWindowResolver replacement scope was 9 patches.",
+    "MTA-43 component planning replacement scope was 12 patches.",
+    "All old faces in the 3 extra promoted replacement patches were removed after regeneration.",
+    "A valid outside patch retained its old faces, proving the mutation was bounded rather than full terrain regeneration."
+  ]
+}

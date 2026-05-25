@@ -6,6 +6,7 @@ require_relative 'adaptive_output_conformity'
 require_relative 'adaptive_seams/adaptive_seam_contract'
 require_relative 'adaptive_seams/adaptive_seam_validator'
 require_relative 'patch_lifecycle/patch_plan'
+require_relative 'patch_lifecycle/patch_component_planner'
 require_relative 'patch_lifecycle/patch_window_resolver'
 
 module SU_MCP
@@ -24,7 +25,8 @@ module SU_MCP
                   :simplification_tolerance, :max_simplification_error, :adaptive_patch_plan,
                   :adaptive_patch_policy, :feature_aware_adaptive_policy,
                   :feature_output_policy_diagnostics, :adaptive_seam_records,
-                  :adaptive_seam_validations, :sealed_adaptive_seam_plan
+                  :adaptive_seam_validations, :sealed_adaptive_seam_plan,
+                  :adaptive_lifecycle_resolution
 
       def self.full_grid(
         state:,
@@ -51,7 +53,9 @@ module SU_MCP
         previous_terrain_state_summary: nil,
         adaptive_patch_policy: nil,
         feature_aware_adaptive_policy: nil,
-        feature_output_policy_diagnostics: nil
+        feature_output_policy_diagnostics: nil,
+        component_sources: nil,
+        adaptive_lifecycle_resolution: nil
       )
         raise ArgumentError, 'dirty window must not be empty' if window.empty?
 
@@ -63,7 +67,9 @@ module SU_MCP
           previous_terrain_state_summary: previous_terrain_state_summary,
           adaptive_patch_policy: adaptive_patch_policy,
           feature_aware_adaptive_policy: feature_aware_adaptive_policy,
-          feature_output_policy_diagnostics: feature_output_policy_diagnostics
+          feature_output_policy_diagnostics: feature_output_policy_diagnostics,
+          component_sources: component_sources,
+          adaptive_lifecycle_resolution: adaptive_lifecycle_resolution
         )
       end
 
@@ -75,7 +81,9 @@ module SU_MCP
         previous_terrain_state_summary: nil,
         adaptive_patch_policy: nil,
         feature_aware_adaptive_policy: nil,
-        feature_output_policy_diagnostics: nil
+        feature_output_policy_diagnostics: nil,
+        component_sources: nil,
+        adaptive_lifecycle_resolution: nil
       )
         if adaptive_state?(state)
           return build_adaptive(
@@ -86,7 +94,9 @@ module SU_MCP
             previous_terrain_state_summary,
             adaptive_patch_policy,
             feature_output_policy_diagnostics: feature_output_policy_diagnostics,
-            feature_aware_adaptive_policy: feature_aware_adaptive_policy
+            feature_aware_adaptive_policy: feature_aware_adaptive_policy,
+            component_sources: component_sources,
+            adaptive_lifecycle_resolution: adaptive_lifecycle_resolution
           )
         end
 
@@ -122,18 +132,29 @@ module SU_MCP
         previous_state_summary,
         adaptive_patch_policy,
         feature_output_policy_diagnostics: nil,
-        feature_aware_adaptive_policy: nil
+        feature_aware_adaptive_policy: nil,
+        component_sources: nil,
+        adaptive_lifecycle_resolution: nil
       )
         cell_window = TerrainOutputCellWindow.from_sample_window(
           window: window,
           state: state
         )
+        lifecycle_resolution = adaptive_lifecycle_resolution ||
+                               adaptive_lifecycle_resolution_for(
+                                 state,
+                                 adaptive_patch_policy,
+                                 intent,
+                                 cell_window,
+                                 component_sources
+                               )
         adaptive_cells = adaptive_cells_for(
           state,
           adaptive_patch_policy,
           feature_aware_adaptive_policy,
           intent: intent,
-          cell_window: cell_window
+          cell_window: cell_window,
+          lifecycle_resolution: lifecycle_resolution
         )
         adaptive_cells = compact_planar_interior_cells(
           state,
@@ -150,7 +171,8 @@ module SU_MCP
           state,
           adaptive_patch_policy,
           intent,
-          cell_window
+          cell_window,
+          lifecycle_resolution
         )
         summary = adaptive_summary_for(state, cells, terrain_state_summary, previous_state_summary)
         new(
@@ -166,16 +188,68 @@ module SU_MCP
           adaptive_seam_records: seam_artifacts.fetch(:records),
           adaptive_seam_validations: seam_artifacts.fetch(:validations),
           sealed_adaptive_seam_plan: seam_artifacts.fetch(:sealed_plan),
+          adaptive_lifecycle_resolution: lifecycle_resolution,
           feature_output_policy_diagnostics: feature_output_policy_diagnostics
         )
       end
 
-      def self.adaptive_seam_artifacts_for(state, policy, intent, cell_window)
+      def self.adaptive_lifecycle_resolution_for(state, policy, intent, cell_window, sources)
+        return nil unless intent == :dirty_window && cell_window && policy&.hard_patch_boundaries
+
+        planner = PatchLifecycle::PatchComponentPlanner.new(
+          policy: policy,
+          dimensions: state.dimensions
+        )
+        planner.resolve(**component_source_args(cell_window, sources))
+      end
+
+      def self.component_source_args(cell_window, sources)
+        source_hash = sources || {}
+        {
+          cell_window: cell_window,
+          feature_windows: source_hash.fetch(:feature_windows) do
+            source_hash.fetch('feature_windows', [])
+          end,
+          protected_windows: source_hash.fetch(:protected_windows) do
+            source_hash.fetch('protected_windows', [])
+          end,
+          retained_seam_dependencies: source_hash.fetch(:retained_seam_dependencies) do
+            source_hash.fetch('retained_seam_dependencies', [])
+          end,
+          safety_margin_windows: source_hash.fetch(:safety_margin_windows) do
+            source_hash.fetch('safety_margin_windows', [])
+          end,
+          local_detail_windows: source_hash.fetch(:local_detail_windows) do
+            source_hash.fetch('local_detail_windows', [])
+          end,
+          budget: source_hash.fetch(:budget) { source_hash.fetch('budget', nil) }
+        }
+      end
+
+      def self.adaptive_seam_artifacts_for(
+        state,
+        policy,
+        intent,
+        cell_window,
+        lifecycle_resolution = nil
+      )
         return { records: [], validations: [], sealed_plan: nil } unless
           policy&.hard_patch_boundaries
 
-        patches = adaptive_patch_domains_for(state, policy, intent, cell_window)
-        replacement_patch_ids = replacement_patch_ids_for(state, policy, intent, cell_window)
+        patches = adaptive_patch_domains_for(
+          state,
+          policy,
+          intent,
+          cell_window,
+          lifecycle_resolution
+        )
+        replacement_patch_ids = replacement_patch_ids_for(
+          state,
+          policy,
+          intent,
+          cell_window,
+          lifecycle_resolution
+        )
         records = patches.flat_map do |patch|
           seam_records_for_patch(
             state,
@@ -194,7 +268,15 @@ module SU_MCP
         }
       end
 
-      def self.replacement_patch_ids_for(state, policy, intent, cell_window)
+      def self.replacement_patch_ids_for(
+        state,
+        policy,
+        intent,
+        cell_window,
+        lifecycle_resolution = nil
+      )
+        return Array(lifecycle_resolution.fetch(:replacementPatchIds)).sort if lifecycle_resolution
+
         unless intent == :dirty_window && cell_window
           return policy.patch_domains(state.dimensions).map { |patch| patch.fetch(:patchId) }
         end
@@ -398,14 +480,16 @@ module SU_MCP
         adaptive_patch_policy = nil,
         feature_aware_adaptive_policy = nil,
         intent: :full_grid,
-        cell_window: nil
+        cell_window: nil,
+        lifecycle_resolution: nil
       )
         if adaptive_patch_policy&.hard_patch_boundaries
           return adaptive_patch_domains_for(
             state,
             adaptive_patch_policy,
             intent,
-            cell_window
+            cell_window,
+            lifecycle_resolution
           ).flat_map do |patch|
             bounds = patch.fetch(:sample_bounds)
             subdivide_cell(
@@ -424,7 +508,21 @@ module SU_MCP
         subdivide_cell(state, 0, 0, max_column, max_row, feature_aware_adaptive_policy)
       end
 
-      def self.adaptive_patch_domains_for(state, policy, intent, cell_window)
+      def self.adaptive_patch_domains_for(
+        state,
+        policy,
+        intent,
+        cell_window,
+        lifecycle_resolution = nil
+      )
+        if lifecycle_resolution
+          return expanded_patch_domains(
+            policy,
+            state.dimensions,
+            lifecycle_resolution.fetch(:replacementPatchIds)
+          )
+        end
+
         return policy.patch_domains(state.dimensions) unless intent == :dirty_window && cell_window
 
         resolver = PatchLifecycle::PatchWindowResolver.new(
@@ -842,6 +940,7 @@ module SU_MCP
         adaptive_seam_records: [],
         adaptive_seam_validations: [],
         sealed_adaptive_seam_plan: nil,
+        adaptive_lifecycle_resolution: nil,
         feature_output_policy_diagnostics: nil
       )
         @intent = intent
@@ -866,6 +965,7 @@ module SU_MCP
         @adaptive_seam_records = adaptive_seam_records
         @adaptive_seam_validations = adaptive_seam_validations
         @sealed_adaptive_seam_plan = sealed_adaptive_seam_plan
+        @adaptive_lifecycle_resolution = adaptive_lifecycle_resolution
         @feature_output_policy_diagnostics = feature_output_policy_diagnostics
       end
 
