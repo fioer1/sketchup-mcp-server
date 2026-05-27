@@ -17,6 +17,7 @@ module SU_MCP
         'structure' => %w[footprint_mass adopt_reference],
         'path' => %w[centerline],
         'retaining_edge' => %w[polyline],
+        'edge_restraint' => %w[polyline],
         'planting_mass' => %w[mass_polygon],
         'tree_proxy' => %w[generated_proxy]
       }.freeze
@@ -25,6 +26,7 @@ module SU_MCP
         structure
         path
         retaining_edge
+        edge_restraint
         planting_mass
         tree_proxy
       ].freeze
@@ -187,15 +189,15 @@ module SU_MCP
             -> { invalid_numeric_value_refusal(field: DEFINITION_ELEVATION_FIELD) }
           ],
           [
-            invalid_v2_retaining_edge_geometry?(params),
+            invalid_v2_linear_edge_geometry?(params),
             -> { invalid_geometry_refusal(field: 'definition.polyline') }
           ],
           [
-            invalid_v2_retaining_edge_height?(params),
+            invalid_v2_linear_edge_height?(params),
             -> { invalid_numeric_value_refusal(field: DEFINITION_HEIGHT_FIELD) }
           ],
           [
-            invalid_v2_retaining_edge_thickness?(params),
+            invalid_v2_linear_edge_thickness?(params),
             -> { invalid_numeric_value_refusal(field: DEFINITION_THICKNESS_FIELD) }
           ],
           [
@@ -407,20 +409,20 @@ module SU_MCP
         !elevation.nil? && !finite_numeric?(elevation)
       end
 
-      def invalid_v2_retaining_edge_geometry?(params)
-        return false unless params['elementType'] == 'retaining_edge'
+      def invalid_v2_linear_edge_geometry?(params)
+        return false unless linear_edge_type?(params['elementType'])
 
         invalid_polyline?(params.dig('definition', 'polyline'))
       end
 
-      def invalid_v2_retaining_edge_height?(params)
-        return false unless params['elementType'] == 'retaining_edge'
+      def invalid_v2_linear_edge_height?(params)
+        return false unless linear_edge_type?(params['elementType'])
 
         invalid_positive_number?(params.dig('definition', 'height'))
       end
 
-      def invalid_v2_retaining_edge_thickness?(params)
-        return false unless params['elementType'] == 'retaining_edge'
+      def invalid_v2_linear_edge_thickness?(params)
+        return false unless linear_edge_type?(params['elementType'])
 
         invalid_positive_number?(params.dig('definition', 'thickness'))
       end
@@ -430,6 +432,10 @@ module SU_MCP
 
         elevation = params.dig('definition', 'elevation')
         !elevation.nil? && !finite_numeric?(elevation)
+      end
+
+      def linear_edge_type?(element_type)
+        %w[retaining_edge edge_restraint].include?(element_type)
       end
 
       def invalid_v2_planting_mass_geometry?(params)
@@ -529,7 +535,11 @@ module SU_MCP
         semantic_refusal(
           code: 'unsupported_element_type',
           message: 'Element type is not supported for semantic site creation.',
-          details: { elementType: params['elementType'] }
+          details: {
+            elementType: params['elementType'],
+            value: params['elementType'],
+            allowedValues: SUPPORTED_ELEMENT_TYPES
+          }
         )
       end
 

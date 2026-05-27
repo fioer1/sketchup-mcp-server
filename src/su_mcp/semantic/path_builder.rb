@@ -10,6 +10,8 @@ module SU_MCP
     class PathBuilder
       include PlanarGeometryHelper
 
+      COPLANAR_NORMAL_DOT = 0.999
+
       def initialize(scene_properties: SceneProperties.new, drape_builder: PathDrapeBuilder.new)
         @scene_properties = scene_properties
         @drape_builder = drape_builder
@@ -21,6 +23,7 @@ module SU_MCP
         group = target_collection.add_group
         scene_properties.apply!(model: model, group: group, params: params)
         build_geometry(group: group, payload: payload, params: params)
+        hide_internal_edges(group.entities)
         group
       end
 
@@ -51,6 +54,46 @@ module SU_MCP
           elevation: payload.fetch('elevation', 0.0)
         )
         face.pushpull(-payload['thickness'].to_f) if payload.key?('thickness')
+      end
+
+      def hide_internal_edges(entities)
+        return unless entities.respond_to?(:grep)
+
+        entities.grep(Sketchup::Edge).each do |edge|
+          next unless internal_edge?(edge)
+
+          edge.hidden = true
+          edge.soft = true if edge.respond_to?(:soft=)
+          edge.smooth = true if edge.respond_to?(:smooth=)
+        end
+      end
+
+      def internal_edge?(edge)
+        return false unless edge.respond_to?(:faces)
+
+        faces = edge.faces
+        faces.length == 2 && coplanar_faces?(faces[0], faces[1])
+      rescue StandardError
+        false
+      end
+
+      def coplanar_faces?(first_face, second_face)
+        first_normal = normalized_components(first_face.normal)
+        second_normal = normalized_components(second_face.normal)
+        return false unless first_normal && second_normal
+
+        first_normal.zip(second_normal).sum { |left, right| left * right }.abs >=
+          COPLANAR_NORMAL_DOT
+      end
+
+      def normalized_components(normal)
+        components = %i[x y z].map do |component|
+          normal.respond_to?(component) ? normal.public_send(component).to_f : 0.0
+        end
+        length = Math.sqrt(components.sum { |value| value * value })
+        return nil unless length.positive?
+
+        components.map { |value| value / length }
       end
     end
   end

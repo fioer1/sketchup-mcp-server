@@ -79,6 +79,57 @@ class SemanticRequestValidatorTest < Minitest::Test
     assert_equal('invalid_numeric_value', refusal.dig(:refusal, :code))
   end
 
+  def test_accepts_valid_edge_restraint_payloads
+    refusal = @validator.refusal_for(sectioned_edge_restraint_request)
+
+    assert_nil(refusal)
+  end
+
+  def test_refuses_edge_restraint_payloads_with_missing_height
+    request = sectioned_edge_restraint_request
+    request['definition'].delete('height')
+
+    refusal = @validator.refusal_for(request)
+
+    assert_equal('invalid_numeric_value', refusal.dig(:refusal, :code))
+    assert_equal('definition.height', refusal.dig(:refusal, :details, :field))
+  end
+
+  def test_refuses_edge_restraint_payloads_with_missing_thickness
+    request = sectioned_edge_restraint_request
+    request['definition'].delete('thickness')
+
+    refusal = @validator.refusal_for(request)
+
+    assert_equal('invalid_numeric_value', refusal.dig(:refusal, :code))
+    assert_equal('definition.thickness', refusal.dig(:refusal, :details, :field))
+  end
+
+  def test_refuses_edge_restraint_payloads_with_definition_elevation
+    refusal = @validator.refusal_for(sectioned_edge_restraint_request(
+                                       'definition' => {
+                                         'elevation' => 0.1
+                                       }
+                                     ))
+
+    assert_equal('malformed_request_shape', refusal.dig(:refusal, :code))
+    assert_equal('edge_restraint', refusal.dig(:refusal, :details, :elementType))
+    assert_equal(['elevation'], refusal.dig(:refusal, :details, :misnestedFields))
+    refute_includes(refusal.dig(:refusal, :details, :allowedDefinitionFields), 'elevation')
+  end
+
+  def test_refuses_edge_restraint_alias_element_types
+    %w[curb retaining_curb path_edge sett_edge].each do |element_type|
+      refusal = @validator.refusal_for(sectioned_edge_restraint_request(
+                                         'elementType' => element_type
+                                       ))
+
+      assert_equal('unsupported_element_type', refusal.dig(:refusal, :code))
+      assert_equal(element_type, refusal.dig(:refusal, :details, :value))
+      assert_includes(refusal.dig(:refusal, :details, :allowedValues), 'edge_restraint')
+    end
+  end
+
   def test_refuses_pad_payloads_with_non_finite_elevation
     refusal = @validator.refusal_for(sectioned_pad_request(
                                        'definition' => {
@@ -164,6 +215,7 @@ class SemanticRequestValidatorTest < Minitest::Test
     requests = [
       sectioned_pad_request,
       sectioned_retaining_edge_request,
+      sectioned_edge_restraint_request,
       sectioned_planting_mass_request,
       sectioned_tree_proxy_request
     ]
@@ -182,6 +234,7 @@ class SemanticRequestValidatorTest < Minitest::Test
     requests = [
       sectioned_pad_request('definition' => { 'mode' => 'footprint_surface' }),
       sectioned_retaining_edge_request('definition' => { 'mode' => 'wall_profile' }),
+      sectioned_edge_restraint_request('definition' => { 'mode' => 'curb_profile' }),
       sectioned_planting_mass_request('definition' => { 'mode' => 'boundary_mass' }),
       sectioned_tree_proxy_request('definition' => { 'mode' => 'proxy_tree' })
     ]
@@ -412,6 +465,32 @@ class SemanticRequestValidatorTest < Minitest::Test
           'thickness' => 0.2
         },
         'hosting' => { 'mode' => 'none' },
+        'placement' => { 'mode' => 'host_resolved' },
+        'representation' => { 'mode' => 'procedural' },
+        'lifecycle' => { 'mode' => 'create_new' }
+      },
+      overrides
+    )
+  end
+
+  def sectioned_edge_restraint_request(overrides = {})
+    deep_merge(
+      {
+        'elementType' => 'edge_restraint',
+        'metadata' => {
+          'sourceElementId' => 'path-edge-restraint-001',
+          'status' => 'proposed'
+        },
+        'definition' => {
+          'mode' => 'polyline',
+          'polyline' => [[2.0, 0.0], [8.0, 0.0], [8.0, 4.0]],
+          'height' => 0.18,
+          'thickness' => 0.12
+        },
+        'hosting' => {
+          'mode' => 'edge_clamp',
+          'target' => { 'sourceElementId' => 'terrain-main' }
+        },
         'placement' => { 'mode' => 'host_resolved' },
         'representation' => { 'mode' => 'procedural' },
         'lifecycle' => { 'mode' => 'create_new' }

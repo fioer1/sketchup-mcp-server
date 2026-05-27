@@ -208,4 +208,24 @@ class PathBuilderTest < Minitest::Test
     assert_equal('terrain_sample_miss', error.code)
     assert_equal('hosting', error.details[:section])
   end
+
+  def test_hides_internal_generated_edges_without_hiding_boundary_edges
+    internal_edge = SemanticTestSupport::FakeEdge.new
+    internal_edge.faces = [fake_face_normal(0.0, 0.0, 1.0), fake_face_normal(0.0, 0.0, 1.0)]
+    hard_edge = SemanticTestSupport::FakeEdge.new
+    hard_edge.faces = [fake_face_normal(0.0, 0.0, 1.0), fake_face_normal(1.0, 0.0, 0.0)]
+    boundary_edge = SemanticTestSupport::FakeEdge.new
+    boundary_edge.faces = [fake_face_normal(0.0, 0.0, 1.0)]
+
+    @builder.send(:hide_internal_edges, [internal_edge, hard_edge, boundary_edge])
+
+    assert(internal_edge.hidden?)
+    refute(hard_edge.hidden?)
+    refute(boundary_edge.hidden?)
+  end
+
+  def fake_face_normal(x_value, y_value, z_value)
+    normal = Struct.new(:x, :y, :z).new(x_value, y_value, z_value)
+    Struct.new(:normal).new(normal)
+  end
 end

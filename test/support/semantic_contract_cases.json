@@ -37,7 +37,17 @@
             "code": "unsupported_element_type",
             "message": "Element type is not supported for semantic site creation.",
             "details": {
-              "elementType": "water_feature_proxy"
+              "elementType": "water_feature_proxy",
+              "value": "water_feature_proxy",
+              "allowedValues": [
+                "pad",
+                "structure",
+                "path",
+                "retaining_edge",
+                "edge_restraint",
+                "planting_mass",
+                "tree_proxy"
+              ]
             }
           }
         }

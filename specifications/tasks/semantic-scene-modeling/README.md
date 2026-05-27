@@ -27,6 +27,7 @@ The current task set persists the completed first-wave semantic work and the nex
 - horizontal-cross-section terrain-drape realization for hosted semantic paths
 - governed duplication and managed deletion policy
 - terrain-sampled planting-mass `proxy_mass` representation quality for early-design planting proxies
+- terrain-clamped semantic linear edges and canonical `edge_restraint` vocabulary for curb and restraint workflows
 
 ## Current Task Order
 
@@ -46,6 +47,7 @@ The current task set persists the completed first-wave semantic work and the nex
 14. [SEM-14 Harden Create Site Element Request Recovery and Definition Boundaries](SEM-14-harden-create-site-element-request-recovery-and-definition-boundaries/task.md)
 15. [SEM-15 Add Terrain-Anchored Hosting for Tree Proxy and Structure](SEM-15-add-terrain-anchored-hosting-for-tree-proxy-and-structure/task.md)
 16. [SEM-16 Realize Terrain-Sampled Planting Mass Proxy Representation](SEM-16-realize-terrain-sampled-planting-mass-proxy-representation/task.md)
+17. [SEM-17 Realize Terrain-Clamped Linear Edge Semantics](SEM-17-realize-terrain-clamped-linear-edge-semantics/task.md)
 
 ## Deferred Follow-Ons
 
@@ -71,3 +73,4 @@ The following follow-ons remain intentionally deferred from the active task fold
 - `SEM-13` is now completed and live-validated: `path + surface_drape` builds a smoothed terrain-following top ribbon with horizontal cross-sections, coherent downward thickness shell output, and structured refusals.
 - `SEM-14` is the current create-contract hardening follow-on. It keeps one canonical sectioned `create_site_element` surface while addressing bounded malformed request-shape recovery and family-specific `definition` boundary drift at the MCP seam.
 - `SEM-16` is a planned follow-on for the live `planting_mass + representation.mode: "proxy_mass"` gap. It uses `procedural_terrain_planting_mass.rb` as prototype evidence for terrain-sampled procedural planting output, reuses existing scene-query/profile sampling and staged-asset surface-frame logic, and adds a generated-component seam that also componentizes the accepted tree proxy without changing its visual contract. It does not add public procedural controls, add next-wave semantic families, or implement staged-asset replacement.
+- `SEM-17` captures the hosted linear-edge gap reported during terrain path authoring: `retaining_edge + edge_clamp` is currently accepted but can still build planar z=0 geometry, while curb or sett restraint edges need one canonical semantic type. It fixes the retaining-edge hosted behavior, adds `edge_restraint` without synonym aliases, and uses existing `surfaceOffset` validation as the post-create terrain-proximity acceptance mechanism without turning semantic hardscape into terrain source state.

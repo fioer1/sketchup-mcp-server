@@ -245,7 +245,17 @@ module SU_MCP
           title: 'Create Semantic Site Element',
           description: 'Create one managed semantic site element from explicit sectioned ' \
                        'input. Use for new structure, pad, path, retaining_edge, ' \
-                       'planting_mass, or tree_proxy creation. Bounded malformed-shape ' \
+                       'edge_restraint, planting_mass, or tree_proxy creation. ' \
+                       'Use path for walkable/drivable surfaces, retaining_edge for ' \
+                       'wall-like grade retention, and edge_restraint for low path ' \
+                       'edging, curbs, setts, or metal/stone restraints. ' \
+                       'Do not expect edge_restraint to derive or snap to a path boundary; ' \
+                       'provide its explicit edge centerline. For outside path edging, ' \
+                       'create the path from its centerline and width, then place the ' \
+                       'restraint centerline outside the path by path half-width plus ' \
+                       'restraint half-thickness, plus any intentional gap or shoulder. ' \
+                       'Clamp retaining_edge and edge_restraint to terrain or another ' \
+                       'surface that exists under that edge centerline. Bounded malformed-shape ' \
                        'ingress is recovery-only, not a second supported contract. ' \
                        'Do not use for metadata-only edits, hierarchy moves, or broad ' \
                        'scene search.',
@@ -345,7 +355,10 @@ module SU_MCP
         tool_entry(
           name: 'eval_ruby',
           title: 'Evaluate Ruby',
-          description: 'Evaluate arbitrary Ruby code inside SketchUp. SketchUp Ruby API ' \
+          description: 'Evaluate arbitrary Ruby code inside SketchUp as an escape hatch. ' \
+                       'Prefer first-class MCP tools whenever they can express the same ' \
+                       'inspection, measurement, metadata, terrain, hierarchy, material, ' \
+                       'or transform operation. SketchUp Ruby API ' \
                        'geometry and Length values use internal inches, while public MCP ' \
                        'tool inputs and outputs use meters; convert explicitly when crossing ' \
                        'between eval_ruby code and MCP tool data.',
@@ -1657,18 +1670,55 @@ module SU_MCP
             SU_MCP::Semantic::RequestValidator::SUPPORTED_DEFINITION_MODES.values
           ),
           'Native geometry contract for the requested elementType. Unsupported ' \
-          'combinations refuse with allowedValues for the requested element type.'
+          'combinations refuse with allowedValues for the requested element type. ' \
+          'Use polygon for pad, footprint_mass or adopt_reference for structure, ' \
+          'centerline for path, polyline for retaining_edge and edge_restraint, ' \
+          'mass_polygon for planting_mass, and generated_proxy for tree_proxy.'
         ),
         footprint: xy_point_array_schema,
-        elevation: number_schema,
-        height: number_schema,
-        thickness: number_schema,
+        elevation: described_schema(
+          number_schema,
+          'Planar base elevation in public meters where supported by the element type. ' \
+          'Not accepted for edge_restraint. For retaining_edge with edge_clamp, sampled ' \
+          'host terrain owns the base elevation; elevation is not a terrain offset.'
+        ),
+        height: described_schema(
+          number_schema,
+          'Positive public-meter height where required by the element type. For ' \
+          'retaining_edge this is wall height above the sampled or planar base. For ' \
+          'edge_restraint this is low curb/restraint height, independent of path width.'
+        ),
+        thickness: described_schema(
+          number_schema,
+          'Positive public-meter construction thickness where supported. For ' \
+          'retaining_edge and edge_restraint, this is the physical edge thickness. ' \
+          'For path-edge alignment, thickness matters because definition.polyline is ' \
+          'the edge centerline, not the face that touches the path.'
+        ),
         structureCategory: enum_schema(
           SU_MCP::Semantic::RequestValidator::APPROVED_STRUCTURE_CATEGORIES
         ),
-        centerline: xy_point_array_schema,
-        width: number_schema,
-        polyline: xy_point_array_schema,
+        centerline: described_schema(
+          xy_point_array_schema,
+          'Path centerline in public meters for elementType path. Use with ' \
+          'definition.width for the path surface; side restraints must be separate ' \
+          'retaining_edge or edge_restraint requests with their own polyline.'
+        ),
+        width: described_schema(
+          number_schema,
+          'Path width in public meters where supported. This is not accepted as an ' \
+          'edge_restraint dimension alias; use edge_restraint thickness and height.'
+        ),
+        polyline: described_schema(
+          xy_point_array_schema,
+          'Explicit linear-edge centerline in public meters for retaining_edge ' \
+          'and edge_restraint. Hosted edge_clamp samples the target terrain along ' \
+          'this line. The runtime does not derive this line from a path boundary. ' \
+          'For an outside path restraint whose inside face should meet the path edge, ' \
+          'offset the path centerline by half the path width plus half the restraint ' \
+          'thickness, plus any intentional gap or shoulder; smaller offsets place the ' \
+          'restraint into the path surface.'
+        ),
         boundary: xy_point_array_schema,
         averageHeight: number_schema,
         plantingCategory: string_schema,
@@ -1696,7 +1746,10 @@ module SU_MCP
             SU_MCP::Semantic::RequestValidator::SUPPORTED_ELEMENT_TYPES
           ),
           'Semantic element type to create. This selects the valid definition, ' \
-          'hosting, representation, and lifecycle modes for the request.'
+          'hosting, representation, and lifecycle modes for the request. Use ' \
+          'retaining_edge for wall-like retained grade edges. Use edge_restraint ' \
+          'for low curb/sett/stone restraints along path or hardscape edges; it is ' \
+          'hosted-only with edge_clamp and has no elevation field.'
         ),
         metadata: described_schema(
           {
@@ -1729,7 +1782,11 @@ module SU_MCP
             additionalProperties: false
           },
           'Element-type-specific geometric definition and dimensions. Owns native shape, ' \
-          'not terrain conformity, parent placement, or lifecycle replacement.'
+          'not terrain conformity, parent placement, or lifecycle replacement. ' \
+          'Common shapes: path uses mode centerline with centerline, width, and optional ' \
+          'thickness; retaining_edge uses mode polyline with polyline, height, thickness, ' \
+          'and optional planar elevation only when unhosted; edge_restraint uses mode ' \
+          'polyline with polyline, height, and thickness only.'
         ),
         hosting: described_schema(
           {
@@ -1747,8 +1804,14 @@ module SU_MCP
                 'requests refuse with allowedValues for the requested element type. ' \
                 'Supported hosted pairs include path -> surface_drape, ' \
                 'planting_mass -> surface_drape, pad -> surface_snap, ' \
-                'retaining_edge -> edge_clamp, tree_proxy -> terrain_anchored, and ' \
-                'structure -> terrain_anchored.'
+                'retaining_edge -> edge_clamp only, edge_restraint -> edge_clamp only, ' \
+                'tree_proxy -> terrain_anchored, and ' \
+                'structure -> terrain_anchored. For retaining_edge and edge_restraint, ' \
+                'edge_clamp samples the target surface along definition.polyline; it ' \
+                'does not snap to or infer a path edge. Use a target surface that covers ' \
+                'the edge centerline. An outside restraint line usually belongs on the ' \
+                'terrain host, not the path host, because it can sit beyond the path ' \
+                'footprint and miss path-surface sampling.'
               ),
               target: target_reference_schema
             },

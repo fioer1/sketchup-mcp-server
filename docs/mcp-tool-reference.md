@@ -80,8 +80,30 @@ Currently shipped hosting pairs:
 - `planting_mass -> surface_drape`
 - `pad -> surface_snap`
 - `retaining_edge -> edge_clamp`
+- `edge_restraint -> edge_clamp`
 - `tree_proxy -> terrain_anchored`
 - `structure -> terrain_anchored`
+
+Terrain-clamped linear edge behavior:
+
+- `retaining_edge -> edge_clamp` samples the referenced surface along `definition.polyline`
+  and uses the sampled terrain as the edge base. For unhosted `retaining_edge`,
+  `definition.elevation` remains the planar base elevation.
+- `edge_restraint -> edge_clamp` is the canonical semantic type for curbs, setts, and
+  hardscape restraint edges. It uses `definition.polyline`, `definition.height`, and
+  `definition.thickness`; `definition.elevation` is not accepted for `edge_restraint`
+  because hosted sampling owns base elevation.
+- `retaining_edge` and `edge_restraint` use `edge_clamp` only; `surface_drape` is for
+  path and planting-surface creation. Clamp the edge to a terrain or surface target that
+  exists under the requested edge centerline.
+- For path edging, `definition.polyline` is the edge object's centerline, not its inside
+  face. To make the inside face meet a path boundary, offset from the path centerline by
+  half the path width plus half the edge thickness, with any deliberate shoulder or gap
+  added on top. An exterior restraint centerline can sit outside the generated path
+  footprint, so using the path itself as the clamp target can produce surface-sample misses.
+- `validate_scene_update` `surfaceOffset` can be used as an approximate post-create check
+  for terrain-relative semantic edges. It catches z=0/off-terrain regressions through
+  approximate bounds anchors, but it is not exact edge-topology validation.
 
 Terrain-anchored behavior:
 
@@ -361,6 +383,22 @@ between controls, not as a terrain validation verdict or pass/fail policy.
 - `transform_entities` transforms one explicitly referenced supported group/component instance; `position` values are meters.
 - `set_material` applies a material to one explicitly referenced supported group/component instance.
 - All three tools use canonical `targetReference` with `sourceElementId`, `persistentId`, or compatibility `entityId`.
+
+#### `eval_ruby`
+
+`eval_ruby` is an escape hatch for host-side investigation or unsupported operations. Prefer
+first-class MCP tools whenever they can express the same operation, because those tools provide
+stable request schemas, JSON-safe response shapes, unit conventions, structured refusals, and
+narrower mutation behavior.
+
+Use existing tools instead of `eval_ruby` for ordinary scene summaries, scoped entity listing,
+target lookup, entity inspection, validation, measurement, terrain creation or editing, staged
+asset workflows, semantic element creation, metadata updates, hierarchy maintenance, deletion,
+transforms, or material assignment.
+
+When `eval_ruby` is necessary, remember that SketchUp Ruby API geometry and `Length` values use
+SketchUp internal inches. Public MCP tool inputs and outputs use meters, so convert explicitly
+when moving data between `eval_ruby` code and first-class MCP tool payloads.
 
 ## Example payloads
 

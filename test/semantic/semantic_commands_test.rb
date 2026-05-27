@@ -742,6 +742,109 @@ class SemanticCommandsTest < Minitest::Test
     assert_equal('hosting', result.dig(:refusal, :details, :section))
   end
 
+  def test_create_site_element_refuses_hosted_retaining_edge_sample_miss_without_partial_group
+    terrain_target = build_sample_surface_face(
+      entity_id: 551,
+      persistent_id: 5051,
+      source_element_id: 'terrain-main',
+      name: 'Short Terrain',
+      layer: SceneQueryTestSupport::FakeLayer.new('Terrain'),
+      material: SceneQueryTestSupport::FakeMaterial.new('Soil'),
+      x_range: [0.0, 4.0],
+      y_range: [-1.0, 1.0],
+      z_value: 1.0
+    )
+    commands = SU_MCP::SemanticCommands.new(
+      model: @model,
+      target_resolver: FakeTargetResolver.new(resolution: 'unique', entity: terrain_target)
+    )
+
+    result = commands.create_site_element(sectioned_retaining_edge_request(
+                                            'definition' => {
+                                              'mode' => 'polyline',
+                                              'polyline' => [[0.0, 0.0], [10.0, 0.0]],
+                                              'height' => 0.45,
+                                              'thickness' => 0.2
+                                            },
+                                            'hosting' => {
+                                              'mode' => 'edge_clamp',
+                                              'target' => { 'sourceElementId' => 'terrain-main' }
+                                            }
+                                          ))
+
+    assert_equal(true, result[:success])
+    assert_equal('refused', result[:outcome])
+    assert_equal('terrain_sample_miss', result.dig(:refusal, :code))
+    assert_nil(result[:managedObject])
+    assert_empty(@model.active_entities.groups)
+  end
+
+  def test_create_site_element_refuses_hosted_retaining_edge_replace_sample_miss_without_partial_group
+    parent_group = @model.active_entities.add_group
+    previous_entity = parent_group.entities.add_group
+    metadata_writer = SU_MCP::Semantic::ManagedObjectMetadata.new
+    metadata_writer.write!(
+      previous_entity,
+      'sourceElementId' => 'ret-edge-001',
+      'semanticType' => 'retaining_edge',
+      'status' => 'existing',
+      'state' => 'Created',
+      'schemaVersion' => 1,
+      'height' => 0.45,
+      'thickness' => 0.2
+    )
+    terrain_target = build_sample_surface_face(
+      entity_id: 552,
+      persistent_id: 5052,
+      source_element_id: 'terrain-main',
+      name: 'Short Terrain',
+      layer: SceneQueryTestSupport::FakeLayer.new('Terrain'),
+      material: SceneQueryTestSupport::FakeMaterial.new('Soil'),
+      x_range: [0.0, 4.0],
+      y_range: [-1.0, 1.0],
+      z_value: 1.0
+    )
+    target_resolver = FakeSequentialTargetResolver.new(
+      { resolution: 'unique', entity: previous_entity },
+      { resolution: 'unique', entity: terrain_target },
+      { resolution: 'unique', entity: parent_group }
+    )
+    commands = SU_MCP::SemanticCommands.new(
+      model: @model,
+      metadata_writer: metadata_writer,
+      serializer: SU_MCP::Semantic::Serializer.new,
+      target_resolver: target_resolver
+    )
+
+    result = commands.create_site_element(sectioned_retaining_edge_request(
+                                            'metadata' => { 'status' => 'existing' },
+                                            'definition' => {
+                                              'mode' => 'polyline',
+                                              'polyline' => [[0.0, 0.0], [10.0, 0.0]],
+                                              'height' => 0.45,
+                                              'thickness' => 0.2
+                                            },
+                                            'hosting' => {
+                                              'mode' => 'edge_clamp',
+                                              'target' => { 'sourceElementId' => 'terrain-main' }
+                                            },
+                                            'placement' => {
+                                              'mode' => 'parented',
+                                              'parent' => { 'entityId' => 'parent-group-22' }
+                                            },
+                                            'lifecycle' => {
+                                              'mode' => 'replace_preserve_identity',
+                                              'target' => { 'entityId' => 'ret-edge-001' }
+                                            }
+                                          ))
+
+    assert_equal(true, result[:success])
+    assert_equal('refused', result[:outcome])
+    assert_equal('terrain_sample_miss', result.dig(:refusal, :code))
+    assert_equal(false, previous_entity.erased?)
+    assert_equal([previous_entity], parent_group.entities.groups)
+  end
+
   def test_create_site_element_builds_terrain_anchored_tree_with_resolved_hosting_context
     created_group = @model.active_entities.add_group
     captured_params = nil
@@ -1204,6 +1307,117 @@ class SemanticCommandsTest < Minitest::Test
     assert_equal(false, build_called)
   end
 
+  def test_create_site_element_refuses_edge_restraint_without_edge_clamp_before_builder_execution
+    build_called = false
+    builder = Object.new
+    builder.define_singleton_method(:build) do |**_kwargs|
+      build_called = true
+      @model.active_entities.add_group
+    end
+    commands = SU_MCP::SemanticCommands.new(
+      model: @model,
+      registry: FakeRegistry.new(builder)
+    )
+
+    result = commands.create_site_element(sectioned_edge_restraint_request(
+                                            'hosting' => {
+                                              'mode' => 'none',
+                                              'target' => nil
+                                            }
+                                          ))
+
+    assert_equal(true, result[:success])
+    assert_equal('refused', result[:outcome])
+    assert_equal('unsupported_hosting_mode', result.dig(:refusal, :code))
+    assert_equal('edge_restraint', result.dig(:refusal, :details, :elementType))
+    assert_equal(['edge_clamp'], result.dig(:refusal, :details, :allowedValues))
+    assert_equal(false, build_called)
+  end
+
+  def test_create_site_element_refuses_edge_restraint_edge_clamp_without_target_before_builder
+    build_called = false
+    builder = Object.new
+    builder.define_singleton_method(:build) do |**_kwargs|
+      build_called = true
+      @model.active_entities.add_group
+    end
+    commands = SU_MCP::SemanticCommands.new(
+      model: @model,
+      registry: FakeRegistry.new(builder)
+    )
+
+    result = commands.create_site_element(sectioned_edge_restraint_request(
+                                            'hosting' => {
+                                              'mode' => 'edge_clamp',
+                                              'target' => nil
+                                            }
+                                          ))
+
+    assert_equal(true, result[:success])
+    assert_equal('refused', result[:outcome])
+    assert_equal('missing_required_field', result.dig(:refusal, :code))
+    assert_equal('hosting.target', result.dig(:refusal, :details, :field))
+    assert_equal(false, build_called)
+  end
+
+  def test_create_site_element_refuses_wrong_edge_restraint_hosting_mode_with_allowed_values
+    build_called = false
+    builder = Object.new
+    builder.define_singleton_method(:build) do |**_kwargs|
+      build_called = true
+      @model.active_entities.add_group
+    end
+    commands = SU_MCP::SemanticCommands.new(
+      model: @model,
+      registry: FakeRegistry.new(builder),
+      target_resolver: FakeTargetResolver.new(
+        resolution: 'unique',
+        entity: @model.active_entities.add_group
+      )
+    )
+
+    result = commands.create_site_element(sectioned_edge_restraint_request(
+                                            'hosting' => {
+                                              'mode' => 'surface_drape',
+                                              'target' => { 'sourceElementId' => 'terrain-main' }
+                                            }
+                                          ))
+
+    assert_equal(true, result[:success])
+    assert_equal('refused', result[:outcome])
+    assert_equal('unsupported_hosting_mode', result.dig(:refusal, :code))
+    assert_equal(['edge_clamp'], result.dig(:refusal, :details, :allowedValues))
+    assert_equal(false, build_called)
+  end
+
+  def test_create_site_element_refuses_edge_restraint_adopt_without_edge_clamp_before_targeting
+    target_resolver = FakeTargetResolver.new(
+      resolution: 'unique',
+      entity: FakeManagedEntity.new(parent: Object.new)
+    )
+    commands = SU_MCP::SemanticCommands.new(
+      model: @model,
+      target_resolver: target_resolver
+    )
+
+    result = commands.create_site_element(sectioned_edge_restraint_request(
+                                            'hosting' => {
+                                              'mode' => 'none',
+                                              'target' => nil
+                                            },
+                                            'lifecycle' => {
+                                              'mode' => 'adopt_existing',
+                                              'target' => { 'entityId' => 'edge-restraint-7' }
+                                            }
+                                          ))
+
+    assert_equal(true, result[:success])
+    assert_equal('refused', result[:outcome])
+    assert_equal('unsupported_hosting_mode', result.dig(:refusal, :code))
+    assert_equal(['edge_clamp'], result.dig(:refusal, :details, :allowedValues))
+    assert_empty(target_resolver.calls)
+  end
+
   def test_create_site_element_unsupported_hosting_mode_allowed_values_reflect_contextual_matrix
     commands = SU_MCP::SemanticCommands.new(
       model: @model,
@@ -1225,6 +1439,13 @@ class SemanticCommandsTest < Minitest::Test
                                                    'target' => { 'sourceElementId' => 'terrain-main' }
                                                  }
                                                ))
+    edge_restraint_request = sectioned_edge_restraint_request(
+      'hosting' => {
+        'mode' => 'surface_snap',
+        'target' => { 'sourceElementId' => 'terrain-main' }
+      }
+    )
+    edge_restraint_result = commands.create_site_element(edge_restraint_request)
     structure_result = commands.create_site_element(sectioned_structure_request(
                                                       'hosting' => {
                                                         'mode' => 'surface_snap',
@@ -1235,6 +1456,7 @@ class SemanticCommandsTest < Minitest::Test
     assert_equal('unsupported_hosting_mode', pad_result.dig(:refusal, :code))
     assert_equal(['surface_snap'], pad_result.dig(:refusal, :details, :allowedValues))
     assert_equal(['terrain_anchored'], tree_result.dig(:refusal, :details, :allowedValues))
+    assert_equal(['edge_clamp'], edge_restraint_result.dig(:refusal, :details, :allowedValues))
     assert_equal(['terrain_anchored'], structure_result.dig(:refusal, :details, :allowedValues))
   end
 
@@ -1522,6 +1744,93 @@ class SemanticCommandsTest < Minitest::Test
        [8.0 * METERS_TO_INTERNAL, 4.0 * METERS_TO_INTERNAL]],
       captured_params.dig('definition', 'polyline')
     )
+  end
+
+  def test_create_site_element_routes_edge_restraint_and_persists_dimension_metadata
+    created_group = @model.active_entities.add_group
+    captured_params = nil
+    host_target = FakeManagedEntity.new(parent: Object.new)
+    builder = Object.new
+    builder.define_singleton_method(:build) do |**kwargs|
+      captured_params = kwargs.fetch(:params)
+      created_group
+    end
+    metadata_writer = FakeMetadataWriter.new
+    serializer = FakeSerializer.new(sourceElementId: 'path-edge-restraint-001',
+                                    semanticType: 'edge_restraint')
+    commands = SU_MCP::SemanticCommands.new(
+      model: @model,
+      registry: FakeRegistry.new(builder),
+      metadata_writer: metadata_writer,
+      serializer: serializer,
+      target_resolver: FakeTargetResolver.new(resolution: 'unique', entity: host_target)
+    )
+
+    result = commands.create_site_element(sectioned_edge_restraint_request)
+
+    assert_equal(true, result[:success])
+    assert_equal('created', result[:outcome])
+    assert_equal('edge_restraint', captured_params.fetch('elementType'))
+    assert_same(host_target, captured_params.dig('hosting', 'resolved_target'))
+    assert_equal('edge_restraint', metadata_writer.calls.first.last['semanticType'])
+    assert_equal(0.18, metadata_writer.calls.first.last['height'])
+    assert_equal(0.12, metadata_writer.calls.first.last['thickness'])
+  end
+
+  def test_create_site_element_replaces_edge_restraint_and_preserves_dimension_metadata
+    old_parent = @model.active_entities.add_group
+    new_parent = @model.active_entities.add_group
+    previous_entity = old_parent.entities.add_group
+    metadata_writer = SU_MCP::Semantic::ManagedObjectMetadata.new
+    metadata_writer.write!(
+      previous_entity,
+      'sourceElementId' => 'path-edge-restraint-001',
+      'semanticType' => 'edge_restraint',
+      'status' => 'existing',
+      'state' => 'Created',
+      'schemaVersion' => 1,
+      'height' => 0.18,
+      'thickness' => 0.12
+    )
+    host_target = FakeManagedEntity.new(parent: Object.new)
+    target_resolver = FakeSequentialTargetResolver.new(
+      { resolution: 'unique', entity: previous_entity },
+      { resolution: 'unique', entity: host_target },
+      { resolution: 'unique', entity: new_parent }
+    )
+    builder = Object.new
+    builder.define_singleton_method(:build) do |**kwargs|
+      kwargs.fetch(:destination).add_group
+    end
+    commands = SU_MCP::SemanticCommands.new(
+      model: @model,
+      registry: FakeRegistry.new(builder),
+      metadata_writer: metadata_writer,
+      serializer: SU_MCP::Semantic::Serializer.new,
+      target_resolver: target_resolver
+    )
+
+    result = commands.create_site_element(sectioned_edge_restraint_request(
+                                            'metadata' => { 'status' => 'existing' },
+                                            'placement' => {
+                                              'mode' => 'parented',
+                                              'parent' => { 'entityId' => 'new-parent-22' }
+                                            },
+                                            'lifecycle' => {
+                                              'mode' => 'replace_preserve_identity',
+                                              'target' => { 'entityId' => 'old-restraint-11' }
+                                            }
+                                          ))
+
+    assert_equal(true, result[:success])
+    assert_equal('replaced', result[:outcome])
+    assert_equal(true, previous_entity.erased?)
+    assert_empty(old_parent.entities.groups)
+    assert_equal(1, new_parent.entities.groups.length)
+    replacement = new_parent.entities.groups.first
+    assert_equal('edge_restraint', replacement.get_attribute('su_mcp', 'semanticType'))
+    assert_equal(0.18, replacement.get_attribute('su_mcp', 'height'))
+    assert_equal(0.12, replacement.get_attribute('su_mcp', 'thickness'))
   end
 
   def test_create_site_element_routes_sectioned_planting_mass_requests_directly_to_builder_native_definition
@@ -2191,6 +2500,43 @@ class SemanticCommandsTest < Minitest::Test
         'representation' => {
           'mode' => 'procedural',
           'material' => 'Stone'
+        },
+        'lifecycle' => {
+          'mode' => 'create_new'
+        }
+      },
+      overrides
+    )
+  end
+
+  def sectioned_edge_restraint_request(overrides = {})
+    deep_merge(
+      {
+        'elementType' => 'edge_restraint',
+        'metadata' => {
+          'sourceElementId' => 'path-edge-restraint-001',
+          'status' => 'proposed'
+        },
+        'sceneProperties' => {
+          'name' => 'Path Edge Restraint',
+          'tag' => 'Edges'
+        },
+        'definition' => {
+          'mode' => 'polyline',
+          'polyline' => [[2.0, 0.0], [8.0, 0.0], [8.0, 4.0]],
+          'height' => 0.18,
+          'thickness' => 0.12
+        },
+        'hosting' => {
+          'mode' => 'edge_clamp',
+          'target' => { 'sourceElementId' => 'terrain-main' }
+        },
+        'placement' => {
+          'mode' => 'host_resolved'
+        },
+        'representation' => {
+          'mode' => 'procedural',
+          'material' => 'Granite Setts'
         },
         'lifecycle' => {
           'mode' => 'create_new'

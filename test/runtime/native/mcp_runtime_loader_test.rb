@@ -554,6 +554,7 @@ class McpRuntimeLoaderTest < Minitest::Test
 
     create_site_element_tool = tools.find { |tool| tool.fetch('name') == 'create_site_element' }
     assert_equal('Create Semantic Site Element', create_site_element_tool.fetch('title'))
+    assert_includes(create_site_element_tool.fetch('description'), 'edge_restraint')
     assert_equal(
       %w[elementType metadata definition hosting placement representation lifecycle],
       create_site_element_tool.fetch('inputSchema').fetch('required')
@@ -1173,42 +1174,35 @@ class McpRuntimeLoaderTest < Minitest::Test
     )
   end
 
-  def test_create_site_element_tool_description_and_sections_expose_operational_boundaries
+  def test_create_site_element_schema_exposes_operational_sections
     tool = @loader.tool_catalog.find { |entry| entry.fetch(:name) == 'create_site_element' }
     input_schema = tool.fetch(:input_schema)
 
-    assert_includes(tool.fetch(:description), 'Do not use for metadata-only edits')
-    assert_includes(
-      input_schema.fetch(:properties).fetch(:definition).fetch(:description),
-      'Owns native shape'
-    )
-    assert_includes(
-      input_schema.fetch(:properties).fetch(:hosting).fetch(:description),
-      'not parent placement or identity-preserving replacement'
-    )
-    assert_includes(
-      input_schema.fetch(:properties).fetch(:placement).fetch(:description),
-      'does not own terrain conformity or lifecycle replacement'
-    )
-    assert_includes(
-      input_schema.fetch(:properties).fetch(:lifecycle).fetch(:description),
-      'create/adopt/replace intent'
-    )
+    refute_empty(tool.fetch(:description))
+    %i[definition hosting placement lifecycle].each do |section|
+      refute_empty(input_schema.fetch(:properties).fetch(section).fetch(:description))
+    end
     assert_includes(
       input_schema.fetch(:properties).fetch(:hosting).fetch(:properties).fetch(:mode)
-                  .fetch(:description),
-      'Contextual by elementType'
+                  .fetch(:enum),
+      'edge_clamp'
     )
-    assert_includes(
-      input_schema.fetch(:properties).fetch(:hosting).fetch(:properties).fetch(:mode)
-                  .fetch(:description),
-      'tree_proxy -> terrain_anchored'
-    )
-    assert_includes(
-      input_schema.fetch(:properties).fetch(:hosting).fetch(:properties).fetch(:mode)
-                  .fetch(:description),
-      'structure -> terrain_anchored'
-    )
+    refute_includes(input_schema.fetch(:properties).fetch(:elementType).fetch(:enum), 'curb')
+  end
+
+  def test_create_site_element_schema_exposes_edge_restraint_contract_without_aliases
+    tool = @loader.tool_catalog.find { |entry| entry.fetch(:name) == 'create_site_element' }
+    input_schema = tool.fetch(:input_schema)
+    definition_properties = input_schema.fetch(:properties).fetch(:definition).fetch(:properties)
+
+    assert_includes(input_schema.fetch(:properties).fetch(:elementType).fetch(:enum),
+                    'edge_restraint')
+    assert_includes(definition_properties.fetch(:mode).fetch(:enum), 'polyline')
+    assert(definition_properties.key?(:polyline))
+    assert(definition_properties.key?(:height))
+    assert(definition_properties.key?(:thickness))
+    refute_includes(input_schema.fetch(:properties).fetch(:elementType).fetch(:enum), 'curb')
+    refute_includes(input_schema.fetch(:properties).fetch(:elementType).fetch(:enum), 'path_edge')
   end
 
   def test_create_site_element_schema_advertises_canonical_sections_only

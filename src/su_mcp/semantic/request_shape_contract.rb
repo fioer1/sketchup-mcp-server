@@ -19,6 +19,7 @@ module SU_MCP
         'pad' => %w[mode footprint elevation thickness],
         'path' => %w[mode centerline width elevation thickness],
         'retaining_edge' => %w[mode polyline elevation height thickness],
+        'edge_restraint' => %w[mode polyline height thickness],
         'planting_mass' => %w[mode boundary averageHeight elevation plantingCategory],
         'tree_proxy' => %w[
           mode position canopyDiameterX canopyDiameterY height trunkDiameter speciesHint

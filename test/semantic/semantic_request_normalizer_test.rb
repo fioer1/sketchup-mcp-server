@@ -42,6 +42,9 @@ class SemanticRequestNormalizerTest < Minitest::Test
     retaining_edge = @normalizer.normalize_create_site_element_params(
       sectioned_retaining_edge_request
     )
+    edge_restraint = @normalizer.normalize_create_site_element_params(
+      sectioned_edge_restraint_request
+    )
     planting_mass = @normalizer.normalize_create_site_element_params(
       sectioned_planting_mass_request
     )
@@ -59,6 +62,17 @@ class SemanticRequestNormalizerTest < Minitest::Test
     )
     assert_in_delta(0.45 * METERS_TO_INTERNAL, retaining_edge.dig('definition', 'height'), 1e-9)
     assert_in_delta(0.2 * METERS_TO_INTERNAL, retaining_edge.dig('definition', 'thickness'), 1e-9)
+    assert_equal(
+      [[2.0 * METERS_TO_INTERNAL, 0.0], [8.0 * METERS_TO_INTERNAL, 0.0],
+       [8.0 * METERS_TO_INTERNAL, 4.0 * METERS_TO_INTERNAL]],
+      edge_restraint.dig('definition', 'polyline')
+    )
+    assert_in_delta(0.18 * METERS_TO_INTERNAL, edge_restraint.dig('definition', 'height'), 1e-9)
+    assert_in_delta(
+      0.12 * METERS_TO_INTERNAL,
+      edge_restraint.dig('definition', 'thickness'),
+      1e-9
+    )
     assert_equal(
       [[0.0, 0.0], [4.0 * METERS_TO_INTERNAL, 0.0],
        [4.0 * METERS_TO_INTERNAL, 2.0 * METERS_TO_INTERNAL], [0.0, 2.0 * METERS_TO_INTERNAL]],
@@ -277,6 +291,32 @@ class SemanticRequestNormalizerTest < Minitest::Test
           'mode' => 'procedural',
           'material' => 'Stone'
         },
+        'lifecycle' => { 'mode' => 'create_new' }
+      },
+      overrides
+    )
+  end
+
+  def sectioned_edge_restraint_request(overrides = {})
+    deep_merge(
+      {
+        'elementType' => 'edge_restraint',
+        'metadata' => {
+          'sourceElementId' => 'path-edge-restraint-001',
+          'status' => 'proposed'
+        },
+        'definition' => {
+          'mode' => 'polyline',
+          'polyline' => [[2.0, 0.0], [8.0, 0.0], [8.0, 4.0]],
+          'height' => 0.18,
+          'thickness' => 0.12
+        },
+        'hosting' => {
+          'mode' => 'edge_clamp',
+          'target' => { 'sourceElementId' => 'terrain-main' }
+        },
+        'placement' => { 'mode' => 'host_resolved' },
+        'representation' => { 'mode' => 'procedural' },
         'lifecycle' => { 'mode' => 'create_new' }
       },
       overrides

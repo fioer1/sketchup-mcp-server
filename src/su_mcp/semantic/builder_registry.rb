@@ -17,6 +17,7 @@ module SU_MCP
           'structure' => StructureBuilder.new,
           'path' => PathBuilder.new,
           'retaining_edge' => RetainingEdgeBuilder.new,
+          'edge_restraint' => RetainingEdgeBuilder.new,
           'planting_mass' => PlantingMassBuilder.new,
           'tree_proxy' => TreeProxyBuilder.new
         }.merge(builders || {})

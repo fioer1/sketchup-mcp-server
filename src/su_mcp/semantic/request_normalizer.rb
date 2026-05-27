@@ -33,6 +33,11 @@ module SU_MCP
           DEFINITION_THICKNESS_FIELD => :scalar,
           DEFINITION_ELEVATION_FIELD => :scalar
         },
+        'edge_restraint' => {
+          'definition.polyline' => :points,
+          DEFINITION_HEIGHT_FIELD => :scalar,
+          DEFINITION_THICKNESS_FIELD => :scalar
+        },
         'planting_mass' => {
           'definition.boundary' => :points,
           'definition.averageHeight' => :scalar,

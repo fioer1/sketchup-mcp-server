@@ -777,6 +777,78 @@ class SceneValidationCommandsTest < Minitest::Test
     )
   end
 
+  def test_surface_offset_passes_for_semantic_edge_restraint_against_matching_surface
+    edge_group = semantic_edge_group(
+      source_element_id: 'edge-restraint-main',
+      semantic_type: 'edge_restraint',
+      bottom_z: 0.5
+    )
+    commands = build_commands(
+      adapter_entities: [edge_group],
+      target_reference_resolver: FakeTargetReferenceResolver.new(
+        { resolution: 'unique', entity: edge_group }
+      ),
+      sample_surface_query: RecordingSampleSurfaceQuery.new(
+        result: {
+          success: true,
+          results: Array.new(4) do
+            { status: 'hit', hitPoint: { 'x' => 83.0, 'y' => 82.0, 'z' => 0.5 } }
+          end
+        }
+      )
+    )
+
+    result = commands.validate_scene_update(
+      'expectations' => {
+        'geometryRequirements' => [
+          surface_offset_expectation(
+            'targetReference' => { 'sourceElementId' => 'edge-restraint-main' }
+          )
+        ]
+      }
+    )
+
+    assert_equal(true, result[:success])
+    assert_equal('passed', result[:outcome])
+  end
+
+  def test_surface_offset_fails_for_planar_z_zero_retaining_edge_against_nonzero_surface
+    edge_group = semantic_edge_group(
+      source_element_id: 'retaining-edge-main',
+      semantic_type: 'retaining_edge',
+      bottom_z: 0.0
+    )
+    commands = build_commands(
+      adapter_entities: [edge_group],
+      target_reference_resolver: FakeTargetReferenceResolver.new(
+        { resolution: 'unique', entity: edge_group }
+      ),
+      sample_surface_query: RecordingSampleSurfaceQuery.new(
+        result: {
+          success: true,
+          results: Array.new(4) do
+            { status: 'hit', hitPoint: { 'x' => 83.0, 'y' => 82.0, 'z' => 1.0 } }
+          end
+        }
+      )
+    )
+
+    result = commands.validate_scene_update(
+      'expectations' => {
+        'geometryRequirements' => [
+          surface_offset_expectation(
+            'targetReference' => { 'sourceElementId' => 'retaining-edge-main' }
+          )
+        ]
+      }
+    )
+
+    assert_equal(true, result[:success])
+    assert_equal('failed', result[:outcome])
+    assert_equal('surfaceOffset', result.dig(:errors, 0, :details, :kind))
+    refute_empty(result.dig(:errors, 0, :details, :failedAnchors))
+  end
+
   def test_surface_offset_reports_surface_sampling_failures_as_validation_errors
     commands = build_commands(
       adapter_entities: [@group],
@@ -976,6 +1048,32 @@ class SceneValidationCommandsTest < Minitest::Test
             'sourceElementId' => 'path-main',
             'status' => 'proposed',
             'semanticType' => 'path'
+          }
+        }
+      }
+    )
+  end
+
+  def semantic_edge_group(source_element_id:, semantic_type:, bottom_z:)
+    FakeGroup.new(
+      entity_id: 151,
+      bounds: FakeBounds.new(
+        min: length_point(83.0, 82.0, bottom_z),
+        max: length_point(84.0, 83.0, bottom_z + 0.5),
+        center: length_point(83.5, 82.5, bottom_z + 0.25),
+        size: [FakeLength.new(1.0), FakeLength.new(1.0), FakeLength.new(0.5)]
+      ),
+      layer: @layer,
+      material: @material,
+      details: {
+        persistent_id: 1151,
+        name: semantic_type,
+        entities: [Object.new],
+        attributes: {
+          'su_mcp' => {
+            'sourceElementId' => source_element_id,
+            'status' => 'proposed',
+            'semanticType' => semantic_type
           }
         }
       }

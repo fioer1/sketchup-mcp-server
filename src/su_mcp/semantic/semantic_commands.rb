@@ -25,6 +25,7 @@ module SU_MCP
       'pad' => ['surface_snap'],
       'planting_mass' => ['surface_drape'],
       'retaining_edge' => ['edge_clamp'],
+      'edge_restraint' => ['edge_clamp'],
       'structure' => ['terrain_anchored'],
       'tree_proxy' => ['terrain_anchored']
     }.freeze
@@ -85,6 +86,9 @@ module SU_MCP
                 :target_resolver, :destination_resolver
 
     def create_site_element_v2(params, public_params:)
+      hosting_refusal = unsupported_hosting_refusal(params)
+      return hosting_refusal if hosting_refusal
+
       case params.dig('lifecycle', 'mode')
       when 'adopt_existing'
         create_site_element_v2_adopt(params, public_params: public_params)
@@ -216,7 +220,8 @@ module SU_MCP
 
     def v2_builder_payload(params)
       case params['elementType']
-      when 'pad', 'structure', 'path', 'retaining_edge', 'planting_mass', 'tree_proxy'
+      when 'pad', 'structure', 'path', 'retaining_edge', 'edge_restraint',
+           'planting_mass', 'tree_proxy'
         migrated_builder_payload(params)
       else
         {}
@@ -349,9 +354,6 @@ module SU_MCP
       parent_entity = resolve_v2_explicit_parent_entity(params)
       return parent_entity if refusal_response?(parent_entity)
 
-      hosting_refusal = unsupported_hosting_refusal(params)
-      return hosting_refusal if hosting_refusal
-
       destination = resolve_v2_create_destination(parent_entity)
       return destination if refusal_response?(destination)
 
@@ -398,9 +400,6 @@ module SU_MCP
       hosting_entity = resolve_v2_hosting_entity(params)
       return hosting_entity if refusal_response?(hosting_entity)
 
-      hosting_refusal = unsupported_hosting_refusal(params)
-      return hosting_refusal if hosting_refusal
-
       hosting_entity
     end
 
@@ -426,6 +425,9 @@ module SU_MCP
     # Shared by create and replace so contextual hosting restrictions stay consistent.
     def unsupported_hosting_refusal(params)
       hosting_mode = params.dig('hosting', 'mode').to_s
+      required_hosting_refusal = required_hosting_refusal(params, hosting_mode)
+      return required_hosting_refusal if required_hosting_refusal
+
       return nil if hosting_mode.empty? || hosting_mode == 'none'
 
       supported_modes = SUPPORTED_HOSTING_MODES.fetch(params.fetch('elementType'), [])
@@ -439,6 +441,22 @@ module SU_MCP
           mode: hosting_mode,
           elementType: params.fetch('elementType'),
           allowedValues: supported_modes
+        }
+      )
+    end
+
+    def required_hosting_refusal(params, hosting_mode)
+      return nil unless params.fetch('elementType') == 'edge_restraint'
+      return nil if hosting_mode == 'edge_clamp'
+
+      refusal(
+        'unsupported_hosting_mode',
+        'Hosting mode is not supported for this semantic element type.',
+        {
+          section: 'hosting',
+          mode: hosting_mode.empty? ? nil : hosting_mode,
+          elementType: params.fetch('elementType'),
+          allowedValues: SUPPORTED_HOSTING_MODES.fetch('edge_restraint')
         }
       )
     end
@@ -496,8 +514,8 @@ module SU_MCP
         structure_metadata_attributes(params)
       when 'path'
         path_metadata_attributes(params)
-      when 'retaining_edge'
-        retaining_edge_metadata_attributes(params)
+      when 'retaining_edge', 'edge_restraint'
+        linear_edge_metadata_attributes(params)
       when 'planting_mass'
         planting_mass_metadata_attributes(params)
       when 'tree_proxy'
@@ -521,7 +539,7 @@ module SU_MCP
       attributes
     end
 
-    def retaining_edge_metadata_attributes(params)
+    def linear_edge_metadata_attributes(params)
       payload = params.fetch('definition', {})
       {
         'height' => payload['height'],

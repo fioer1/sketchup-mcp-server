@@ -108,6 +108,21 @@ class PublicMcpContractPostureTest < Minitest::Test
     refute_includes(docs, 'planting seed')
   end
 
+  def test_semantic_docs_describe_terrain_clamped_linear_edges_without_aliases
+    docs = read_repo_file('docs/mcp-tool-reference.md')
+
+    assert_includes(docs, 'retaining_edge -> edge_clamp')
+    assert_includes(docs, 'edge_restraint -> edge_clamp')
+    assert_includes(docs, 'definition.polyline')
+    assert_includes(docs, 'definition.height')
+    assert_includes(docs, 'definition.thickness')
+    assert_includes(docs, 'definition.elevation` is not accepted for `edge_restraint')
+    assert_includes(docs, 'surfaceOffset')
+    assert_includes(docs, 'approximate')
+    refute_includes(docs, '`curb`')
+    refute_includes(docs, '`path_edge`')
+  end
+
   private
 
   def read_repo_file(relative_path)

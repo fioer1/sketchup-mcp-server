@@ -75,6 +75,23 @@ class RequestShapeRecoveryTest < Minitest::Test
     refute(result.key?('width'))
   end
 
+  def test_recovers_unambiguous_edge_restraint_definition_leafs
+    request = sectioned_edge_restraint_request
+    definition = request.delete('definition')
+    request.merge!(definition)
+
+    result = @recovery.recover_create_site_element_params(request)
+
+    assert_equal('edge_restraint', result['elementType'])
+    assert_equal('polyline', result.dig('definition', 'mode'))
+    assert_equal([[2.0, 0.0], [8.0, 0.0]], result.dig('definition', 'polyline'))
+    assert_equal(0.18, result.dig('definition', 'height'))
+    assert_equal(0.12, result.dig('definition', 'thickness'))
+    refute(result.key?('polyline'))
+    refute(result.key?('height'))
+    refute(result.key?('thickness'))
+  end
+
   def test_refuses_ambiguous_mixed_geometry_inside_wrapped_payload
     wrapped_request = sectioned_terrain_path_request
     wrapped_request['width'] = 3.2
@@ -141,6 +158,32 @@ class RequestShapeRecoveryTest < Minitest::Test
         'hosting' => { 'mode' => 'none' },
         'placement' => { 'mode' => 'host_resolved' },
         'representation' => { 'mode' => 'proxy_mass' },
+        'lifecycle' => { 'mode' => 'create_new' }
+      },
+      overrides
+    )
+  end
+
+  def sectioned_edge_restraint_request(overrides = {})
+    deep_merge(
+      {
+        'elementType' => 'edge_restraint',
+        'metadata' => {
+          'sourceElementId' => 'path-edge-restraint-001',
+          'status' => 'proposed'
+        },
+        'definition' => {
+          'mode' => 'polyline',
+          'polyline' => [[2.0, 0.0], [8.0, 0.0]],
+          'height' => 0.18,
+          'thickness' => 0.12
+        },
+        'hosting' => {
+          'mode' => 'edge_clamp',
+          'target' => { 'sourceElementId' => 'terrain-main' }
+        },
+        'placement' => { 'mode' => 'host_resolved' },
+        'representation' => { 'mode' => 'procedural' },
         'lifecycle' => { 'mode' => 'create_new' }
       },
       overrides

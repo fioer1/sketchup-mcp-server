@@ -36,6 +36,12 @@ class SemanticBuilderRegistryTest < Minitest::Test
     assert_instance_of(SU_MCP::Semantic::RetainingEdgeBuilder, builder)
   end
 
+  def test_returns_edge_restraint_builder_for_edge_restraint_requests
+    builder = @registry.builder_for('edge_restraint')
+
+    assert_instance_of(SU_MCP::Semantic::RetainingEdgeBuilder, builder)
+  end
+
   def test_returns_planting_mass_builder_for_planting_mass_requests
     builder = @registry.builder_for('planting_mass')
 

@@ -512,6 +512,73 @@
       }
     },
     {
+      "case_id": "create_site_element_edge_restraint_elevation_refused",
+      "request": {
+        "jsonrpc": "2.0",
+        "method": "tools/call",
+        "params": {
+          "name": "create_site_element",
+          "arguments": {
+            "elementType": "edge_restraint",
+            "metadata": {
+              "sourceElementId": "path-edge-restraint-001",
+              "status": "proposed"
+            },
+            "definition": {
+              "mode": "polyline",
+              "polyline": [[0.0, 0.0], [4.0, 0.0]],
+              "height": 0.18,
+              "thickness": 0.12,
+              "elevation": 0.1
+            },
+            "hosting": {
+              "mode": "edge_clamp",
+              "target": {
+                "sourceElementId": "terrain-main"
+              }
+            },
+            "placement": {
+              "mode": "host_resolved"
+            },
+            "representation": {
+              "mode": "procedural"
+            },
+            "lifecycle": {
+              "mode": "create_new"
+            }
+          }
+        },
+        "id": "create-site-element-edge-restraint-elevation-refused"
+      },
+      "response": {
+        "jsonrpc": "2.0",
+        "id": "create-site-element-edge-restraint-elevation-refused",
+        "result": {
+          "success": true,
+          "outcome": "refused",
+          "refusal": {
+            "code": "malformed_request_shape",
+            "message": "Request shape is malformed for semantic site creation.",
+            "details": {
+              "elementType": "edge_restraint",
+              "expectedTopLevelSections": [
+                "elementType",
+                "metadata",
+                "definition",
+                "hosting",
+                "placement",
+                "representation",
+                "lifecycle"
+              ],
+              "misnestedFields": ["elevation"],
+              "allowedDefinitionFields": ["mode", "polyline", "height", "thickness"],
+              "suggestedCorrection": "Keep geometry leaf fields inside definition."
+            }
+          }
+        }
+      }
+    },
+    {
       "case_id": "create_group_created",
       "request": {
         "jsonrpc": "2.0",
