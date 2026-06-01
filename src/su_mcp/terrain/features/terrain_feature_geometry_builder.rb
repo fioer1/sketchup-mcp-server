@@ -5,6 +5,7 @@ require_relative 'effective_feature_view'
 require_relative 'feature_intent_set'
 require_relative 'planar_occlusion_clipper'
 require_relative 'terrain_feature_geometry'
+require_relative 'terrain_oracle_semantic_region_builder'
 
 module SU_MCP
   module Terrain
@@ -30,6 +31,7 @@ module SU_MCP
         @affected_windows = []
         @tolerances = []
         @planar_regions = []
+        @oracle_semantic_regions = []
         @limitations = []
         @failure_category = 'none'
 
@@ -40,6 +42,7 @@ module SU_MCP
         end
         @absolute_planar_regions = absolute_planar_regions_for(feature_source)
         feature_source.each do |feature|
+          append_oracle_semantic_region(feature)
           derive_feature(feature)
         end
         suppress_occluded_output_geometry
@@ -52,6 +55,7 @@ module SU_MCP
           affectedWindows: @affected_windows,
           tolerances: @tolerances,
           planarRegions: @planar_regions,
+          oracleSemanticRegions: @oracle_semantic_regions,
           failureCategory: @failure_category,
           limitations: @limitations
         )
@@ -337,6 +341,15 @@ module SU_MCP
           'maxRow' => window.fetch('max').fetch('row'),
           'source' => 'payload'
         }
+      end
+
+      def append_oracle_semantic_region(feature)
+        region = TerrainOracleSemanticRegionBuilder.new.build(feature)
+        return unless region
+
+        @oracle_semantic_regions << region
+      rescue ArgumentError, KeyError => e
+        limitation(feature, "oracle semantic region unavailable: #{e.message}")
       end
 
       def segment(feature, role, start_point, end_point)

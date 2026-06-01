@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative '../regions/fixed_control_evaluator'
+require_relative '../regions/planar_height_model'
 require_relative '../regions/region_influence'
 require_relative '../regions/sample_window'
 
@@ -171,78 +172,10 @@ module SU_MCP
       end
 
       def fit_plane(controls)
-        unique_controls = unique_controls_for_fit(controls)
-        return { refusal: degenerate_refusal } if unique_controls.length < 3
-        return { refusal: degenerate_refusal } if collinear?(unique_controls)
+        model = PlanarHeightModel.fit(controls)
+        return { refusal: degenerate_refusal } unless model
 
-        matrix = normal_equation_matrix(unique_controls)
-        vector = normal_equation_vector(unique_controls)
-        coefficients = solve_3x3(matrix, vector)
-        return { refusal: degenerate_refusal } unless coefficients&.all?(&:finite?)
-
-        { plane: { a: coefficients[0], b: coefficients[1], c: coefficients[2] } }
-      end
-
-      def unique_controls_for_fit(controls)
-        controls.group_by { |control| [control.dig(:point, 'x'), control.dig(:point, 'y')] }
-                .values
-                .map(&:first)
-      end
-
-      def collinear?(controls)
-        controls.combination(3).none? do |first, second, third|
-          triangle_area_twice(
-            first.fetch(:point),
-            second.fetch(:point),
-            third.fetch(:point)
-          ).abs > GEOMETRY_TOLERANCE
-        end
-      end
-
-      def triangle_area_twice(first, second, third)
-        ((second.fetch('x') - first.fetch('x')) * (third.fetch('y') - first.fetch('y'))) -
-          ((second.fetch('y') - first.fetch('y')) * (third.fetch('x') - first.fetch('x')))
-      end
-
-      def normal_equation_matrix(controls)
-        sx = controls.sum { |control| control.dig(:point, 'x') }
-        sy = controls.sum { |control| control.dig(:point, 'y') }
-        sxx = controls.sum { |control| control.dig(:point, 'x')**2 }
-        syy = controls.sum { |control| control.dig(:point, 'y')**2 }
-        sxy = controls.sum { |control| control.dig(:point, 'x') * control.dig(:point, 'y') }
-        [[sxx, sxy, sx], [sxy, syy, sy], [sx, sy, controls.length.to_f]]
-      end
-
-      def normal_equation_vector(controls)
-        [
-          controls.sum { |control| control.dig(:point, 'x') * control.dig(:point, 'z') },
-          controls.sum { |control| control.dig(:point, 'y') * control.dig(:point, 'z') },
-          controls.sum { |control| control.dig(:point, 'z') }
-        ]
-      end
-
-      def solve_3x3(matrix, vector)
-        determinant = det3(matrix)
-        return nil if determinant.abs <= GEOMETRY_TOLERANCE
-
-        (0...3).map do |column|
-          det3(replace_column(matrix, vector, column)) / determinant
-        end
-      end
-
-      def det3(matrix)
-        a, b, c = matrix
-        (a[0] * ((b[1] * c[2]) - (b[2] * c[1]))) -
-          (a[1] * ((b[0] * c[2]) - (b[2] * c[0]))) +
-          (a[2] * ((b[0] * c[1]) - (b[1] * c[0])))
-      end
-
-      def replace_column(matrix, vector, column)
-        matrix.map.with_index do |row, index|
-          row.each_with_index.map do |value, row_column|
-            row_column == column ? vector[index] : value
-          end
-        end
+        { plane: model.to_h }
       end
 
       def non_coplanar_refusal(controls, plane, request)
@@ -543,8 +476,11 @@ module SU_MCP
       end
 
       def plane_elevation(plane, point)
-        (plane.fetch(:a) * point.fetch('x')) + (plane.fetch(:b) * point.fetch('y')) +
-          plane.fetch(:c)
+        PlanarHeightModel.new(
+          a: plane.fetch(:a),
+          b: plane.fetch(:b),
+          c: plane.fetch(:c)
+        ).height_at(point)
       end
 
       def distance_between(first, second)

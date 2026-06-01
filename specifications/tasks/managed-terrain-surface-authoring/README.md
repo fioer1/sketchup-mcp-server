@@ -65,7 +65,8 @@ The current task order proves terrain authoring through concrete, testable incre
   production terrain output should not route through the current CDT backend
 - feature-aware adaptive backend planning that keeps the adaptive patch/cell production path and
   makes feature intents operational through policy, local tolerance, density pressure, forced
-  subdivision, seam contracts, bounded patch components, and sparse local detail
+  subdivision, seam contracts, bounded patch components, composed height truth, feature cut graphs,
+  and seam-safe feature cut lifecycle behavior
 
 ## Current Task Order
 
@@ -112,9 +113,12 @@ The current task order proves terrain authoring through concrete, testable incre
 41. [MTA-41 Add Optional Deterministic Feature-Aware Diagonal Optimization](MTA-41-add-optional-deterministic-feature-aware-diagonal-optimization/task.md) - optional; not a dependency for MTA-42 through MTA-44
 42. [MTA-42 Upgrade Adaptive Seam Contracts For Feature-Driven Splits](MTA-42-upgrade-adaptive-seam-contracts-for-feature-driven-splits/task.md)
 43. [MTA-43 Add Patch Component Planner For Cross-Patch Features](MTA-43-add-patch-component-planner-for-cross-patch-features/task.md)
-44. [MTA-44 Add Sparse Local Detail Tiles And Composed Height Oracle](MTA-44-add-sparse-local-detail-tiles-and-composed-height-oracle/task.md)
-45. [MTA-45 Reduce Unnecessary Planar Region Output Tessellation](MTA-45-reduce-unnecessary-planar-region-output-tessellation/task.md)
-46. [MTA-46 Make Fairing Output Pressure Residual-Aware](MTA-46-make-fairing-output-pressure-residual-aware/task.md)
+44. [MTA-44 Add Sparse Local Detail Tiles And Composed Height Oracle](MTA-44-add-sparse-local-detail-tiles-and-composed-height-oracle/task.md) - closed-superseded by MTA-44A through MTA-44C
+45. [MTA-44A Establish Effective Feature Composed Height Oracle](MTA-44A-establish-effective-feature-composed-height-oracle/task.md)
+46. [MTA-44B Add Contained Production Feature Cut Graph Output](MTA-44B-add-contained-production-feature-cut-graph-output/task.md)
+47. [MTA-44C Harden Feature Cuts Across Seams And Patch Lifecycle](MTA-44C-harden-feature-cuts-across-seams-and-patch-lifecycle/task.md)
+48. [MTA-45 Reduce Unnecessary Planar Region Output Tessellation](MTA-45-reduce-unnecessary-planar-region-output-tessellation/task.md)
+49. [MTA-46 Make Fairing Output Pressure Residual-Aware](MTA-46-make-fairing-output-pressure-residual-aware/task.md)
 
 ## Deferred Follow-Ons
 
@@ -222,12 +226,12 @@ Deferred work is not promoted into active task folders in this iteration:
 - `MTA-37` is closed as failed/reverted CDT work. Its useful output is negative evidence: a heap or
   residual batching wrapper around the current CDT backend did not address backend-call count,
   scan/retriangulation economics, or production trust.
-- `MTA-38` through `MTA-44` follow the recommended feature-aware adaptive architecture. The sequence
-  is harness and policy scaffolding, feature-aware tolerance/density fields, forced subdivision
-  masks, adaptive seam contracts, patch component planning, and sparse local detail state. Each task
-  must end with hosted public-command replay evidence using the same baseline corpus, including
-  timing, face count, dirty-window/patch scope, fallback/refusal checks where relevant, and a clear
-  verdict.
+- `MTA-38` through `MTA-44C` follow the recommended feature-aware adaptive architecture. The
+  sequence is harness and policy scaffolding, feature-aware tolerance/density fields, forced
+  subdivision masks, adaptive seam contracts, patch component planning, composed height truth,
+  contained production feature cuts, and seam-safe cross-patch feature cuts. Each task must end with
+  hosted public-command replay evidence appropriate to its risk surface, including timing, face
+  count, dirty-window/patch scope, fallback/refusal checks where relevant, and a clear verdict.
 - `MTA-41` is optional diagonal optimization. It may be implemented when evidence shows value, but
   no downstream feature-aware adaptive task depends on it.
 - Local CDT islands and native acceleration remain deferred and evidence-triggered. They should be

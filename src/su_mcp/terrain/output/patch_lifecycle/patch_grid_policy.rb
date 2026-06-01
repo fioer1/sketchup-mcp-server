@@ -15,7 +15,7 @@ module SU_MCP
 
         attr_reader :patch_cell_size, :conformance_ring, :hard_patch_boundaries,
                     :metadata_schema_version, :spacing, :candidate_patch_cell_sizes,
-                    :patch_id_prefix, :fingerprint_kind
+                    :patch_id_prefix, :fingerprint_kind, :oracle_semantic_token
 
         def initialize(
           patch_cell_size: DEFAULT_PATCH_CELL_SIZE,
@@ -25,7 +25,8 @@ module SU_MCP
           candidate_patch_cell_sizes: DEFAULT_CANDIDATE_PATCH_CELL_SIZES,
           spacing: { 'x' => 1.0, 'y' => 1.0 },
           patch_id_prefix: 'patch',
-          fingerprint_kind: 'patch-lifecycle'
+          fingerprint_kind: 'patch-lifecycle',
+          oracle_semantic_token: nil
         )
           @patch_cell_size = positive_integer(patch_cell_size, 'patch_cell_size')
           @conformance_ring = non_negative_integer(conformance_ring, 'conformance_ring')
@@ -40,6 +41,7 @@ module SU_MCP
           @spacing = normalize_spacing(spacing)
           @patch_id_prefix = patch_id_prefix.to_s
           @fingerprint_kind = fingerprint_kind.to_s
+          @oracle_semantic_token = oracle_semantic_token&.to_s
         end
 
         def patch_id_for(column:, row:)
@@ -148,8 +150,9 @@ module SU_MCP
             patchCellSize: patch_cell_size,
             hardPatchBoundaries: hard_patch_boundaries,
             conformanceBandPolicy: { ring: conformance_ring },
-            metadataSchemaVersion: metadata_schema_version
-          }
+            metadataSchemaVersion: metadata_schema_version,
+            oracleSemanticToken: oracle_semantic_token
+          }.compact
         end
 
         def normalize_spacing(value)

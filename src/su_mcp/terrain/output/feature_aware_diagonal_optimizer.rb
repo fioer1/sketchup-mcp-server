@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative '../regions/composed_height_oracle'
+
 module SU_MCP
   module Terrain
     # Pure deterministic optimizer for rectangular adaptive cell diagonals.
@@ -12,11 +14,11 @@ module SU_MCP
         feature_check_budget: 256
       }.freeze
 
-      def initialize(state:, context: nil, config: DEFAULT_CONFIG)
+      def initialize(state:, context: nil, config: DEFAULT_CONFIG, height_oracle: nil)
         @state = state
         @context = context
         @config = DEFAULT_CONFIG.merge(config)
-        @elevations = state.elevations
+        @height_oracle = height_oracle
         @column_count = state.dimensions.fetch('columns')
       end
 
@@ -63,7 +65,7 @@ module SU_MCP
 
       private
 
-      attr_reader :state, :context, :config, :elevations, :column_count
+      attr_reader :state, :context, :config, :height_oracle, :column_count
 
       def baseline_triangles(boundary_vertices)
         [
@@ -130,7 +132,9 @@ module SU_MCP
       end
 
       def height_at(column, row)
-        elevations.fetch((row * column_count) + column)
+        return height_oracle.height_at_grid(column: column, row: row) if height_oracle
+
+        state.elevations.fetch((row * column_count) + column) # low_level_state_without_oracle
       end
 
       def planes_for(triangles)

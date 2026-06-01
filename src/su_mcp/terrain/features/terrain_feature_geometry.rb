@@ -11,10 +11,10 @@ module SU_MCP
     class TerrainFeatureGeometry
       COLLECTION_KEYS = %w[
         outputAnchorCandidates protectedRegions pressureRegions referenceSegments affectedWindows
-        tolerances planarRegions
+        tolerances planarRegions oracleSemanticRegions
       ].freeze
       OPTIONAL_KEYS = %w[failureCategory limitations].freeze
-      SORT_KEYS = %w[id featureId role strength primitive source].freeze
+      SORT_KEYS = %w[id featureId kind role strength primitive sourceCategory source].freeze
 
       attr_reader :failure_category, :limitations
 

@@ -5,6 +5,7 @@ require_relative '../../scene_query/scene_query_serializer'
 require_relative '../features/feature_intent_set'
 require_relative '../features/terrain_feature_geometry_builder'
 require_relative '../output/feature_aware_adaptive_policy'
+require_relative '../regions/composed_height_oracle'
 require_relative '../regions/terrain_state_elevation_sampler'
 require_relative '../storage/terrain_repository'
 
@@ -21,12 +22,14 @@ module SU_MCP
         repository: TerrainRepository.new,
         surface_query: SampleSurfaceQuery.new(serializer: SceneQuerySerializer.new),
         sample_budget: DEFAULT_SAMPLE_BUDGET,
+        height_oracle_builder: nil,
         clock: nil
       )
         @model = model
         @repository = repository
         @surface_query = surface_query
         @sample_budget = sample_budget.to_i.clamp(1, MAX_SAMPLE_BUDGET)
+        @height_oracle_builder = height_oracle_builder
         @clock = clock
       end
 
@@ -43,7 +46,8 @@ module SU_MCP
 
       private
 
-      attr_reader :model, :repository, :surface_query, :sample_budget, :clock
+      attr_reader :model, :repository, :surface_query, :sample_budget, :clock,
+                  :height_oracle_builder
 
       def quality_summary(row:, result:, baseline_evidence:)
         return { status: 'not_captured', reason: 'row_not_accepted' } if refused?(result)
@@ -85,7 +89,7 @@ module SU_MCP
         geometry = TerrainFeatureGeometryBuilder.new.build(state: state)
         feature_kinds = feature_kinds_by_id(state)
         targets = sample_targets(geometry, feature_kinds) + planar_region_targets(state)
-        state_sampler = TerrainStateElevationSampler.new(state)
+        state_sampler = TerrainStateElevationSampler.new(state) # coarse_pruning_bounds_only
         local_samples = distribute_samples(targets).select do |sample|
           state_sampler.inside_bounds?(point_hash(sample.fetch(:point)))
         end
@@ -289,9 +293,9 @@ module SU_MCP
       end
 
       def summarize_samples(state, samples, surface_results, base_tolerance)
-        state_sampler = TerrainStateElevationSampler.new(state)
+        height_reader = height_reader_for(state)
         measured = samples.zip(surface_results).map do |sample, result|
-          measurement_for(state_sampler, sample, result, base_tolerance)
+          measurement_for(height_reader, sample, result, base_tolerance)
         end
         summary_for(measured).merge(
           status: 'captured',
@@ -301,8 +305,8 @@ module SU_MCP
         )
       end
 
-      def measurement_for(state_sampler, sample, result, base_tolerance)
-        expected = state_sampler.elevation_at(point_hash(sample.fetch(:point)))
+      def measurement_for(height_reader, sample, result, base_tolerance)
+        expected = expected_height(height_reader, point_hash(sample.fetch(:point)))
         actual = hit_z(result)
         tolerance = local_tolerance(sample, base_tolerance)
         error = expected && actual ? (actual - expected).abs : nil
@@ -311,6 +315,18 @@ module SU_MCP
 
       def point_hash(point)
         { 'x' => point.fetch(:x), 'y' => point.fetch(:y) }
+      end
+
+      def height_reader_for(state)
+        return height_oracle_builder.call(state) if height_oracle_builder
+
+        ComposedHeightOracle.build(state: state)
+      end
+
+      def expected_height(height_reader, point)
+        return height_reader.height_at(point) if height_reader.respond_to?(:height_at)
+
+        height_reader.elevation_at(point)
       end
 
       def world_point_for(owner, point)

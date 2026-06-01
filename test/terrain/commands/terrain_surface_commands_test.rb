@@ -65,6 +65,12 @@ class TerrainSurfaceCommandsTest < Minitest::Test # rubocop:disable Metrics/Clas
     assert_equal('created', result.fetch(:outcome))
     plan = mesh_generator.last_generate_args.fetch(:output_plan)
     assert_equal(:adaptive_tin, plan.execution_strategy)
+    assert(
+      plan.adaptive_cells.all? do |cell|
+        cell.fetch(:height_source) == 'composed_height_oracle'
+      end
+    )
+    assert(mesh_generator.last_generate_args.fetch(:height_oracle))
     assert_instance_of(
       SU_MCP::Terrain::PatchLifecycle::PatchGridPolicy,
       plan.adaptive_patch_policy
@@ -183,6 +189,12 @@ class TerrainSurfaceCommandsTest < Minitest::Test # rubocop:disable Metrics/Clas
     plan = mesh_generator.last_regenerate_args.fetch(:output_plan)
     assert_equal(:dirty_window, plan.intent)
     assert_equal(:adaptive_tin, plan.execution_strategy)
+    assert(
+      plan.adaptive_cells.all? do |cell|
+        cell.fetch(:height_source) == 'composed_height_oracle'
+      end
+    )
+    assert(mesh_generator.last_regenerate_args.fetch(:height_oracle))
     assert_instance_of(
       SU_MCP::Terrain::PatchLifecycle::PatchGridPolicy,
       plan.adaptive_patch_policy
@@ -1652,14 +1664,22 @@ class TerrainSurfaceCommandsTest < Minitest::Test # rubocop:disable Metrics/Clas
       @cdt_enabled
     end
 
-    def generate(owner:, state:, terrain_state_summary:, output_plan: nil, feature_context: nil)
+    def generate(
+      owner:,
+      state:,
+      terrain_state_summary:,
+      output_plan: nil,
+      feature_context: nil,
+      height_oracle: nil
+    )
       @calls << :generate
       @last_generate_args = {
         owner: owner,
         state: state,
         terrain_state_summary: terrain_state_summary,
         output_plan: output_plan,
-        feature_context: feature_context
+        feature_context: feature_context,
+        height_oracle: height_oracle
       }
       { outcome: 'generated', summary: { derivedMesh: { derivedFromStateDigest: 'digest-1' } } }
     end
@@ -1673,14 +1693,22 @@ class TerrainSurfaceCommandsTest < Minitest::Test # rubocop:disable Metrics/Clas
       @regenerate_args = []
     end
 
-    def regenerate(owner:, state:, terrain_state_summary:, output_plan: nil, feature_context: nil)
+    def regenerate(
+      owner:,
+      state:,
+      terrain_state_summary:,
+      output_plan: nil,
+      feature_context: nil,
+      height_oracle: nil
+    )
       @calls << :regenerate
       @last_regenerate_args = {
         owner: owner,
         state: state,
         terrain_state_summary: terrain_state_summary,
         output_plan: output_plan,
-        feature_context: feature_context
+        feature_context: feature_context,
+        height_oracle: height_oracle
       }
       @regenerate_args << @last_regenerate_args
       { outcome: 'generated', summary: { derivedMesh: { derivedFromStateDigest: 'digest-2' } } }

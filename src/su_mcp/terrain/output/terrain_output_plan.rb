@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative '../regions/sample_window'
+require_relative '../regions/composed_height_oracle'
 require_relative 'terrain_output_cell_window'
 require_relative 'adaptive_output_conformity'
 require_relative 'adaptive_seams/adaptive_seam_contract'
@@ -33,7 +34,8 @@ module SU_MCP
         terrain_state_summary:,
         adaptive_patch_policy: nil,
         feature_aware_adaptive_policy: nil,
-        feature_output_policy_diagnostics: nil
+        feature_output_policy_diagnostics: nil,
+        height_oracle: nil
       )
         build(
           intent: :full_grid,
@@ -42,7 +44,8 @@ module SU_MCP
           terrain_state_summary: terrain_state_summary,
           adaptive_patch_policy: adaptive_patch_policy,
           feature_aware_adaptive_policy: feature_aware_adaptive_policy,
-          feature_output_policy_diagnostics: feature_output_policy_diagnostics
+          feature_output_policy_diagnostics: feature_output_policy_diagnostics,
+          height_oracle: height_oracle
         )
       end
 
@@ -55,7 +58,8 @@ module SU_MCP
         feature_aware_adaptive_policy: nil,
         feature_output_policy_diagnostics: nil,
         component_sources: nil,
-        adaptive_lifecycle_resolution: nil
+        adaptive_lifecycle_resolution: nil,
+        height_oracle: nil
       )
         raise ArgumentError, 'dirty window must not be empty' if window.empty?
 
@@ -69,7 +73,8 @@ module SU_MCP
           feature_aware_adaptive_policy: feature_aware_adaptive_policy,
           feature_output_policy_diagnostics: feature_output_policy_diagnostics,
           component_sources: component_sources,
-          adaptive_lifecycle_resolution: adaptive_lifecycle_resolution
+          adaptive_lifecycle_resolution: adaptive_lifecycle_resolution,
+          height_oracle: height_oracle
         )
       end
 
@@ -83,7 +88,8 @@ module SU_MCP
         feature_aware_adaptive_policy: nil,
         feature_output_policy_diagnostics: nil,
         component_sources: nil,
-        adaptive_lifecycle_resolution: nil
+        adaptive_lifecycle_resolution: nil,
+        height_oracle: nil
       )
         if adaptive_state?(state)
           return build_adaptive(
@@ -96,7 +102,8 @@ module SU_MCP
             feature_output_policy_diagnostics: feature_output_policy_diagnostics,
             feature_aware_adaptive_policy: feature_aware_adaptive_policy,
             component_sources: component_sources,
-            adaptive_lifecycle_resolution: adaptive_lifecycle_resolution
+            adaptive_lifecycle_resolution: adaptive_lifecycle_resolution,
+            height_oracle: height_oracle
           )
         end
 
@@ -134,7 +141,8 @@ module SU_MCP
         feature_output_policy_diagnostics: nil,
         feature_aware_adaptive_policy: nil,
         component_sources: nil,
-        adaptive_lifecycle_resolution: nil
+        adaptive_lifecycle_resolution: nil,
+        height_oracle: nil
       )
         cell_window = TerrainOutputCellWindow.from_sample_window(
           window: window,
@@ -154,32 +162,40 @@ module SU_MCP
           feature_aware_adaptive_policy,
           intent: intent,
           cell_window: cell_window,
-          lifecycle_resolution: lifecycle_resolution
+          lifecycle_resolution: lifecycle_resolution,
+          height_oracle: height_oracle
         )
         adaptive_cells = compact_planar_interior_cells(
           state,
           adaptive_cells,
           feature_aware_adaptive_policy,
-          adaptive_patch_policy
+          adaptive_patch_policy,
+          height_oracle
         )
+        adaptive_cells = adaptive_cells.map do |cell|
+          height_oracle ? cell.merge(height_source: 'composed_height_oracle') : cell
+        end
         diagonal_context = feature_aware_adaptive_policy&.diagonal_optimization_context
         cells = AdaptiveOutputConformity.cells(
           adaptive_cells,
           state: state,
           collapse_coplanar_edges: !feature_aware_adaptive_policy.nil?,
-          diagonal_context: diagonal_context
+          diagonal_context: diagonal_context,
+          height_oracle: height_oracle
         )
         diagonal_summary = AdaptiveOutputConformity.diagonal_optimization_summary(
           cells,
           context: diagonal_context,
           seam_adjacent: seam_adjacent_checker(adaptive_patch_policy, state.dimensions)
         )
+        diagonal_summary ||= oracle_height_source_summary(height_oracle)
         seam_artifacts = adaptive_seam_artifacts_for(
           state,
           adaptive_patch_policy,
           intent,
           cell_window,
-          lifecycle_resolution
+          lifecycle_resolution,
+          height_oracle
         )
         summary = adaptive_summary_for(state, cells, terrain_state_summary, previous_state_summary)
         new(
@@ -239,7 +255,8 @@ module SU_MCP
         policy,
         intent,
         cell_window,
-        lifecycle_resolution = nil
+        lifecycle_resolution = nil,
+        height_oracle = nil
       )
         return { records: [], validations: [], sealed_plan: nil } unless
           policy&.hard_patch_boundaries
@@ -263,7 +280,8 @@ module SU_MCP
             state,
             policy,
             patch,
-            replacement_patch_ids.include?(patch.fetch(:patchId))
+            replacement_patch_ids.include?(patch.fetch(:patchId)),
+            height_oracle
           )
         end
         {
@@ -344,14 +362,15 @@ module SU_MCP
         value.positive? && value < (sample_count - 1) && (value % policy.patch_cell_size).zero?
       end
 
-      def self.seam_records_for_patch(state, policy, patch, replacement_side)
+      def self.seam_records_for_patch(state, policy, patch, replacement_side, height_oracle = nil)
         seam_side_specs(state, policy, patch).map do |spec|
           seam_record_for_side(
             state: state,
             policy: policy,
             patch: patch,
             spec: spec,
-            replacement_side: replacement_side
+            replacement_side: replacement_side,
+            height_oracle: height_oracle
           )
         end
       end
@@ -455,7 +474,8 @@ module SU_MCP
         policy.patch_id_for_coords(patch_column, patch_row + 1)
       end
 
-      def self.seam_record_for_side(state:, policy:, patch:, spec:, replacement_side:)
+      def self.seam_record_for_side(state:, policy:, patch:, spec:, replacement_side:,
+                                    height_oracle: nil)
         side = spec.fetch(:side)
         positions = spec.fetch(:positions)
         neighbor_patch_id = spec.fetch(:neighbor_patch_id)
@@ -469,7 +489,9 @@ module SU_MCP
           edge_axis: vertical ? 'column' : 'row',
           edge_index: positions.first.fetch(vertical ? 0 : 1),
           positions: positions,
-          z_values: positions.map { |column, row| height_at_point(state, column, row) },
+          z_values: positions.map do |column, row|
+            height_at_point(state, column, row, height_oracle)
+          end,
           policy_fingerprint: policy.output_policy_fingerprint
         ).merge(replacementSide: replacement_side)
       end
@@ -504,7 +526,8 @@ module SU_MCP
         feature_aware_adaptive_policy = nil,
         intent: :full_grid,
         cell_window: nil,
-        lifecycle_resolution: nil
+        lifecycle_resolution: nil,
+        height_oracle: nil
       )
         if adaptive_patch_policy&.hard_patch_boundaries
           return adaptive_patch_domains_for(
@@ -521,14 +544,16 @@ module SU_MCP
               bounds.fetch(:min_row),
               bounds.fetch(:max_column),
               bounds.fetch(:max_row),
-              feature_aware_adaptive_policy
+              feature_aware_adaptive_policy,
+              height_oracle
             )
           end
         end
 
         max_column = state.dimensions.fetch('columns') - 1
         max_row = state.dimensions.fetch('rows') - 1
-        subdivide_cell(state, 0, 0, max_column, max_row, feature_aware_adaptive_policy)
+        subdivide_cell(state, 0, 0, max_column, max_row, feature_aware_adaptive_policy,
+                       height_oracle)
       end
 
       def self.adaptive_patch_domains_for(
@@ -560,7 +585,8 @@ module SU_MCP
         )
       end
 
-      def self.compact_planar_interior_cells(state, cells, feature_policy, patch_policy)
+      def self.compact_planar_interior_cells(state, cells, feature_policy, patch_policy,
+                                             height_oracle = nil)
         return cells unless feature_policy
         return cells unless feature_policy.respond_to?(:planar_compaction_candidate?)
 
@@ -573,7 +599,8 @@ module SU_MCP
           state,
           candidates,
           patch_policy,
-          feature_policy
+          feature_policy,
+          height_oracle
         )
         (retained + compacted).sort_by do |cell|
           [
@@ -602,14 +629,16 @@ module SU_MCP
         merge_planar_candidate_cells_with_policy(state, cells, patch_policy, nil)
       end
 
-      def self.merge_planar_candidate_cells_with_policy(state, cells, patch_policy, feature_policy)
+      def self.merge_planar_candidate_cells_with_policy(state, cells, patch_policy, feature_policy,
+                                                        height_oracle = nil)
         horizontal = merge_planar_cells_along_with_policy(
           state,
           cells.map { |cell| cell.merge(patch_key: patch_key_for_cell(cell, patch_policy)) },
           fixed_keys: %i[patch_key min_row max_row],
           min_key: :min_column,
           max_key: :max_column,
-          feature_policy: feature_policy
+          feature_policy: feature_policy,
+          height_oracle: height_oracle
         )
         merge_planar_cells_along_with_policy(
           state,
@@ -617,7 +646,8 @@ module SU_MCP
           fixed_keys: %i[patch_key min_column max_column],
           min_key: :min_row,
           max_key: :max_row,
-          feature_policy: feature_policy
+          feature_policy: feature_policy,
+          height_oracle: height_oracle
         ).map do |cell|
           adaptive_cell(
             cell.fetch(:min_column),
@@ -629,7 +659,8 @@ module SU_MCP
               cell.fetch(:min_column),
               cell.fetch(:min_row),
               cell.fetch(:max_column),
-              cell.fetch(:max_row)
+              cell.fetch(:max_row),
+              height_oracle
             )
           )
         end
@@ -652,7 +683,8 @@ module SU_MCP
         fixed_keys:,
         min_key:,
         max_key:,
-        feature_policy:
+        feature_policy:,
+        height_oracle: nil
       )
         cells.group_by { |cell| fixed_keys.map { |key| cell.fetch(key) } }
              .flat_map do |_fixed, group|
@@ -661,7 +693,8 @@ module SU_MCP
             group.sort_by { |cell| cell.fetch(min_key) },
             min_key,
             max_key,
-            feature_policy
+            feature_policy,
+            height_oracle
           )
         end
       end
@@ -670,10 +703,12 @@ module SU_MCP
         merge_sorted_planar_cells_with_policy(nil, cells, min_key, max_key, nil)
       end
 
-      def self.merge_sorted_planar_cells_with_policy(state, cells, min_key, max_key, feature_policy)
+      def self.merge_sorted_planar_cells_with_policy(state, cells, min_key, max_key,
+                                                     feature_policy, height_oracle = nil)
         cells.each_with_object([]) do |cell, merged|
           previous = merged.last
-          if planar_cells_mergeable?(state, previous, cell, min_key, max_key, feature_policy)
+          if planar_cells_mergeable?(state, previous, cell, min_key, max_key, feature_policy,
+                                     height_oracle)
             previous[max_key] = cell.fetch(max_key)
           else
             merged << cell.dup
@@ -681,17 +716,20 @@ module SU_MCP
         end
       end
 
-      def self.planar_cells_mergeable?(state, previous, cell, min_key, max_key, feature_policy)
+      # rubocop:disable Metrics/ParameterLists
+      def self.planar_cells_mergeable?(state, previous, cell, min_key, max_key, feature_policy,
+                                       height_oracle = nil)
         previous &&
           previous.fetch(max_key) == cell.fetch(min_key) &&
           planar_merge_residual_allowed?(
             state,
             previous.merge(max_key => cell.fetch(max_key)),
-            feature_policy
+            feature_policy,
+            height_oracle
           )
       end
 
-      def self.planar_merge_residual_allowed?(state, cell, feature_policy)
+      def self.planar_merge_residual_allowed?(state, cell, feature_policy, height_oracle = nil)
         return true unless feature_policy.respond_to?(:planar_compaction_residual_guard_required?)
 
         bounds = {
@@ -707,7 +745,8 @@ module SU_MCP
           cell.fetch(:min_column),
           cell.fetch(:min_row),
           cell.fetch(:max_column),
-          cell.fetch(:max_row)
+          cell.fetch(:max_row),
+          height_oracle
         ) <= ADVISORY_PLANAR_COMPACTION_TOLERANCE
       end
 
@@ -764,10 +803,11 @@ module SU_MCP
         min_row,
         max_column,
         max_row,
-        feature_aware_adaptive_policy = nil
+        feature_aware_adaptive_policy = nil,
+        height_oracle = nil
       )
         if min_output_cell?(min_column, min_row, max_column, max_row)
-          error = max_cell_error(state, min_column, min_row, max_column, max_row)
+          error = max_cell_error(state, min_column, min_row, max_column, max_row, height_oracle)
           return [adaptive_cell(min_column, min_row, max_column, max_row, error)]
         end
 
@@ -777,7 +817,8 @@ module SU_MCP
           min_row,
           max_column,
           max_row,
-          feature_aware_adaptive_policy
+          feature_aware_adaptive_policy,
+          height_oracle
         )
         unless probe.fetch(:split)
           return [adaptive_cell(min_column, min_row, max_column, max_row, probe.fetch(:max_error))]
@@ -793,7 +834,7 @@ module SU_MCP
           mid_column,
           mid_row
         ).flat_map do |bounds|
-          subdivide_cell(state, *bounds, feature_aware_adaptive_policy)
+          subdivide_cell(state, *bounds, feature_aware_adaptive_policy, height_oracle)
         end
       end
 
@@ -803,7 +844,8 @@ module SU_MCP
         min_row,
         max_column,
         max_row,
-        feature_aware_adaptive_policy
+        feature_aware_adaptive_policy,
+        height_oracle = nil
       )
         split_pressure = feature_split_pressure(
           feature_aware_adaptive_policy,
@@ -814,7 +856,8 @@ module SU_MCP
         )
         if planar_residual_probe_bypassed?(split_pressure)
           return {
-            max_error: max_cell_error(state, min_column, min_row, max_column, max_row),
+            max_error: max_cell_error(state, min_column, min_row, max_column, max_row,
+                                      height_oracle),
             split: false
           }
         end
@@ -824,7 +867,8 @@ module SU_MCP
           min_row,
           max_column,
           max_row,
-          split_pressure.fetch(:tolerance)
+          split_pressure.fetch(:tolerance),
+          height_oracle
         )
         {
           max_error: probe.fetch(:max_error),
@@ -849,6 +893,12 @@ module SU_MCP
         return residual_exceeded if split_pressure.fetch(:fairing_only_density_split, false)
 
         true
+      end
+
+      def self.oracle_height_source_summary(height_oracle)
+        return nil unless height_oracle
+
+        { heightSource: 'composed_height_oracle' }
       end
 
       def self.feature_split_pressure(
@@ -901,30 +951,46 @@ module SU_MCP
         }
       end
 
-      def self.max_cell_error(state, min_column, min_row, max_column, max_row)
+      def self.max_cell_error(state, min_column, min_row, max_column, max_row,
+                              height_oracle = nil)
         max_cell_error_probe(
           state,
           min_column,
           min_row,
           max_column,
           max_row,
-          nil
+          nil,
+          height_oracle
         ).fetch(:max_error)
       end
 
-      def self.height_at_point(state, column, row)
-        state.elevations.fetch((row * state.dimensions.fetch('columns')) + column)
+      def self.height_at_point(state, column, row, height_oracle = nil)
+        return raw_base_height_for_low_level_state(state, column, row) unless height_oracle
+        return raw_base_height_for_low_level_state(state, column, row) unless
+          oracle_compatible_state?(state)
+
+        height_oracle.height_at_grid(column: column, row: row)
+      end
+
+      def self.oracle_compatible_state?(state)
+        state.respond_to?(:origin) && state.respond_to?(:spacing) &&
+          state.elevations.respond_to?(:fetch) # low_level_state_without_oracle
+      end
+
+      def self.raw_base_height_for_low_level_state(state, column, row)
+        # Test-owned/prototype low-level structs do not carry origin/spacing, so they cannot
+        # construct a composed oracle. Production terrain states use the oracle path above.
+        index = (row * state.dimensions.fetch('columns')) + column
+        state.elevations[index] # low_level_state_without_oracle
       end
 
       # rubocop:disable Metrics/AbcSize
-      def self.max_cell_error_probe(state, min_column, min_row, max_column, max_row, threshold)
-        dimensions = state.dimensions
-        columns = dimensions.fetch('columns')
-        elevations = state.elevations
-        z00 = elevations[(min_row * columns) + min_column]
-        z10 = elevations[(min_row * columns) + max_column]
-        z01 = elevations[(max_row * columns) + min_column]
-        z11 = elevations[(max_row * columns) + max_column]
+      def self.max_cell_error_probe(state, min_column, min_row, max_column, max_row, threshold,
+                                    height_oracle = nil)
+        z00 = height_at_point(state, min_column, min_row, height_oracle)
+        z10 = height_at_point(state, max_column, min_row, height_oracle)
+        z01 = height_at_point(state, min_column, max_row, height_oracle)
+        z11 = height_at_point(state, max_column, max_row, height_oracle)
         x_span = max_column - min_column
         y_span = max_row - min_row
         max_error = 0.0
@@ -937,7 +1003,8 @@ module SU_MCP
           while column <= max_column
             x_ratio = x_span.zero? ? 0.0 : (column - min_column).to_f / x_span
             fitted = left + ((right - left) * x_ratio)
-            error = (elevations[(row * columns) + column] - fitted).abs
+            actual = height_at_point(state, column, row, height_oracle)
+            error = (actual - fitted).abs
             if error > max_error
               max_error = error
               return { max_error: max_error, exceeded: true } if threshold && max_error > threshold
@@ -948,7 +1015,7 @@ module SU_MCP
         end
         { max_error: max_error, exceeded: false }
       end
-      # rubocop:enable Metrics/AbcSize
+      # rubocop:enable Metrics/AbcSize, Metrics/ParameterLists
 
       def initialize(
         intent:,

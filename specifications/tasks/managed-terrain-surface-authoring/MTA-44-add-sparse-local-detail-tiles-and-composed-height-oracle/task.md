@@ -1,7 +1,7 @@
 # Task: MTA-44 Add Sparse Local Detail Tiles And Composed Height Oracle
 **Task ID**: `MTA-44`
 **Title**: `Add Sparse Local Detail Tiles And Composed Height Oracle`
-**Status**: `defined`
+**Status**: `closed-superseded`
 **Priority**: `core`
 **Date**: `2026-05-15`
 
@@ -9,6 +9,15 @@
 
 - [Managed Terrain Surface Authoring](../../../hlds/hld-managed-terrain-surface-authoring.md)
 - [Recommended Backend Architecture for Feature-Aware Adaptive Terrain Output](../../../research/managed-terrain/recommended_new_adaptive_backend_architecture.md)
+
+## Supersession Note
+
+This task has been superseded by a three-task split that reframes local detail around the effective
+feature model, composed height oracle, production feature cut graph, and seam-safe patch lifecycle:
+
+- [MTA-44A Establish Effective Feature Composed Height Oracle](../MTA-44A-establish-effective-feature-composed-height-oracle/task.md)
+- [MTA-44B Add Contained Production Feature Cut Graph Output](../MTA-44B-add-contained-production-feature-cut-graph-output/task.md)
+- [MTA-44C Harden Feature Cuts Across Seams And Patch Lifecycle](../MTA-44C-harden-feature-cuts-across-seams-and-patch-lifecycle/task.md)
 
 ## Problem Statement
 
@@ -109,7 +118,7 @@ Scenario: Live evidence is recorded for the same baseline corpus
 
 ## Related Technical Plan
 
-- none yet
+- [Technical Plan](./plan.md)
 
 ## Success Metrics
 

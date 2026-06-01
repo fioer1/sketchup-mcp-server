@@ -3,6 +3,7 @@
 require 'set'
 
 require_relative '../../semantic/length_converter'
+require_relative '../regions/composed_height_oracle'
 require_relative 'patch_lifecycle/patch_registry_store'
 require_relative 'patch_lifecycle/patch_window_resolver'
 require_relative 'patch_lifecycle/patch_timing'
@@ -71,7 +72,10 @@ module SU_MCP
         @fallback_on_cdt_failure = fallback_on_cdt_failure
       end
 
-      def generate(owner:, state:, terrain_state_summary:, output_plan: nil, feature_context: nil)
+      def generate(owner:, state:, terrain_state_summary:, output_plan: nil, feature_context: nil,
+                   height_oracle: nil)
+        @height_oracle = height_oracle || ComposedHeightOracle.build(state: state)
+        @height_oracle_state = state
         @last_cdt_failure_reason = nil
         @last_adaptive_patch_timing = nil
         @last_adaptive_seam_validation_summary = nil
@@ -80,7 +84,8 @@ module SU_MCP
         # Create/adopt generation emits the complete derived grid; edit regeneration may be partial.
         plan = output_plan || TerrainOutputPlan.full_grid(
           state: state,
-          terrain_state_summary: terrain_state_summary
+          terrain_state_summary: terrain_state_summary,
+          height_oracle: @height_oracle
         )
         cdt_attempted = cdt_generation_attemptable?(plan, feature_context)
         cdt_result = generate_cdt(
@@ -136,7 +141,10 @@ module SU_MCP
         !cdt_backend.nil? || !cdt_patch_replacement_provider.nil?
       end
 
-      def regenerate(owner:, state:, terrain_state_summary:, output_plan: nil, feature_context: nil)
+      def regenerate(owner:, state:, terrain_state_summary:, output_plan: nil,
+                     feature_context: nil, height_oracle: nil)
+        @height_oracle = height_oracle || ComposedHeightOracle.build(state: state)
+        @height_oracle_state = state
         @last_cdt_failure_reason = nil
         @last_adaptive_patch_timing = nil
         @last_adaptive_seam_validation_summary = nil
@@ -146,7 +154,8 @@ module SU_MCP
 
         plan = output_plan || TerrainOutputPlan.full_grid(
           state: state,
-          terrain_state_summary: terrain_state_summary
+          terrain_state_summary: terrain_state_summary,
+          height_oracle: @height_oracle
         )
         cdt_attempted = cdt_regeneration_attemptable?(plan, feature_context)
         cdt_result = regenerate_cdt(
@@ -182,7 +191,7 @@ module SU_MCP
       private
 
       attr_reader :length_converter, :cdt_backend, :cdt_patch_replacement_provider,
-                  :seam_validator
+                  :seam_validator, :height_oracle
 
       def fallback_on_cdt_failure?
         @fallback_on_cdt_failure == true
@@ -1381,13 +1390,13 @@ module SU_MCP
         end
       end
 
-      def vertex_for(state, column, row, columns)
+      def vertex_for(state, column, row, _columns)
         origin = state.origin
         spacing = state.spacing
         [
           internal_length(origin.fetch('x') + (column * spacing.fetch('x'))),
           internal_length(origin.fetch('y') + (row * spacing.fetch('y'))),
-          internal_length(state.elevations.fetch((row * columns) + column))
+          internal_length(height_at_grid(state, column, row))
         ]
       end
 
@@ -1476,11 +1485,10 @@ module SU_MCP
       def adaptive_vertex_at(state, column, row)
         origin = state.origin
         spacing = state.spacing
-        index = (row * state.dimensions.fetch('columns')) + column
         [
           internal_length(origin.fetch('x') + (column * spacing.fetch('x'))),
           internal_length(origin.fetch('y') + (row * spacing.fetch('y'))),
-          internal_length(state.elevations.fetch(index))
+          internal_length(height_at_grid(state, column, row))
         ]
       end
 
@@ -1502,11 +1510,10 @@ module SU_MCP
         max_row = row.ceil
         x_ratio = max_column == min_column ? 0.0 : column - min_column
         y_ratio = max_row == min_row ? 0.0 : row - min_row
-        columns = state.dimensions.fetch('columns')
-        z00 = state.elevations.fetch((min_row * columns) + min_column)
-        z10 = state.elevations.fetch((min_row * columns) + max_column)
-        z01 = state.elevations.fetch((max_row * columns) + min_column)
-        z11 = state.elevations.fetch((max_row * columns) + max_column)
+        z00 = height_at_grid(state, min_column, min_row)
+        z10 = height_at_grid(state, max_column, min_row)
+        z01 = height_at_grid(state, min_column, max_row)
+        z11 = height_at_grid(state, max_column, max_row)
         bottom = z00 + ((z10 - z00) * x_ratio)
         top = z01 + ((z11 - z01) * x_ratio)
         bottom + ((top - bottom) * y_ratio)
@@ -1921,10 +1928,19 @@ module SU_MCP
         [
           state.origin.fetch('x') + (column * state.spacing.fetch('x')),
           state.origin.fetch('y') + (row * state.spacing.fetch('y')),
-          state.origin.fetch('z') + state.elevations.fetch(
-            (row * state.dimensions.fetch('columns')) + column
-          )
+          state.origin.fetch('z') + height_at_grid(state, column, row)
         ]
+      end
+
+      def height_at_grid(state, column, row)
+        oracle = height_oracle_for(state)
+        oracle.height_at_grid(column: column, row: row)
+      end
+
+      def height_oracle_for(state)
+        return height_oracle if height_oracle && state.equal?(@height_oracle_state)
+
+        ComposedHeightOracle.build(state: state)
       end
 
       def value_from_hash(hash, key)

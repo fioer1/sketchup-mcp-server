@@ -1,0 +1,3829 @@
+{
+  "schemaVersion": 1,
+  "corpusId": "feature-aware-adaptive-baseline-results",
+  "baselineCorpusId": "feature-aware-adaptive-baseline",
+  "capturedAt": "2026-06-01T19:57:01+03:00",
+  "captureKind": "live_sketchup_timing",
+  "fixture": {
+    "path": "C:/Users/Gleb/AppData/Roaming/SketchUp/SketchUp 2026/SketchUp/Plugins/su_mcp/test/terrain/replay/feature_aware_adaptive_baseline.json",
+    "sha256": "e65fdf3d8339d01b85068763c78ffe6645ef34c2343dbb170d4bc02ec3046a6d"
+  },
+  "environment": {
+    "sketchUpVersion": "26.1.189",
+    "sketchUpPlatform": "platform_win",
+    "extensionVersion": "1.15.0",
+    "runtime": "su_ruby_live_sketchup"
+  },
+  "limits": {
+    "maxSamples": 65536,
+    "maxColumns": 256,
+    "maxRows": 256
+  },
+  "terrainSpecs": [
+    {
+      "sourceElementId": "feature-aware-baseline-terrain",
+      "dimensions": {
+        "columns": 49,
+        "rows": 49
+      },
+      "samples": 2401,
+      "regularGridFaces": 4608
+    },
+    {
+      "sourceElementId": "feature-aware-baseline-terrain-large-timing",
+      "dimensions": {
+        "columns": 224,
+        "rows": 224
+      },
+      "samples": 50176,
+      "regularGridFaces": 99458
+    },
+    {
+      "sourceElementId": "feature-aware-baseline-terrain-wide-timing",
+      "dimensions": {
+        "columns": 192,
+        "rows": 192
+      },
+      "samples": 36864,
+      "regularGridFaces": 72962
+    }
+  ],
+  "rows": [
+    {
+      "rowId": "create-baseline",
+      "sourceElementId": "feature-aware-baseline-terrain",
+      "commandKind": "create",
+      "featureContextClass": "none",
+      "seconds": 0.13605079999979353,
+      "timingBuckets": {
+        "commandOutputPlanning": 0.0807128999986162,
+        "featureSelectionDiagnostics": 0.0021946999986539595,
+        "componentPlanning": null,
+        "dirtyWindowMapping": 4.260000059730373e-05,
+        "adaptivePlanning": 0.008845000000292202,
+        "mutation": 0.035068999997747596,
+        "total": 0.13605079999979353
+      },
+      "outcome": "created",
+      "simplificationTolerance": 0.01,
+      "maxSimplificationError": 0.00990000000000002,
+      "dirtyWindow": {
+        "minColumn": 0,
+        "minRow": 0,
+        "maxColumn": 48,
+        "maxRow": 48,
+        "columns": 49,
+        "rows": 49
+      },
+      "patchScope": {
+        "affectedPatchCount": 9,
+        "replacementPatchCount": 9,
+        "conformanceRing": 1
+      },
+      "meshType": "adaptive_tin",
+      "faceCount": 1173,
+      "vertexCount": 626,
+      "adaptivePolicySummary": {
+        "policyFingerprint": "13d8e5817200c65aa4d7cc23cbf9602e05ae6fa8722760a7c9755d6f09d598e3",
+        "featureGeometryDigest": "1595ad61e5c534dac3e016a78fd622ef8773bb6f2c85b611f7f07cd1bfea311f",
+        "hardProtectedToleranceHitCount": 0,
+        "densityHitCount": 0,
+        "forcedSubdivisionSummary": {
+          "supportedInputCounts": {
+          },
+          "skippedInputCounts": {
+          },
+          "hitCount": 0
+        },
+        "fallbackCounts": {
+          "absentFeatureGeometry": 0,
+          "partialFeatureGeometry": 0,
+          "unsupportedFeatureGeometry": 0
+        }
+      },
+      "seamValidationSummary": {
+        "status": "passed",
+        "seamRecordCount": 36,
+        "validationCount": 12,
+        "replacementPatchCount": 9,
+        "maxZGap": 0.0,
+        "sameBatch": [
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          }
+        ]
+      },
+      "diagonalOptimizationSummary": {
+        "eligibleCount": 430,
+        "changedCount": 161,
+        "decisionReasonCounts": {
+          "baseline_tie": 217,
+          "residual": 161,
+          "no_metric_samples": 52
+        },
+        "residualImprovement": 0.42680000000000085,
+        "proofCell": {
+          "cellKey": "c2-r4-c4-r6"
+        },
+        "seamAdjacentChangedCount": 43,
+        "seamAdjacentResidualDelta": 0.0,
+        "seamAdjacentDihedralDelta": 0.0,
+        "adoptionVerdict": "adopt"
+      }
+    },
+    {
+      "rowId": "target-local-center",
+      "sourceElementId": "feature-aware-baseline-terrain",
+      "commandKind": "edit",
+      "featureContextClass": "target_region",
+      "seconds": 0.26106849999996484,
+      "timingBuckets": {
+        "commandOutputPlanning": 0.09105769999951008,
+        "featureSelectionDiagnostics": 0.0009055999980773777,
+        "componentPlanning": 0.00016830000095069408,
+        "dirtyWindowMapping": 1.7000020307023078e-06,
+        "adaptivePlanning": 0.007003599999734433,
+        "mutation": 0.07206389999919338,
+        "total": 0.26106849999996484
+      },
+      "outcome": "edited",
+      "simplificationTolerance": 0.01,
+      "maxSimplificationError": 0.00990000000000002,
+      "dirtyWindow": {
+        "minColumn": 20,
+        "minRow": 20,
+        "maxColumn": 28,
+        "maxRow": 28,
+        "columns": 9,
+        "rows": 9
+      },
+      "patchScope": {
+        "affectedPatchCount": 1,
+        "replacementPatchCount": 9,
+        "conformanceRing": 1
+      },
+      "meshType": "adaptive_tin",
+      "faceCount": 1257,
+      "vertexCount": 680,
+      "adaptivePolicySummary": {
+        "policyFingerprint": "13d8e5817200c65aa4d7cc23cbf9602e05ae6fa8722760a7c9755d6f09d598e3",
+        "featureGeometryDigest": "e64e87bb06a81029f6775a31695192022214687d1e9357ddf39653a71e105ff4",
+        "hardProtectedToleranceHitCount": 0,
+        "densityHitCount": 41,
+        "forcedSubdivisionSummary": {
+          "supportedInputCounts": {
+          },
+          "skippedInputCounts": {
+          },
+          "hitCount": 0
+        },
+        "fallbackCounts": {
+          "absentFeatureGeometry": 0,
+          "partialFeatureGeometry": 0,
+          "unsupportedFeatureGeometry": 0
+        }
+      },
+      "seamValidationSummary": {
+        "status": "passed",
+        "seamRecordCount": 36,
+        "validationCount": 12,
+        "replacementPatchCount": 9,
+        "maxZGap": 0.0,
+        "sameBatch": [
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          }
+        ],
+        "retained": {
+          "status": "passed",
+          "maxZGap": 0.0
+        }
+      },
+      "diagonalOptimizationSummary": {
+        "eligibleCount": 442,
+        "changedCount": 148,
+        "decisionReasonCounts": {
+          "baseline_tie": 194,
+          "residual": 148,
+          "no_metric_samples": 100
+        },
+        "residualImprovement": 0.3711500000000022,
+        "proofCell": {
+          "cellKey": "c2-r4-c4-r6"
+        },
+        "seamAdjacentChangedCount": 37,
+        "seamAdjacentResidualDelta": 0.0,
+        "seamAdjacentDihedralDelta": 0.0,
+        "adoptionVerdict": "adopt"
+      },
+      "componentPlanSummary": {
+        "componentCount": 1,
+        "maxComponentSize": 1,
+        "promotedCount": 0,
+        "roleCounts": {
+          "affected": 1,
+          "replacement": 9,
+          "conformance": 8,
+          "retained_boundary": 0,
+          "safety_margin": 0
+        },
+        "graphReasons": [
+          "dirty_window"
+        ]
+      },
+      "componentBudget": {
+        "status": "within_budget",
+        "maxReplacementPatchCount": 25,
+        "maxPromotionRadius": 2
+      }
+    },
+    {
+      "rowId": "target-adjacent-east",
+      "sourceElementId": "feature-aware-baseline-terrain",
+      "commandKind": "edit",
+      "featureContextClass": "adjacent_target_region",
+      "seconds": 0.26595389999783947,
+      "timingBuckets": {
+        "commandOutputPlanning": 0.08629169999767328,
+        "featureSelectionDiagnostics": 0.0015101999997568782,
+        "componentPlanning": 0.0002879999992728699,
+        "dirtyWindowMapping": 2.4000000848900527e-06,
+        "adaptivePlanning": 0.0089034000011452,
+        "mutation": 0.08105669999713427,
+        "total": 0.26595389999783947
+      },
+      "outcome": "edited",
+      "simplificationTolerance": 0.01,
+      "maxSimplificationError": 0.00990000000000002,
+      "dirtyWindow": {
+        "minColumn": 28,
+        "minRow": 20,
+        "maxColumn": 36,
+        "maxRow": 28,
+        "columns": 9,
+        "rows": 9
+      },
+      "patchScope": {
+        "affectedPatchCount": 2,
+        "replacementPatchCount": 9,
+        "conformanceRing": 1
+      },
+      "meshType": "adaptive_tin",
+      "faceCount": 1331,
+      "vertexCount": 727,
+      "adaptivePolicySummary": {
+        "policyFingerprint": "13d8e5817200c65aa4d7cc23cbf9602e05ae6fa8722760a7c9755d6f09d598e3",
+        "featureGeometryDigest": "ddf4d6973a30c5834363d638a6dbea55612b327dfb0e8094d61b8039c3f98966",
+        "hardProtectedToleranceHitCount": 0,
+        "densityHitCount": 68,
+        "forcedSubdivisionSummary": {
+          "supportedInputCounts": {
+          },
+          "skippedInputCounts": {
+          },
+          "hitCount": 0
+        },
+        "fallbackCounts": {
+          "absentFeatureGeometry": 0,
+          "partialFeatureGeometry": 0,
+          "unsupportedFeatureGeometry": 0
+        }
+      },
+      "seamValidationSummary": {
+        "status": "passed",
+        "seamRecordCount": 36,
+        "validationCount": 12,
+        "replacementPatchCount": 9,
+        "maxZGap": 0.0,
+        "sameBatch": [
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          }
+        ],
+        "retained": {
+          "status": "passed",
+          "maxZGap": 0.0
+        }
+      },
+      "diagonalOptimizationSummary": {
+        "eligibleCount": 468,
+        "changedCount": 145,
+        "decisionReasonCounts": {
+          "baseline_tie": 187,
+          "residual": 145,
+          "no_metric_samples": 136
+        },
+        "residualImprovement": 0.35425000000000295,
+        "proofCell": {
+          "cellKey": "c2-r4-c4-r6"
+        },
+        "seamAdjacentChangedCount": 35,
+        "seamAdjacentResidualDelta": 0.0,
+        "seamAdjacentDihedralDelta": 0.0,
+        "adoptionVerdict": "adopt"
+      },
+      "componentPlanSummary": {
+        "componentCount": 1,
+        "maxComponentSize": 2,
+        "promotedCount": 0,
+        "roleCounts": {
+          "affected": 2,
+          "replacement": 9,
+          "conformance": 7,
+          "retained_boundary": 0,
+          "safety_margin": 0
+        },
+        "graphReasons": [
+          "dirty_window",
+          "feature_boundary_crossing"
+        ]
+      },
+      "componentBudget": {
+        "status": "within_budget",
+        "maxReplacementPatchCount": 25,
+        "maxPromotionRadius": 2
+      }
+    },
+    {
+      "rowId": "target-repeat-center",
+      "sourceElementId": "feature-aware-baseline-terrain",
+      "commandKind": "edit",
+      "featureContextClass": "repeat_target_region",
+      "seconds": 0.2725282999999763,
+      "timingBuckets": {
+        "commandOutputPlanning": 0.09092719999898691,
+        "featureSelectionDiagnostics": 0.0013113000022713095,
+        "componentPlanning": 0.00023289999808184803,
+        "dirtyWindowMapping": 2.5999979698099196e-06,
+        "adaptivePlanning": 0.006676499997411156,
+        "mutation": 0.09094810000169673,
+        "total": 0.2725282999999763
+      },
+      "outcome": "edited",
+      "simplificationTolerance": 0.01,
+      "maxSimplificationError": 0.00990000000000002,
+      "dirtyWindow": {
+        "minColumn": 20,
+        "minRow": 20,
+        "maxColumn": 28,
+        "maxRow": 28,
+        "columns": 9,
+        "rows": 9
+      },
+      "patchScope": {
+        "affectedPatchCount": 1,
+        "replacementPatchCount": 9,
+        "conformanceRing": 1
+      },
+      "meshType": "adaptive_tin",
+      "faceCount": 1331,
+      "vertexCount": 727,
+      "adaptivePolicySummary": {
+        "policyFingerprint": "13d8e5817200c65aa4d7cc23cbf9602e05ae6fa8722760a7c9755d6f09d598e3",
+        "featureGeometryDigest": "d8c73ee60acbf98e46d9181852e5f4319443247846108c9f7cd8879c4a4887c3",
+        "hardProtectedToleranceHitCount": 0,
+        "densityHitCount": 68,
+        "forcedSubdivisionSummary": {
+          "supportedInputCounts": {
+          },
+          "skippedInputCounts": {
+          },
+          "hitCount": 0
+        },
+        "fallbackCounts": {
+          "absentFeatureGeometry": 0,
+          "partialFeatureGeometry": 0,
+          "unsupportedFeatureGeometry": 0
+        }
+      },
+      "seamValidationSummary": {
+        "status": "passed",
+        "seamRecordCount": 36,
+        "validationCount": 12,
+        "replacementPatchCount": 9,
+        "maxZGap": 0.0,
+        "sameBatch": [
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          }
+        ],
+        "retained": {
+          "status": "passed",
+          "maxZGap": 0.0
+        }
+      },
+      "diagonalOptimizationSummary": {
+        "eligibleCount": 468,
+        "changedCount": 145,
+        "decisionReasonCounts": {
+          "baseline_tie": 187,
+          "residual": 145,
+          "no_metric_samples": 136
+        },
+        "residualImprovement": 0.35425000000000295,
+        "proofCell": {
+          "cellKey": "c2-r4-c4-r6"
+        },
+        "seamAdjacentChangedCount": 35,
+        "seamAdjacentResidualDelta": 0.0,
+        "seamAdjacentDihedralDelta": 0.0,
+        "adoptionVerdict": "adopt"
+      },
+      "componentPlanSummary": {
+        "componentCount": 1,
+        "maxComponentSize": 2,
+        "promotedCount": 1,
+        "roleCounts": {
+          "affected": 1,
+          "replacement": 9,
+          "conformance": 7,
+          "retained_boundary": 0,
+          "safety_margin": 0
+        },
+        "graphReasons": [
+          "dirty_window",
+          "feature_boundary_crossing",
+          "conformance"
+        ]
+      },
+      "componentBudget": {
+        "status": "within_budget",
+        "maxReplacementPatchCount": 25,
+        "maxPromotionRadius": 2
+      }
+    },
+    {
+      "rowId": "corridor-diagonal-intersect",
+      "sourceElementId": "feature-aware-baseline-terrain",
+      "commandKind": "edit",
+      "featureContextClass": "intersecting_linear_corridor",
+      "seconds": 0.32739280000168947,
+      "timingBuckets": {
+        "commandOutputPlanning": 0.13568419999865,
+        "featureSelectionDiagnostics": 0.002635500000906177,
+        "componentPlanning": 0.0003299999989394564,
+        "dirtyWindowMapping": 1.6000012692529708e-06,
+        "adaptivePlanning": 0.012193300000944873,
+        "mutation": 0.09435619999931077,
+        "total": 0.32739280000168947
+      },
+      "outcome": "edited",
+      "simplificationTolerance": 0.01,
+      "maxSimplificationError": 0.00990000000000002,
+      "dirtyWindow": {
+        "minColumn": 14,
+        "minRow": 14,
+        "maxColumn": 36,
+        "maxRow": 36,
+        "columns": 23,
+        "rows": 23
+      },
+      "patchScope": {
+        "affectedPatchCount": 9,
+        "replacementPatchCount": 9,
+        "conformanceRing": 1
+      },
+      "meshType": "adaptive_tin",
+      "faceCount": 1599,
+      "vertexCount": 866,
+      "adaptivePolicySummary": {
+        "policyFingerprint": "13d8e5817200c65aa4d7cc23cbf9602e05ae6fa8722760a7c9755d6f09d598e3",
+        "featureGeometryDigest": "b4158ad983760fd349310861eb5605cc4c6e174aedd8c6868160bd63961970d0",
+        "hardProtectedToleranceHitCount": 0,
+        "densityHitCount": 80,
+        "forcedSubdivisionSummary": {
+          "supportedInputCounts": {
+            "corridor_detail": 4
+          },
+          "skippedInputCounts": {
+            "broad_corridor_pressure": 1,
+            "unsupported_reference_role": 1
+          },
+          "hitCount": 42
+        },
+        "fallbackCounts": {
+          "absentFeatureGeometry": 0,
+          "partialFeatureGeometry": 0,
+          "unsupportedFeatureGeometry": 1
+        }
+      },
+      "seamValidationSummary": {
+        "status": "passed",
+        "seamRecordCount": 36,
+        "validationCount": 12,
+        "replacementPatchCount": 9,
+        "maxZGap": 0.0,
+        "sameBatch": [
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          }
+        ],
+        "retained": {
+          "status": "passed",
+          "maxZGap": 0.0
+        }
+      },
+      "diagonalOptimizationSummary": {
+        "eligibleCount": 593,
+        "changedCount": 133,
+        "decisionReasonCounts": {
+          "baseline_tie": 188,
+          "residual": 133,
+          "no_metric_samples": 272
+        },
+        "residualImprovement": 0.2594500000000014,
+        "proofCell": {
+          "cellKey": "c2-r4-c4-r6"
+        },
+        "seamAdjacentChangedCount": 25,
+        "seamAdjacentResidualDelta": 0.0,
+        "seamAdjacentDihedralDelta": 0.0,
+        "adoptionVerdict": "adopt"
+      },
+      "componentPlanSummary": {
+        "componentCount": 1,
+        "maxComponentSize": 9,
+        "promotedCount": 0,
+        "roleCounts": {
+          "affected": 9,
+          "replacement": 9,
+          "conformance": 0,
+          "retained_boundary": 0,
+          "safety_margin": 0
+        },
+        "graphReasons": [
+          "dirty_window",
+          "feature_boundary_crossing"
+        ]
+      },
+      "componentBudget": {
+        "status": "within_budget",
+        "maxReplacementPatchCount": 25,
+        "maxPromotionRadius": 2
+      }
+    },
+    {
+      "rowId": "planar-pad-intersect",
+      "sourceElementId": "feature-aware-baseline-terrain",
+      "commandKind": "edit",
+      "featureContextClass": "intersecting_planar_region",
+      "seconds": 0.3346835000011197,
+      "timingBuckets": {
+        "commandOutputPlanning": 0.10925009999846225,
+        "featureSelectionDiagnostics": 0.003130499997496372,
+        "componentPlanning": 0.0003022999990207609,
+        "dirtyWindowMapping": 2.4999972083605826e-06,
+        "adaptivePlanning": 0.01544330000251648,
+        "mutation": 0.11270990000048187,
+        "total": 0.3346835000011197
+      },
+      "outcome": "edited",
+      "planarInteriorMetrics": {
+        "metricKind": "planned_cell_centroid",
+        "cellCount": 16,
+        "faceCount": 32,
+        "vertexCount": 32,
+        "qualityStatus": "planned_metric"
+      },
+      "simplificationTolerance": 0.01,
+      "maxSimplificationError": 0.00990000000000002,
+      "dirtyWindow": {
+        "minColumn": 18,
+        "minRow": 18,
+        "maxColumn": 30,
+        "maxRow": 30,
+        "columns": 13,
+        "rows": 13
+      },
+      "patchScope": {
+        "affectedPatchCount": 1,
+        "replacementPatchCount": 9,
+        "conformanceRing": 1
+      },
+      "meshType": "adaptive_tin",
+      "faceCount": 1543,
+      "vertexCount": 841,
+      "adaptivePolicySummary": {
+        "policyFingerprint": "13d8e5817200c65aa4d7cc23cbf9602e05ae6fa8722760a7c9755d6f09d598e3",
+        "featureGeometryDigest": "0683075a9079ba5f4b70cfe2f4f3b3df757127a476cd556b892b79eaa2e1dbe6",
+        "hardProtectedToleranceHitCount": 0,
+        "densityHitCount": 44,
+        "forcedSubdivisionSummary": {
+          "supportedInputCounts": {
+            "corridor_detail": 6
+          },
+          "skippedInputCounts": {
+            "broad_corridor_pressure": 1,
+            "unsupported_reference_role": 2
+          },
+          "hitCount": 34
+        },
+        "fallbackCounts": {
+          "absentFeatureGeometry": 0,
+          "partialFeatureGeometry": 0,
+          "unsupportedFeatureGeometry": 1
+        }
+      },
+      "seamValidationSummary": {
+        "status": "passed",
+        "seamRecordCount": 36,
+        "validationCount": 12,
+        "replacementPatchCount": 9,
+        "maxZGap": 0.0,
+        "sameBatch": [
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          }
+        ],
+        "retained": {
+          "status": "passed",
+          "maxZGap": 0.0
+        }
+      },
+      "diagonalOptimizationSummary": {
+        "eligibleCount": 562,
+        "changedCount": 131,
+        "decisionReasonCounts": {
+          "baseline_tie": 179,
+          "residual": 131,
+          "no_metric_samples": 252
+        },
+        "residualImprovement": 0.2516500000000008,
+        "proofCell": {
+          "cellKey": "c18-r0-c20-r2"
+        },
+        "seamAdjacentChangedCount": 23,
+        "seamAdjacentResidualDelta": 0.0,
+        "seamAdjacentDihedralDelta": 0.0,
+        "adoptionVerdict": "adopt"
+      },
+      "componentPlanSummary": {
+        "componentCount": 1,
+        "maxComponentSize": 9,
+        "promotedCount": 8,
+        "roleCounts": {
+          "affected": 1,
+          "replacement": 9,
+          "conformance": 0,
+          "retained_boundary": 0,
+          "safety_margin": 0
+        },
+        "graphReasons": [
+          "dirty_window",
+          "feature_boundary_crossing"
+        ]
+      },
+      "componentBudget": {
+        "status": "within_budget",
+        "maxReplacementPatchCount": 25,
+        "maxPromotionRadius": 2
+      }
+    },
+    {
+      "rowId": "survey-control-intersect",
+      "sourceElementId": "feature-aware-baseline-terrain",
+      "commandKind": "edit",
+      "featureContextClass": "intersecting_survey_control",
+      "seconds": 0.3974828999998863,
+      "timingBuckets": {
+        "commandOutputPlanning": 0.11576559999957681,
+        "featureSelectionDiagnostics": 0.003158600000460865,
+        "componentPlanning": 0.0005061999981990084,
+        "dirtyWindowMapping": 1.7000020307023078e-06,
+        "adaptivePlanning": 0.010473700000147801,
+        "mutation": 0.09926889999769628,
+        "total": 0.3974828999998863
+      },
+      "outcome": "edited",
+      "planarInteriorMetrics": {
+        "metricKind": "planned_cell_centroid",
+        "cellCount": 21,
+        "faceCount": 42,
+        "vertexCount": 37,
+        "qualityStatus": "planned_metric"
+      },
+      "simplificationTolerance": 0.01,
+      "maxSimplificationError": 0.00990000000000002,
+      "dirtyWindow": {
+        "minColumn": 25,
+        "minRow": 25,
+        "maxColumn": 30,
+        "maxRow": 30,
+        "columns": 6,
+        "rows": 6
+      },
+      "patchScope": {
+        "affectedPatchCount": 1,
+        "replacementPatchCount": 9,
+        "conformanceRing": 1
+      },
+      "meshType": "adaptive_tin",
+      "faceCount": 1559,
+      "vertexCount": 846,
+      "adaptivePolicySummary": {
+        "policyFingerprint": "13d8e5817200c65aa4d7cc23cbf9602e05ae6fa8722760a7c9755d6f09d598e3",
+        "featureGeometryDigest": "125e540c30791193db9671b9a8bba02155521bb388e49431d4bb2f2f7373accf",
+        "toleranceRange": {
+          "min": 0.005,
+          "max": 0.005
+        },
+        "hardProtectedToleranceHitCount": 0,
+        "densityHitCount": 99,
+        "forcedSubdivisionSummary": {
+          "supportedInputCounts": {
+            "anchor": 1,
+            "corridor_detail": 6
+          },
+          "skippedInputCounts": {
+            "broad_corridor_pressure": 1,
+            "unsupported_reference_role": 2
+          },
+          "hitCount": 36
+        },
+        "fallbackCounts": {
+          "absentFeatureGeometry": 0,
+          "partialFeatureGeometry": 0,
+          "unsupportedFeatureGeometry": 1
+        }
+      },
+      "seamValidationSummary": {
+        "status": "passed",
+        "seamRecordCount": 36,
+        "validationCount": 12,
+        "replacementPatchCount": 9,
+        "maxZGap": 0.0,
+        "sameBatch": [
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          }
+        ],
+        "retained": {
+          "status": "passed",
+          "maxZGap": 0.0
+        }
+      },
+      "diagonalOptimizationSummary": {
+        "eligibleCount": 570,
+        "changedCount": 131,
+        "decisionReasonCounts": {
+          "baseline_tie": 183,
+          "residual": 131,
+          "no_metric_samples": 256
+        },
+        "residualImprovement": 0.2516500000000008,
+        "proofCell": {
+          "cellKey": "c18-r0-c20-r2"
+        },
+        "seamAdjacentChangedCount": 23,
+        "seamAdjacentResidualDelta": 0.0,
+        "seamAdjacentDihedralDelta": 0.0,
+        "adoptionVerdict": "adopt"
+      },
+      "componentPlanSummary": {
+        "componentCount": 1,
+        "maxComponentSize": 9,
+        "promotedCount": 8,
+        "roleCounts": {
+          "affected": 1,
+          "replacement": 9,
+          "conformance": 0,
+          "retained_boundary": 0,
+          "safety_margin": 0
+        },
+        "graphReasons": [
+          "dirty_window",
+          "feature_boundary_crossing"
+        ]
+      },
+      "componentBudget": {
+        "status": "within_budget",
+        "maxReplacementPatchCount": 25,
+        "maxPromotionRadius": 2
+      }
+    },
+    {
+      "rowId": "fairing-envelope-intersect",
+      "sourceElementId": "feature-aware-baseline-terrain",
+      "commandKind": "edit",
+      "featureContextClass": "intersecting_fairing_region",
+      "seconds": 0.3346798000020499,
+      "timingBuckets": {
+        "commandOutputPlanning": 0.11508519999915734,
+        "featureSelectionDiagnostics": 0.004463600002054591,
+        "componentPlanning": 0.0005811000009998679,
+        "dirtyWindowMapping": 1.7000020307023078e-06,
+        "adaptivePlanning": 0.008081799998763017,
+        "mutation": 0.09697519999826909,
+        "total": 0.3346798000020499
+      },
+      "outcome": "edited",
+      "planarInteriorMetrics": {
+        "metricKind": "planned_cell_centroid",
+        "cellCount": 21,
+        "faceCount": 42,
+        "vertexCount": 37,
+        "qualityStatus": "planned_metric"
+      },
+      "simplificationTolerance": 0.01,
+      "maxSimplificationError": 0.00990000000000002,
+      "dirtyWindow": {
+        "minColumn": 17,
+        "minRow": 17,
+        "maxColumn": 35,
+        "maxRow": 35,
+        "columns": 19,
+        "rows": 19
+      },
+      "patchScope": {
+        "affectedPatchCount": 4,
+        "replacementPatchCount": 9,
+        "conformanceRing": 1
+      },
+      "meshType": "adaptive_tin",
+      "faceCount": 1593,
+      "vertexCount": 861,
+      "adaptivePolicySummary": {
+        "policyFingerprint": "13d8e5817200c65aa4d7cc23cbf9602e05ae6fa8722760a7c9755d6f09d598e3",
+        "featureGeometryDigest": "49497be3609acb9566099ef8374e50d2aef23a9ab3985b853244094a5a5dc4e8",
+        "toleranceRange": {
+          "min": 0.005,
+          "max": 0.005
+        },
+        "hardProtectedToleranceHitCount": 0,
+        "densityHitCount": 148,
+        "forcedSubdivisionSummary": {
+          "supportedInputCounts": {
+            "anchor": 1,
+            "corridor_detail": 6
+          },
+          "skippedInputCounts": {
+            "broad_corridor_pressure": 1,
+            "unsupported_reference_role": 2
+          },
+          "hitCount": 36
+        },
+        "fallbackCounts": {
+          "absentFeatureGeometry": 0,
+          "partialFeatureGeometry": 0,
+          "unsupportedFeatureGeometry": 1
+        }
+      },
+      "seamValidationSummary": {
+        "status": "passed",
+        "seamRecordCount": 36,
+        "validationCount": 12,
+        "replacementPatchCount": 9,
+        "maxZGap": 0.0,
+        "sameBatch": [
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          }
+        ],
+        "retained": {
+          "status": "passed",
+          "maxZGap": 0.0
+        }
+      },
+      "diagonalOptimizationSummary": {
+        "eligibleCount": 589,
+        "changedCount": 131,
+        "decisionReasonCounts": {
+          "baseline_tie": 178,
+          "residual": 131,
+          "no_metric_samples": 280
+        },
+        "residualImprovement": 0.2516500000000008,
+        "proofCell": {
+          "cellKey": "c18-r0-c20-r2"
+        },
+        "seamAdjacentChangedCount": 23,
+        "seamAdjacentResidualDelta": 0.0,
+        "seamAdjacentDihedralDelta": 0.0,
+        "adoptionVerdict": "adopt"
+      },
+      "componentPlanSummary": {
+        "componentCount": 1,
+        "maxComponentSize": 9,
+        "promotedCount": 5,
+        "roleCounts": {
+          "affected": 4,
+          "replacement": 9,
+          "conformance": 0,
+          "retained_boundary": 0,
+          "safety_margin": 0
+        },
+        "graphReasons": [
+          "dirty_window",
+          "feature_boundary_crossing"
+        ]
+      },
+      "componentBudget": {
+        "status": "within_budget",
+        "maxReplacementPatchCount": 25,
+        "maxPromotionRadius": 2
+      }
+    },
+    {
+      "rowId": "feature-aware-baseline-terrain-large-timing-create",
+      "sourceElementId": "feature-aware-baseline-terrain-large-timing",
+      "commandKind": "create",
+      "featureContextClass": "timing_terrain_create",
+      "seconds": 15.129283899997972,
+      "timingBuckets": {
+        "commandOutputPlanning": 9.232162800002698,
+        "featureSelectionDiagnostics": 0.05699499999900581,
+        "componentPlanning": null,
+        "dirtyWindowMapping": 0.0009161999987554736,
+        "adaptivePlanning": 2.333840899998904,
+        "mutation": 3.1956949999985227,
+        "total": 15.129283899997972
+      },
+      "outcome": "created",
+      "simplificationTolerance": 0.01,
+      "maxSimplificationError": 0.009999999999999995,
+      "dirtyWindow": {
+        "minColumn": 0,
+        "minRow": 0,
+        "maxColumn": 223,
+        "maxRow": 223,
+        "columns": 224,
+        "rows": 224
+      },
+      "patchScope": {
+        "affectedPatchCount": 196,
+        "replacementPatchCount": 196,
+        "conformanceRing": 1
+      },
+      "meshType": "adaptive_tin",
+      "faceCount": 76191,
+      "vertexCount": 38416,
+      "adaptivePolicySummary": {
+        "policyFingerprint": "13d8e5817200c65aa4d7cc23cbf9602e05ae6fa8722760a7c9755d6f09d598e3",
+        "featureGeometryDigest": "1595ad61e5c534dac3e016a78fd622ef8773bb6f2c85b611f7f07cd1bfea311f",
+        "hardProtectedToleranceHitCount": 0,
+        "densityHitCount": 0,
+        "forcedSubdivisionSummary": {
+          "supportedInputCounts": {
+          },
+          "skippedInputCounts": {
+          },
+          "hitCount": 0
+        },
+        "fallbackCounts": {
+          "absentFeatureGeometry": 0,
+          "partialFeatureGeometry": 0,
+          "unsupportedFeatureGeometry": 0
+        }
+      },
+      "seamValidationSummary": {
+        "status": "passed",
+        "seamRecordCount": 784,
+        "validationCount": 364,
+        "replacementPatchCount": 196,
+        "maxZGap": 0.0,
+        "sameBatch": [
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          }
+        ]
+      },
+      "diagonalOptimizationSummary": {
+        "eligibleCount": 21156,
+        "changedCount": 1206,
+        "decisionReasonCounts": {
+          "no_metric_samples": 19535,
+          "residual": 1206,
+          "baseline_tie": 415
+        },
+        "residualImprovement": 8.799350000000047,
+        "proofCell": {
+          "cellKey": "c2-r6-c4-r8"
+        },
+        "seamAdjacentChangedCount": 454,
+        "seamAdjacentResidualDelta": 0.0,
+        "seamAdjacentDihedralDelta": 0.0,
+        "adoptionVerdict": "adopt"
+      }
+    },
+    {
+      "rowId": "large-varied-local-target-timing",
+      "sourceElementId": "feature-aware-baseline-terrain-large-timing",
+      "commandKind": "edit",
+      "featureContextClass": "large_varied_local_target",
+      "seconds": 4.797345399998449,
+      "timingBuckets": {
+        "commandOutputPlanning": 1.559691999998904,
+        "featureSelectionDiagnostics": 0.000818300002720207,
+        "componentPlanning": 0.0009660999967309181,
+        "dirtyWindowMapping": 1.5999976312741637e-06,
+        "adaptivePlanning": 0.10226499999771477,
+        "mutation": 1.2831268000009004,
+        "total": 4.797345399998449
+      },
+      "outcome": "edited",
+      "simplificationTolerance": 0.01,
+      "maxSimplificationError": 0.009999999999999995,
+      "dirtyWindow": {
+        "minColumn": 45,
+        "minRow": 45,
+        "maxColumn": 69,
+        "maxRow": 69,
+        "columns": 25,
+        "rows": 25
+      },
+      "patchScope": {
+        "affectedPatchCount": 9,
+        "replacementPatchCount": 25,
+        "conformanceRing": 1
+      },
+      "meshType": "adaptive_tin",
+      "faceCount": 18770,
+      "vertexCount": 9575,
+      "adaptivePolicySummary": {
+        "policyFingerprint": "13d8e5817200c65aa4d7cc23cbf9602e05ae6fa8722760a7c9755d6f09d598e3",
+        "featureGeometryDigest": "4bb4556935726f2c490f3c19ea054f0f31316b68915d6e268ca38547c331e899",
+        "hardProtectedToleranceHitCount": 0,
+        "densityHitCount": 143,
+        "forcedSubdivisionSummary": {
+          "supportedInputCounts": {
+          },
+          "skippedInputCounts": {
+          },
+          "hitCount": 0
+        },
+        "fallbackCounts": {
+          "absentFeatureGeometry": 0,
+          "partialFeatureGeometry": 0,
+          "unsupportedFeatureGeometry": 0
+        }
+      },
+      "seamValidationSummary": {
+        "status": "passed",
+        "seamRecordCount": 196,
+        "validationCount": 84,
+        "replacementPatchCount": 25,
+        "maxZGap": 0.0,
+        "sameBatch": [
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          },
+          {
+            "status": "passed",
+            "comparisonMode": "planned_vs_planned",
+            "maxZGap": 0.0
+          }
+        ],
+        "retained": {
+          "status": "passed",
+          "maxZGap": 0.0
+        }
+      },
+      "diagonalOptimizationSummary": {
+        "eligibleCount": 5331,
+        "changedCount": 266,
+        "decisionReasonCounts": {
+          "no_metric_samples": 4936,
+          "residual": 266,
+          "baseline_tie": 129
+        },
+        "residualImprovement": 1.9126500000000055,
+        "proofCell": {
+          "cellKey": "c2-r6-c4-r8"
+        },
+        "seamAdjacentChangedCount": 112,
+        "seamAdjacentResidualDelta": 0.0,
+        "seamAdjacentDihedralDelta": 0.0,
+        "adoptionVerdict": "adopt"
+      },
+      "componentPlanSummary": {
+        "componentCount": 1,
+        "maxComponentSize": 9,
+        "promotedCount": 0,
+        "roleCounts": {
+          "affected": 9,
+          "replacement": 25,
+          "conformance": 16,
+          "retained_boundary": 0,
+          "safety_margin": 0
+        },
+        "graphReasons": [
+          "dirty_window",
+          "feature_boundary_crossing"
+        ]
+      },
+      "componentBudget": {
+        "status": "within_budget",
+        "maxReplacementPatchCount": 25,
+        "maxPromotionRadius": 2
+      }
+    }
+  ],
+  "liveGeometryAfterRun": {
+    "feature-aware-baseline-terrain": {
+      "found": true,
+      "entityId": 4623156,
+      "faces": 1593,
+      "edges": 2493
+    },
+    "feature-aware-baseline-terrain-large-timing": {
+      "found": true,
+      "entityId": 4762348,
+      "faces": 75616,
+      "edges": 113821
+    },
+    "feature-aware-baseline-terrain-wide-timing": {
+      "found": false
+    }
+  },
+  "notes": [
+    "Captured with real hosted command geometry through TerrainSurfaceCommands.",
+    "Timing rows are opt-in; this result records the requested capture pass.",
+    "Feature quality sampling is harness-only and timed outside command seconds.",
+    "Entity ids are scene-instance evidence, not stable replay inputs."
+  ]
+}

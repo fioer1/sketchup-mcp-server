@@ -38,7 +38,7 @@ class TerrainFeatureGeometryTest < Minitest::Test
     payload = geometry.to_h
     expected_keys = %w[
       outputAnchorCandidates protectedRegions pressureRegions referenceSegments affectedWindows
-      tolerances planarRegions featureGeometryDigest referenceGeometryDigest
+      tolerances planarRegions oracleSemanticRegions featureGeometryDigest referenceGeometryDigest
     ]
     assert_equal(expected_keys, payload.keys)
     assert_equal('pl1', geometry.planar_regions.first.fetch('id'))

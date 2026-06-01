@@ -17,6 +17,7 @@ require_relative '../regions/sample_window'
 require_relative '../edits/survey_point_constraint_edit'
 require_relative '../features/terrain_feature_intent_emitter'
 require_relative '../features/terrain_feature_planner'
+require_relative '../regions/composed_height_oracle'
 require_relative '../evidence/terrain_edit_evidence_builder'
 require_relative '../output/cdt/patches/cdt_patch_policy'
 require_relative '../output/feature_aware_adaptive_policy'
@@ -231,14 +232,21 @@ module SU_MCP
       end
 
       def regenerate_edit_output(context, saved, feature_plan, feature_state, timing:)
-        output_state = context.fetch(:edit_result).fetch(:state)
-        output_state = feature_state if cdt_output_enabled?
+        output_state = output_state_for_regeneration(context, feature_state)
+        height_oracle = height_oracle_for_output(output_state)
         output_plan = measure_baseline_timing(
           timing,
           :commandOutputPlanning,
           legacy_bucket: cdt_output_enabled? ? :command_prep : nil
         ) do
-          edit_output_plan(context, saved, feature_plan, output_state, timing: timing)
+          edit_output_plan(
+            context,
+            saved,
+            feature_plan,
+            output_state,
+            timing: timing,
+            height_oracle: height_oracle
+          )
         end
         record_baseline_evidence(output_plan, state: feature_state)
         feature_context = cdt_feature_context(feature_plan, feature_state)
@@ -254,10 +262,20 @@ module SU_MCP
           state: output_state,
           terrain_state_summary: saved.fetch(:summary),
           output_plan: output_plan,
-          feature_context: feature_context
+          feature_context: feature_context,
+          height_oracle: height_oracle
         )
         record_baseline_timing(timing)
         output
+      end
+
+      def output_state_for_regeneration(context, feature_state)
+        return feature_state if cdt_output_enabled?
+
+        loaded_state = context.fetch(:loaded).fetch(:state)
+        return feature_state if loaded_state.respond_to?(:feature_intent)
+
+        context.fetch(:edit_result).fetch(:state)
       end
 
       def cdt_feature_context(feature_plan, feature_state)
@@ -663,7 +681,7 @@ module SU_MCP
         TiledHeightmapState.from_heightmap_state(state)
       end
 
-      def edit_output_plan(context, saved, feature_plan, state, timing: nil)
+      def edit_output_plan(context, saved, feature_plan, state, timing: nil, height_oracle: nil)
         policy = adaptive_patch_policy_for(state)
         feature_policy = feature_aware_adaptive_policy_for(state, feature_plan)
         if full_grid_feature_reconciliation?(feature_plan)
@@ -678,7 +696,8 @@ module SU_MCP
               selection_window: window,
               affected_window: window,
               adaptive_patch_policy: policy
-            )
+            ),
+            height_oracle: height_oracle
           )
         end
 
@@ -710,8 +729,16 @@ module SU_MCP
             selection_window: window,
             affected_window: window,
             adaptive_patch_policy: policy
-          )
+          ),
+          height_oracle: height_oracle
         )
+      end
+
+      def height_oracle_for_output(state)
+        return nil if cdt_output_enabled?
+        return nil unless state.respond_to?(:origin) && state.respond_to?(:spacing)
+
+        ComposedHeightOracle.build(state: state)
       end
 
       def component_lifecycle_resolution_for(state:, policy:, window:, sources:, timing:)
@@ -807,7 +834,8 @@ module SU_MCP
 
         PatchLifecycle::PatchGridPolicy.new(
           patch_id_prefix: 'adaptive-patch',
-          fingerprint_kind: 'adaptive-patch'
+          fingerprint_kind: 'adaptive-patch',
+          oracle_semantic_token: ComposedHeightOracle.semantic_token
         )
       end
 
@@ -1004,8 +1032,9 @@ module SU_MCP
           feature_context = cdt_feature_context(feature_plan, state)
         end
 
+        height_oracle = height_oracle_for_output(state)
         output_plan = measure_baseline_timing(timing, :commandOutputPlanning) do
-          full_output_plan_for(state, saved, feature_plan)
+          full_output_plan_for(state, saved, feature_plan, height_oracle: height_oracle)
         end
         record_baseline_evidence(output_plan, state: state)
 
@@ -1014,13 +1043,14 @@ module SU_MCP
           state: state,
           terrain_state_summary: saved.fetch(:summary),
           output_plan: output_plan,
-          feature_context: feature_context
+          feature_context: feature_context,
+          height_oracle: height_oracle
         )
         record_baseline_timing(timing)
         [saved, output]
       end
 
-      def full_output_plan_for(state, saved, feature_plan = nil)
+      def full_output_plan_for(state, saved, feature_plan = nil, height_oracle: nil)
         policy = adaptive_patch_policy_for(state)
         return nil unless policy
 
@@ -1035,7 +1065,8 @@ module SU_MCP
             selection_window: window,
             affected_window: window,
             adaptive_patch_policy: policy
-          )
+          ),
+          height_oracle: height_oracle
         )
       end
 

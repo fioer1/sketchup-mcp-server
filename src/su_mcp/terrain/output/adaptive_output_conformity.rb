@@ -1,18 +1,30 @@
 # frozen_string_literal: true
 
 require_relative 'feature_aware_diagonal_optimizer'
+require_relative '../regions/composed_height_oracle'
 
 module SU_MCP
   module Terrain
     # Derives compact conforming boundary plans for adaptive terrain cells.
     class AdaptiveOutputConformity
-      def self.cells(cells, state: nil, collapse_coplanar_edges: false, diagonal_context: nil)
+      def self.cells(
+        cells,
+        state: nil,
+        collapse_coplanar_edges: false,
+        diagonal_context: nil,
+        height_oracle: nil
+      )
+        oracle = oracle_for(state, height_oracle)
         min_row_index = index_cells_by(cells, :min_row)
         max_row_index = index_cells_by(cells, :max_row)
         min_column_index = index_cells_by(cells, :min_column)
         max_column_index = index_cells_by(cells, :max_column)
         optimizer = if state && diagonal_context
-                      FeatureAwareDiagonalOptimizer.new(state: state, context: diagonal_context)
+                      FeatureAwareDiagonalOptimizer.new(
+                        state: state,
+                        context: diagonal_context,
+                        height_oracle: oracle
+                      )
                     end
 
         cells.map do |cell|
@@ -30,7 +42,8 @@ module SU_MCP
             cell,
             boundary_vertices,
             state,
-            collapse_coplanar_edges
+            collapse_coplanar_edges,
+            oracle
           )
           fan_center = fan_center_for(cell, boundary_vertices)
           diagonal_decision = diagonal_decision_for(
@@ -243,7 +256,8 @@ module SU_MCP
         cell,
         boundary_vertices,
         state,
-        collapse_coplanar_edges
+        collapse_coplanar_edges,
+        height_oracle
       )
         return boundary_vertices unless collapse_coplanar_edges
         return boundary_vertices unless state
@@ -251,7 +265,8 @@ module SU_MCP
         return boundary_vertices unless boundary_vertices_linear_on_cell_edges?(
           cell,
           boundary_vertices,
-          state
+          state,
+          height_oracle
         )
 
         rectangle_boundary_vertices(cell)
@@ -266,16 +281,22 @@ module SU_MCP
         ]
       end
 
-      def self.boundary_vertices_linear_on_cell_edges?(cell, boundary_vertices, state)
+      def self.boundary_vertices_linear_on_cell_edges?(
+        cell,
+        boundary_vertices,
+        state,
+        height_oracle
+      )
+        corner_heights = cell_corner_heights(state, cell, height_oracle)
         boundary_vertices.all? do |column, row|
-          actual = height_at(state, column, row)
-          expected = interpolated_cell_height(state, cell, column, row)
+          actual = height_at(state, column, row, height_oracle)
+          expected = interpolated_cell_height(cell, column, row, corner_heights)
           (actual - expected).abs <= 1e-9
         end
       end
 
       # rubocop:disable Metrics/AbcSize
-      def self.interpolated_cell_height(state, cell, column, row)
+      def self.interpolated_cell_height(cell, column, row, corner_heights)
         min_column = cell.fetch(:min_column)
         max_column = cell.fetch(:max_column)
         min_row = cell.fetch(:min_row)
@@ -284,18 +305,44 @@ module SU_MCP
         y_span = max_row - min_row
         y_ratio = y_span.zero? ? 0.0 : (row - min_row).to_f / y_span
         x_ratio = x_span.zero? ? 0.0 : (column - min_column).to_f / x_span
-        z00 = height_at(state, min_column, min_row)
-        z10 = height_at(state, max_column, min_row)
-        z01 = height_at(state, min_column, max_row)
-        z11 = height_at(state, max_column, max_row)
+        z00 = corner_heights.fetch(:z00)
+        z10 = corner_heights.fetch(:z10)
+        z01 = corner_heights.fetch(:z01)
+        z11 = corner_heights.fetch(:z11)
         left = z00 + ((z01 - z00) * y_ratio)
         right = z10 + ((z11 - z10) * y_ratio)
         left + ((right - left) * x_ratio)
       end
       # rubocop:enable Metrics/AbcSize
 
-      def self.height_at(state, column, row)
-        state.elevations.fetch((row * state.dimensions.fetch('columns')) + column)
+      def self.cell_corner_heights(state, cell, height_oracle)
+        min_column = cell.fetch(:min_column)
+        max_column = cell.fetch(:max_column)
+        min_row = cell.fetch(:min_row)
+        max_row = cell.fetch(:max_row)
+        {
+          z00: height_at(state, min_column, min_row, height_oracle),
+          z10: height_at(state, max_column, min_row, height_oracle),
+          z01: height_at(state, min_column, max_row, height_oracle),
+          z11: height_at(state, max_column, max_row, height_oracle)
+        }
+      end
+
+      def self.height_at(state, column, row, height_oracle)
+        return raw_base_height_for_low_level_state(state, column, row) unless height_oracle
+
+        height_oracle.height_at_grid(column: column, row: row)
+      end
+
+      def self.oracle_for(state, height_oracle)
+        return nil unless state
+
+        height_oracle
+      end
+
+      def self.raw_base_height_for_low_level_state(state, column, row)
+        index = (row * state.dimensions.fetch('columns')) + column
+        state.elevations[index] # low_level_state_without_oracle
       end
 
       def self.fan_center_for(cell, boundary_vertices)
