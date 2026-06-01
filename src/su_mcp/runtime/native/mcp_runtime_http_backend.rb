@@ -13,6 +13,8 @@ module SU_MCP
     MAX_ACCEPTS_PER_POLL = 4
     MAX_ACTIVE_CLIENTS = 16
     READ_CHUNK_BYTES = 16 * 1024
+    WRITE_CHUNK_BYTES = 64 * 1024
+    MAX_WRITE_CHUNKS_PER_POLL = 16
 
     def initialize(app_builder:, server_factory:, timer_starter:, timer_stopper:, logger:)
       @app_builder = app_builder
@@ -114,6 +116,8 @@ module SU_MCP
       @clients[client] = {
         input: ''.b,
         output: nil,
+        output_offset: 0,
+        dispatching: false,
         last_active_at: monotonic_time
       }
     end
@@ -153,11 +157,15 @@ module SU_MCP
     end
 
     def dispatch_request(client, state, request)
+      state[:dispatching] = true
       status, headers, body = @app.call(build_env(request))
       response_body = collect_body(body)
       state[:output] = response_text(status, headers, response_body)
+      state[:output_offset] = 0
       state[:last_active_at] = monotonic_time
       flush_client_output(client, state)
+    ensure
+      state[:dispatching] = false
     end
 
     def build_env(request)
@@ -214,10 +222,16 @@ module SU_MCP
       return unless state[:output]
       return unless client.wait_writable(0)
 
-      until state[:output].empty?
-        written = client.write_nonblock(state[:output])
-        state[:output] = state[:output].byteslice(written..).to_s
+      chunks_written = 0
+      while state.fetch(:output_offset) < state[:output].bytesize
+        chunk = state[:output].byteslice(state[:output_offset], WRITE_CHUNK_BYTES)
+        written = client.write_nonblock(chunk)
+        return unless written.positive?
+
+        state[:output_offset] += written
         state[:last_active_at] = monotonic_time
+        chunks_written += 1
+        return if chunks_written >= MAX_WRITE_CHUNKS_PER_POLL
         return unless client.wait_writable(0)
       end
 
@@ -231,6 +245,8 @@ module SU_MCP
     def close_idle_clients
       now = monotonic_time
       @clients.each_pair.to_a.each do |client, state|
+        next if state[:dispatching]
+
         close_client(client) if now - state.fetch(:last_active_at) > CLIENT_IDLE_TIMEOUT
       end
     end

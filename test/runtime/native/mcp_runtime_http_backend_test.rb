@@ -44,13 +44,19 @@ class McpRuntimeHttpBackendTest < Minitest::Test
     attr_reader :writes
     attr_accessor :closed
 
-    def initialize(request_text = '', read_chunk_size: nil, write_chunk_size: nil)
+    def initialize(
+      request_text = '',
+      read_chunk_size: nil,
+      write_chunk_size: nil,
+      max_write_bytes: nil
+    )
       @request_text = request_text
       @writes = []
       @closed = false
       @position = 0
       @read_chunk_size = read_chunk_size
       @write_chunk_size = write_chunk_size
+      @max_write_bytes = max_write_bytes
     end
 
     def feed(text)
@@ -98,6 +104,8 @@ class McpRuntimeHttpBackendTest < Minitest::Test
     # rubocop:enable Naming/PredicateMethod
 
     def write_nonblock(data)
+      raise Errno::EMSGSIZE if @max_write_bytes && data.bytesize > @max_write_bytes
+
       length = [data.bytesize, @write_chunk_size || data.bytesize].min
       @writes << data.byteslice(0, length)
       length
@@ -215,6 +223,70 @@ class McpRuntimeHttpBackendTest < Minitest::Test
 
     assert_equal('application/json', app_calls.first['CONTENT_TYPE'])
     assert_equal('{"jsonrpc":"2.0","id":1}', app_calls.first['rack.input'].read)
+  end
+
+  def test_poll_writes_large_responses_in_bounded_nonblocking_chunks
+    chunk_bytes = SU_MCP::McpRuntimeHttpBackend::WRITE_CHUNK_BYTES
+    body = 'x' * ((chunk_bytes * 2) + 123)
+    app = ->(_env) { [200, { 'Content-Type' => 'application/json' }, [body]] }
+    timer_blocks = []
+    tcp_server = FakeTcpServer.new('127.0.0.1', 9877)
+    backend = build_backend(
+      app_builder: ->(_handlers) { app },
+      server_factory: ->(_host, _port) { tcp_server },
+      timer_starter: lambda do |_interval, _repeat, &block|
+        timer_blocks << block
+        :timer_one
+      end,
+      timer_stopper: ->(_timer_id) {},
+      logger: ->(_message) {}
+    )
+    backend.start(host: '127.0.0.1', port: 9877, handlers: {})
+    client = FakeClient.new(
+      http_post_request('{"jsonrpc":"2.0","id":1}'),
+      max_write_bytes: chunk_bytes
+    )
+    tcp_server.enqueue(client)
+
+    timer_blocks.first.call
+
+    assert_equal(true, client.closed)
+    assert(
+      client.writes.all? { |write| write.bytesize <= chunk_bytes }
+    )
+    assert_includes(client.writes.join, body)
+  end
+
+  def test_poll_does_not_idle_close_a_client_while_request_dispatch_is_in_progress
+    timer_blocks = []
+    tcp_server = FakeTcpServer.new('127.0.0.1', 9877)
+    client = FakeClient.new(http_post_request('{"jsonrpc":"2.0","id":1}'))
+    closed_during_dispatch = nil
+    app = lambda do |_env|
+      timer_blocks.first.call
+      closed_during_dispatch = client.closed
+      [200, { 'Content-Type' => 'application/json' }, ['{"ok":true}']]
+    end
+    backend = build_backend(
+      app_builder: ->(_handlers) { app },
+      server_factory: ->(_host, _port) { tcp_server },
+      timer_starter: lambda do |_interval, _repeat, &block|
+        timer_blocks << block
+        :timer_one
+      end,
+      timer_stopper: ->(_timer_id) {},
+      logger: ->(_message) {}
+    )
+    monotonic_times = [0.0, 0.0, 10.0]
+    backend.define_singleton_method(:monotonic_time) { monotonic_times.shift || 10.0 }
+    backend.start(host: '127.0.0.1', port: 9877, handlers: {})
+    tcp_server.enqueue(client)
+
+    timer_blocks.first.call
+
+    assert_equal(false, closed_during_dispatch)
+    assert_equal(true, client.closed)
+    assert_includes(client.writes.join, '{"ok":true}')
   end
 
   def test_poll_reads_chunked_request_bodies
