@@ -2,6 +2,25 @@
 
 <!-- version list -->
 
+## v1.17.0 (2026-06-01)
+
+### Bug Fixes
+
+- **transport**: Large chunks through socket no longer error
+  ([`575781c`](https://github.com/SidhNor/sketchup-mcp-server/commit/575781cc99b4f6cc8b12a4835d4d885023add3f4))
+
+### Features
+
+- **MTA-44A**: Common height oracle
+  ([`8334ec3`](https://github.com/SidhNor/sketchup-mcp-server/commit/8334ec37672d748d0f5d3271ed8503e30c27146a))
+
+- **SEM-17**: Retaining edge and tool decriptions
+  ([`464f201`](https://github.com/SidhNor/sketchup-mcp-server/commit/464f201556c22f3060416b99537cf344d4956289))
+
+- **semantic**: Update tree proxy geometry
+  ([`122cd41`](https://github.com/SidhNor/sketchup-mcp-server/commit/122cd417176397ed3b12aa2bbdcd3ecf273570ea))
+
+
 ## v1.16.0 (2026-05-25)
 
 ### Bug Fixes
