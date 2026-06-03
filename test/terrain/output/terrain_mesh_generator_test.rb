@@ -122,20 +122,6 @@ class TerrainMeshGeneratorTest < Minitest::Test # rubocop:disable Metrics/ClassL
     end
   end
 
-  def test_batch_edge_marking_marks_shared_edges_once
-    edge = CountingEdge.new
-    faces = [
-      FaceWithEdges.new([edge]),
-      FaceWithEdges.new([edge])
-    ]
-
-    identity_generator.send(:mark_unique_derived_edges, faces)
-
-    assert_equal(1, edge.attribute_write_count)
-    assert_derived_output(edge)
-    assert(edge.hidden?)
-  end
-
   def test_generate_summary_matches_full_grid_output_plan
     model = build_semantic_model
     owner = model.active_entities.add_group
@@ -341,114 +327,6 @@ class TerrainMeshGeneratorTest < Minitest::Test # rubocop:disable Metrics/ClassL
     assert_equal(2, owner.entities.faces.length)
   end
 
-  def test_owned_faces_for_cell_window_accepts_complete_current_metadata
-    model = build_semantic_model
-    owner = model.active_entities.add_group
-    state = build_state(columns: 3, rows: 3, revision: 4)
-    terrain_state_summary = { digest: 'digest-4', revision: 4 }
-    identity_generator.generate(
-      owner: owner,
-      state: state,
-      terrain_state_summary: terrain_state_summary
-    )
-
-    result = identity_generator.send(
-      :owned_faces_for_cell_window,
-      owner.entities,
-      output_cell_window(0, 0, 1, 1)
-    )
-
-    assert_equal(:owned, result.fetch(:outcome))
-    assert_equal(8, result.fetch(:faces).length)
-  end
-
-  def test_owned_faces_for_cell_window_accepts_sketchup_faces_without_points_helper
-    model = build_semantic_model
-    owner = model.active_entities.add_group
-    state = build_state(columns: 2, rows: 2, revision: 4)
-    terrain_state_summary = { digest: 'digest-4', revision: 4 }
-    identity_generator.generate(
-      owner: owner,
-      state: state,
-      terrain_state_summary: terrain_state_summary
-    )
-    owner.entities.faces.each do |face|
-      face.define_singleton_method(:respond_to?) do |method_name, include_private = false|
-        return false if method_name == :points
-
-        super(method_name, include_private)
-      end
-    end
-
-    result = identity_generator.send(
-      :owned_faces_for_cell_window,
-      owner.entities,
-      output_cell_window(0, 0, 0, 0)
-    )
-
-    assert_equal(:owned, result.fetch(:outcome))
-    assert_equal(2, result.fetch(:faces).length)
-  end
-
-  def test_owned_faces_for_cell_window_falls_back_for_legacy_marker_only_output
-    model = build_semantic_model
-    owner = model.active_entities.add_group
-    face = owner.entities.add_face([0, 0, 0], [1, 0, 0], [1, 1, 0])
-    face.set_attribute('su_mcp_terrain', 'derivedOutput', true)
-
-    result = identity_generator.send(
-      :owned_faces_for_cell_window,
-      owner.entities,
-      output_cell_window(0, 0, 0, 0)
-    )
-
-    assert_equal(:fallback, result.fetch(:outcome))
-    assert_equal(:legacy_output, result.fetch(:reason))
-  end
-
-  def test_owned_faces_for_cell_window_accepts_stale_digest_metadata
-    model = build_semantic_model
-    owner = model.active_entities.add_group
-    add_owned_face(owner.entities, column: 0, row: 0, triangle: 0, digest: 'old', revision: 1)
-    add_owned_face(owner.entities, column: 0, row: 0, triangle: 1, digest: 'old', revision: 1)
-
-    result = identity_generator.send(
-      :owned_faces_for_cell_window,
-      owner.entities,
-      output_cell_window(0, 0, 0, 0)
-    )
-
-    assert_equal(:owned, result.fetch(:outcome))
-    assert_equal(2, result.fetch(:faces).length)
-  end
-
-  def test_owned_faces_for_cell_window_falls_back_for_duplicate_or_incomplete_ownership
-    model = build_semantic_model
-    owner = model.active_entities.add_group
-    add_owned_face(owner.entities, column: 0, row: 0, triangle: 0, digest: 'digest-1', revision: 1)
-    add_owned_face(owner.entities, column: 0, row: 0, triangle: 0, digest: 'digest-1', revision: 1)
-
-    duplicate = identity_generator.send(
-      :owned_faces_for_cell_window,
-      owner.entities,
-      output_cell_window(0, 0, 0, 0)
-    )
-
-    assert_equal(:fallback, duplicate.fetch(:outcome))
-    assert_equal(:duplicate_ownership, duplicate.fetch(:reason))
-
-    owner = model.active_entities.add_group
-    add_owned_face(owner.entities, column: 0, row: 0, triangle: 0, digest: 'digest-1', revision: 1)
-    incomplete = identity_generator.send(
-      :owned_faces_for_cell_window,
-      owner.entities,
-      output_cell_window(0, 0, 0, 0)
-    )
-
-    assert_equal(:fallback, incomplete.fetch(:outcome))
-    assert_equal(:incomplete_ownership, incomplete.fetch(:reason))
-  end
-
   def test_partial_regenerate_replaces_only_affected_faces_and_preserves_adjacent_output
     model = build_semantic_model
     owner = model.active_entities.add_group
@@ -570,20 +448,6 @@ class TerrainMeshGeneratorTest < Minitest::Test # rubocop:disable Metrics/ClassL
     refute_includes(owner.entities.faces, old_face)
     assert_equal(4, owner.entities.faces.length)
     assert(owner.entities.faces.all? { |face| terrain_attribute(face, 'terrainStateDigest').nil? })
-  end
-
-  def test_partial_edge_cleanup_selects_only_edges_owned_by_affected_faces
-    shared_edge = EdgeWithFaces.new
-    affected_edge = EdgeWithFaces.new
-    retained_face = FaceWithEdges.new([shared_edge])
-    affected_a = FaceWithEdges.new([shared_edge, affected_edge])
-    affected_b = FaceWithEdges.new([affected_edge])
-    shared_edge.faces = [affected_a, retained_face]
-    affected_edge.faces = [affected_a, affected_b]
-
-    result = identity_generator.send(:edges_owned_only_by, [affected_a, affected_b])
-
-    assert_equal([affected_edge], result)
   end
 
   def test_regenerate_refuses_unexpected_child_entities_before_erasing_output
@@ -1793,66 +1657,6 @@ class TerrainMeshGeneratorTest < Minitest::Test # rubocop:disable Metrics/ClassL
     refute_internal_output_fields(result)
   end
 
-  def test_v2_adaptive_patch_planning_reuses_projected_vertices
-    state = build_v2_state(columns: 2, rows: 2, elevations: [0.0, 0.1, 0.2, 0.3])
-    policy = SU_MCP::Terrain::AdaptivePatches::AdaptivePatchPolicy.new(patch_cell_size: 1)
-    output_plan = Struct.new(
-      :adaptive_cells,
-      :state_digest,
-      :adaptive_patch_policy
-    ).new(
-      [
-        {
-          min_column: 0,
-          min_row: 0,
-          max_column: 1,
-          max_row: 1,
-          emission_triangles: [
-            [[0, 0], [1, 0], [1, 1]],
-            [[0, 0], [1, 1], [0, 1]]
-          ]
-        }
-      ],
-      'digest-v2',
-      policy
-    )
-    patch = {
-      patchId: 'adaptive-patch-v1-c0-r0',
-      bounds: {},
-      cell_bounds: { min_column: 0, min_row: 0, max_column: 0, max_row: 0 }
-    }
-    generator = CountingAdaptiveVertexGenerator.new
-
-    planned = generator.send(
-      :planned_adaptive_patch_batch,
-      state: state,
-      output_plan: output_plan,
-      patches: [patch]
-    )
-
-    assert_equal(2, planned.fetch(:faces).length)
-    assert_equal(4, generator.adaptive_vertex_call_count)
-  end
-
-  def test_v2_adaptive_patch_face_count_uses_sketchup_entities_enumeration
-    model = build_semantic_model
-    owner = model.active_entities.add_group
-    face = owner.entities.add_face([0, 0, 0], [1, 0, 0], [0, 1, 0])
-    host_like_entities = Class.new do
-      include Enumerable
-
-      def initialize(entities)
-        @entities = entities
-      end
-
-      def each(&block)
-        @entities.each(&block)
-      end
-    end.new([face])
-
-    assert_equal([face], identity_generator.send(:entity_faces, host_like_entities))
-  end
-
   def test_v2_adaptive_dirty_window_replaces_only_affected_logical_patch_faces
     model = build_semantic_model
     owner = model.active_entities.add_group
@@ -2304,56 +2108,6 @@ class TerrainMeshGeneratorTest < Minitest::Test # rubocop:disable Metrics/ClassL
     end
   end
 
-  def test_v2_over_budget_component_verdict_still_uses_dirty_partial_path
-    model = build_semantic_model
-    owner = model.active_entities.add_group
-    state = build_v2_state(columns: 17, rows: 17, elevations: Array.new(289, 1.0))
-    policy = SU_MCP::Terrain::AdaptivePatches::AdaptivePatchPolicy.new(patch_cell_size: 4)
-    generator = RecordingOverBudgetGenerator.new(
-      length_converter: ScalingLengthConverter.new(multiplier: 1.0)
-    )
-    generator.generate(
-      owner: owner,
-      state: state,
-      terrain_state_summary: { digest: 'digest-1', revision: 1 },
-      output_plan: adaptive_full_plan(state, 'digest-1', policy)
-    )
-    generator.reset_recorded_calls!
-    mesh = owner.entities.groups.first
-    old_faces = mesh.entities.faces.dup
-    dirty = adaptive_dirty_plan_with_sources(
-      state,
-      'digest-2',
-      policy,
-      dirty_window(5, 5, 5, 5),
-      feature_windows: [dirty_window(0, 0, 15, 15)],
-      budget: { maxReplacementPatchCount: 2, maxPromotionRadius: 1 }
-    )
-
-    assert_equal('over_budget', dirty.adaptive_lifecycle_resolution.dig(:componentBudget, :status))
-    result = generator.regenerate(
-      owner: owner,
-      state: state,
-      terrain_state_summary: { digest: 'digest-2', revision: 2 },
-      output_plan: dirty
-    )
-
-    assert_equal('generated', result.fetch(:outcome))
-    assert_includes(generator.partial_path_calls, :ownership_lookup)
-    assert_includes(generator.partial_path_calls, :seam_gate)
-    assert_includes(generator.partial_path_calls, :partial_erase)
-    assert_equal([], generator.full_rebuild_calls)
-    old_faces.each do |face|
-      next unless face.get_attribute(
-        SU_MCP::Terrain::TerrainMeshGenerator::DERIVED_OUTPUT_DICTIONARY,
-        SU_MCP::Terrain::TerrainMeshGenerator::ADAPTIVE_PATCH_ID_KEY
-      ) == 'patch-v1-r1-c1'
-
-      refute_includes(owner.entities.groups.first.entities.faces, face)
-    end
-    assert_equal(16, adaptive_registry(owner).fetch(:patches).length)
-  end
-
   private
 
   def assert_derived_output(entity)
@@ -2410,18 +2164,6 @@ class TerrainMeshGeneratorTest < Minitest::Test # rubocop:disable Metrics/ClassL
       max_column: max_column,
       max_row: max_row
     )
-  end
-
-  def add_owned_face(entities, column:, row:, triangle:, digest:, revision:)
-    face = entities.add_face([column, row, 0], [column + 1, row, 0], [column + 1, row + 1, 0])
-    face.set_attribute('su_mcp_terrain', 'derivedOutput', true)
-    face.set_attribute('su_mcp_terrain', 'outputSchemaVersion', 1)
-    face.set_attribute('su_mcp_terrain', 'terrainStateDigest', digest)
-    face.set_attribute('su_mcp_terrain', 'terrainStateRevision', revision)
-    face.set_attribute('su_mcp_terrain', 'gridCellColumn', column)
-    face.set_attribute('su_mcp_terrain', 'gridCellRow', row)
-    face.set_attribute('su_mcp_terrain', 'gridTriangleIndex', triangle)
-    face
   end
 
   def assert_seams_coherent(faces, tolerance:)
@@ -2992,86 +2734,6 @@ class TerrainMeshGeneratorTest < Minitest::Test # rubocop:disable Metrics/ClassL
   class EntitiesWithFailingBuilder < EntitiesWithoutBuilder
     def build
       raise 'builder failed'
-    end
-  end
-
-  class FaceWithEdges
-    attr_reader :edges
-
-    def initialize(edges)
-      @edges = edges
-    end
-  end
-
-  class EdgeWithFaces
-    attr_accessor :faces
-  end
-
-  class CountingEdge < SemanticTestSupport::FakeEdge
-    attr_reader :attribute_write_count
-
-    def initialize
-      super
-      @attribute_write_count = 0
-    end
-
-    def set_attribute(dictionary_name, key, value)
-      @attribute_write_count += 1 if dictionary_name == 'su_mcp_terrain' &&
-                                     key == 'derivedOutput'
-      super
-    end
-  end
-
-  class CountingAdaptiveVertexGenerator < SU_MCP::Terrain::TerrainMeshGenerator
-    attr_reader :adaptive_vertex_call_count
-
-    def initialize
-      super
-      @adaptive_vertex_call_count = 0
-    end
-
-    private
-
-    def adaptive_vertex_for_planned_point(state, point)
-      @adaptive_vertex_call_count += 1
-      super
-    end
-  end
-
-  class RecordingOverBudgetGenerator < SU_MCP::Terrain::TerrainMeshGenerator
-    attr_reader :partial_path_calls, :full_rebuild_calls
-
-    def initialize(...)
-      super
-      @partial_path_calls = []
-      @full_rebuild_calls = []
-    end
-
-    def reset_recorded_calls!
-      @partial_path_calls.clear
-      @full_rebuild_calls.clear
-    end
-
-    private
-
-    def generate_adaptive_patches(...)
-      @full_rebuild_calls << :generate_adaptive_patches
-      super
-    end
-
-    def owned_adaptive_patch_faces(...)
-      @partial_path_calls << :ownership_lookup
-      super
-    end
-
-    def validate_adaptive_seam_plan_before_mutation(...)
-      @partial_path_calls << :seam_gate
-      super
-    end
-
-    def erase_partial_output(...)
-      @partial_path_calls << :partial_erase
-      super
     end
   end
 

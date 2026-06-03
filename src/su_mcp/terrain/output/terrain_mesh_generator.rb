@@ -10,6 +10,11 @@ require_relative 'patch_lifecycle/patch_timing'
 require_relative 'cdt/patches/cdt_lifecycle_ownership'
 require_relative 'cdt/patches/cdt_patch_batch_plan'
 require_relative 'cdt/terrain_cdt_backend'
+require_relative 'adaptive_patches/output_generator'
+require_relative 'derived_output_attributes'
+require_relative 'derived_output_entity_store'
+require_relative 'regular_grid_mesh_emitter'
+require_relative 'terrain_vertex_projector'
 require_relative 'terrain_output_plan'
 
 module SU_MCP
@@ -17,31 +22,33 @@ module SU_MCP
     # Regenerates disposable SketchUp mesh output from authoritative terrain state.
     # rubocop:disable Metrics/AbcSize, Metrics/ClassLength
     class TerrainMeshGenerator
-      DERIVED_OUTPUT_DICTIONARY = 'su_mcp_terrain'
-      DERIVED_OUTPUT_KEY = 'derivedOutput'
-      OUTPUT_SCHEMA_VERSION = 1
-      OUTPUT_SCHEMA_VERSION_KEY = 'outputSchemaVersion'
-      GRID_CELL_COLUMN_KEY = 'gridCellColumn'
-      GRID_CELL_ROW_KEY = 'gridCellRow'
-      GRID_TRIANGLE_INDEX_KEY = 'gridTriangleIndex'
-      OUTPUT_KIND_KEY = 'outputKind'
-      ADAPTIVE_PATCH_MESH_OUTPUT_KIND = 'adaptive_patch_mesh'
-      ADAPTIVE_PATCH_FACE_OUTPUT_KIND = 'adaptive_patch_face'
-      ADAPTIVE_PATCH_REGISTRY_KEY = 'adaptivePatchRegistry'
-      ADAPTIVE_PATCH_ID_KEY = 'adaptivePatchId'
-      ADAPTIVE_PATCH_FACE_INDEX_KEY = 'adaptivePatchFaceIndex'
-      ADAPTIVE_POLICY_FINGERPRINT_KEY = 'adaptiveOutputPolicyFingerprint'
-      REPLACEMENT_BATCH_ID_KEY = 'replacementBatchId'
-      TERRAIN_STATE_DIGEST_KEY = 'terrainStateDigest'
-      TERRAIN_STATE_REVISION_KEY = 'terrainStateRevision'
-      FACE_COUNT_KEY = 'faceCount'
-      CDT_PATCH_OUTPUT_KIND = 'cdt_patch_face'
-      CDT_OWNERSHIP_SCHEMA_VERSION_KEY = 'cdtOwnershipSchemaVersion'
-      CDT_PATCH_ID_KEY = 'cdtPatchId'
-      CDT_REPLACEMENT_BATCH_ID_KEY = 'cdtReplacementBatchId'
-      CDT_PATCH_FACE_INDEX_KEY = 'cdtPatchFaceIndex'
-      CDT_BORDER_SIDE_KEY = 'cdtBorderSide'
-      CDT_BORDER_SPAN_ID_KEY = 'cdtBorderSpanId'
+      DERIVED_OUTPUT_DICTIONARY = DerivedOutputAttributes::DICTIONARY
+      DERIVED_OUTPUT_KEY = DerivedOutputAttributes::DERIVED_OUTPUT_KEY
+      OUTPUT_SCHEMA_VERSION = DerivedOutputAttributes::OUTPUT_SCHEMA_VERSION
+      OUTPUT_SCHEMA_VERSION_KEY = DerivedOutputAttributes::OUTPUT_SCHEMA_VERSION_KEY
+      GRID_CELL_COLUMN_KEY = DerivedOutputAttributes::GRID_CELL_COLUMN_KEY
+      GRID_CELL_ROW_KEY = DerivedOutputAttributes::GRID_CELL_ROW_KEY
+      GRID_TRIANGLE_INDEX_KEY = DerivedOutputAttributes::GRID_TRIANGLE_INDEX_KEY
+      OUTPUT_KIND_KEY = DerivedOutputAttributes::OUTPUT_KIND_KEY
+      ADAPTIVE_PATCH_MESH_OUTPUT_KIND = DerivedOutputAttributes::ADAPTIVE_PATCH_MESH_OUTPUT_KIND
+      ADAPTIVE_PATCH_FACE_OUTPUT_KIND = DerivedOutputAttributes::ADAPTIVE_PATCH_FACE_OUTPUT_KIND
+      ADAPTIVE_PATCH_REGISTRY_KEY = DerivedOutputAttributes::ADAPTIVE_PATCH_REGISTRY_KEY
+      ADAPTIVE_PATCH_ID_KEY = DerivedOutputAttributes::ADAPTIVE_PATCH_ID_KEY
+      ADAPTIVE_PATCH_FACE_INDEX_KEY = DerivedOutputAttributes::ADAPTIVE_PATCH_FACE_INDEX_KEY
+      ADAPTIVE_POLICY_FINGERPRINT_KEY =
+        DerivedOutputAttributes::ADAPTIVE_POLICY_FINGERPRINT_KEY
+      REPLACEMENT_BATCH_ID_KEY = DerivedOutputAttributes::REPLACEMENT_BATCH_ID_KEY
+      TERRAIN_STATE_DIGEST_KEY = DerivedOutputAttributes::TERRAIN_STATE_DIGEST_KEY
+      TERRAIN_STATE_REVISION_KEY = DerivedOutputAttributes::TERRAIN_STATE_REVISION_KEY
+      FACE_COUNT_KEY = DerivedOutputAttributes::FACE_COUNT_KEY
+      CDT_PATCH_OUTPUT_KIND = DerivedOutputAttributes::CDT_PATCH_OUTPUT_KIND
+      CDT_OWNERSHIP_SCHEMA_VERSION_KEY =
+        DerivedOutputAttributes::CDT_OWNERSHIP_SCHEMA_VERSION_KEY
+      CDT_PATCH_ID_KEY = DerivedOutputAttributes::CDT_PATCH_ID_KEY
+      CDT_REPLACEMENT_BATCH_ID_KEY = DerivedOutputAttributes::CDT_REPLACEMENT_BATCH_ID_KEY
+      CDT_PATCH_FACE_INDEX_KEY = DerivedOutputAttributes::CDT_PATCH_FACE_INDEX_KEY
+      CDT_BORDER_SIDE_KEY = DerivedOutputAttributes::CDT_BORDER_SIDE_KEY
+      CDT_BORDER_SPAN_ID_KEY = DerivedOutputAttributes::CDT_BORDER_SPAN_ID_KEY
       CDT_BORDER_SIDE_DEFINITIONS = [
         ['west', 0, :min],
         ['east', 0, :max],
@@ -76,6 +83,9 @@ module SU_MCP
                    height_oracle: nil)
         @height_oracle = height_oracle || ComposedHeightOracle.build(state: state)
         @height_oracle_state = state
+        @vertex_projector = nil
+        @regular_grid_mesh_emitter = nil
+        @adaptive_patch_output_generator = nil
         @last_cdt_failure_reason = nil
         @last_adaptive_patch_timing = nil
         @last_adaptive_seam_validation_summary = nil
@@ -104,8 +114,8 @@ module SU_MCP
 
         rows = state.dimensions.fetch('rows')
         columns = state.dimensions.fetch('columns')
-        vertices = vertices_for(state, columns, rows)
-        emit_faces_via_builder(
+        vertices = vertex_projector.vertices_for(state, columns, rows)
+        regular_grid_mesh_emitter.emit_faces_via_builder(
           owner.entities,
           vertices,
           columns,
@@ -121,13 +131,13 @@ module SU_MCP
       def generate_bulk_candidate(owner:, state:, terrain_state_summary:)
         rows = state.dimensions.fetch('rows')
         columns = state.dimensions.fetch('columns')
-        vertices = vertices_for(state, columns, rows)
+        vertices = vertex_projector.vertices_for(state, columns, rows)
         output_plan = TerrainOutputPlan.full_grid(
           state: state,
           terrain_state_summary: terrain_state_summary
         )
 
-        emit_faces_via_builder(
+        regular_grid_mesh_emitter.emit_faces_via_builder(
           owner.entities,
           vertices,
           columns,
@@ -145,10 +155,13 @@ module SU_MCP
                      feature_context: nil, height_oracle: nil)
         @height_oracle = height_oracle || ComposedHeightOracle.build(state: state)
         @height_oracle_state = state
+        @vertex_projector = nil
+        @regular_grid_mesh_emitter = nil
+        @adaptive_patch_output_generator = nil
         @last_cdt_failure_reason = nil
         @last_adaptive_patch_timing = nil
         @last_adaptive_seam_validation_summary = nil
-        unsupported = unsupported_child_types(owner.entities)
+        unsupported = derived_output_store.unsupported_child_types(owner.entities)
         return unsupported_children_refusal(unsupported) unless unsupported.empty?
         return no_data_refusal if adaptive_state?(state) && state.elevations.any?(&:nil?)
 
@@ -179,7 +192,10 @@ module SU_MCP
         )
         return partial_result if partial_result
 
-        erase_entities(owner.entities, derived_output_entities(owner.entities))
+        derived_output_store.erase_entities(
+          owner.entities,
+          derived_output_store.derived_output_entities(owner.entities)
+        )
         generate(
           owner: owner,
           state: state,
@@ -192,6 +208,40 @@ module SU_MCP
 
       attr_reader :length_converter, :cdt_backend, :cdt_patch_replacement_provider,
                   :seam_validator, :height_oracle
+
+      def derived_output_store
+        @derived_output_store ||= DerivedOutputEntityStore.new
+      end
+
+      def vertex_projector
+        @vertex_projector ||= TerrainVertexProjector.new(
+          length_converter: length_converter,
+          height_oracle: height_oracle,
+          height_oracle_state: @height_oracle_state
+        )
+      end
+
+      def regular_grid_mesh_emitter
+        @regular_grid_mesh_emitter ||= RegularGridMeshEmitter.new(
+          derived_output_store: derived_output_store,
+          vertex_projector: vertex_projector
+        )
+      end
+
+      def adaptive_patch_output_generator
+        @adaptive_patch_output_generator ||= AdaptivePatches::OutputGenerator.new(
+          derived_output_store: derived_output_store,
+          mesh_emitter: regular_grid_mesh_emitter,
+          vertex_projector: vertex_projector,
+          patch_registry_store: patch_registry_store
+        )
+      end
+
+      def apply_adaptive_patch_output(output)
+        @last_adaptive_patch_timing = output.timing
+        @last_adaptive_seam_validation_summary = output.seam_validation_summary
+        output.result
+      end
 
       def fallback_on_cdt_failure?
         @fallback_on_cdt_failure == true
@@ -258,7 +308,10 @@ module SU_MCP
                                   timing: nil, replace_existing: false)
         unless output_plan.adaptive_patch_policy
           if replace_existing
-            erase_entities(owner.entities, derived_output_entities(owner.entities))
+            derived_output_store.erase_entities(
+              owner.entities,
+              derived_output_store.derived_output_entities(owner.entities)
+            )
           end
           return emit_cdt_mesh_via_builder(owner.entities, mesh)
         end
@@ -270,7 +323,10 @@ module SU_MCP
         emitted_faces = nil
         timing.measure(:mutation) do
           if replace_existing
-            erase_entities(owner.entities, derived_output_entities(owner.entities))
+            derived_output_store.erase_entities(
+              owner.entities,
+              derived_output_store.derived_output_entities(owner.entities)
+            )
           end
           emitted_faces = emit_cdt_mesh_via_builder(
             owner.entities,
@@ -462,8 +518,12 @@ module SU_MCP
         return nil if fallback
 
         timing.measure(:mutation) do
-          erase_entities(owner.entities, derived_output_entities(owner.entities)) if
-            replace_existing
+          if replace_existing
+            derived_output_store.erase_entities(
+              owner.entities,
+              derived_output_store.derived_output_entities(owner.entities)
+            )
+          end
           emitted_faces = emit_cdt_mesh_via_builder(
             owner.entities,
             replacement.mesh,
@@ -553,7 +613,7 @@ module SU_MCP
           timing.measure(:registry_write) do
             write_cdt_patch_registry(owner: owner, replacement: replacement, faces: emitted_faces)
           end
-          cleanup_orphan_derived_edges(owner.entities)
+          derived_output_store.cleanup_orphan_derived_edges(owner.entities)
         end
       end
 
@@ -775,10 +835,10 @@ module SU_MCP
           vertex.map(&:to_f)
         end
         vertices = raw_vertices.map do |vertex|
-          vertex.map { |coordinate| internal_length(coordinate) }
+          vertex.map { |coordinate| vertex_projector.internal_length(coordinate) }
         end
         mesh.fetch(:triangles).each_with_index.map do |triangle, index|
-          add_derived_face(
+          regular_grid_mesh_emitter.add_derived_face(
             face_target,
             *triangle.map { |index| vertices.fetch(index) },
             ownership: cdt_face_ownership(ownership, index, raw_vertices, triangle)
@@ -788,14 +848,20 @@ module SU_MCP
 
       def generate_adaptive(owner:, state:, output_plan:)
         if output_plan.adaptive_patch_policy
-          return generate_adaptive_patches(
-            owner: owner,
-            state: state,
-            output_plan: output_plan
+          return apply_adaptive_patch_output(
+            adaptive_patch_output_generator.generate(
+              owner: owner,
+              state: state,
+              output_plan: output_plan
+            )
           )
         end
 
-        emit_adaptive_faces_via_builder(owner.entities, state, output_plan.adaptive_cells)
+        regular_grid_mesh_emitter.emit_adaptive_faces_via_builder(
+          owner.entities,
+          state,
+          output_plan.adaptive_cells
+        )
         generated_result(output_plan)
       end
 
@@ -803,512 +869,20 @@ module SU_MCP
         return no_data_refusal if state.elevations.any?(&:nil?)
 
         if output_plan.adaptive_patch_policy
-          return regenerate_adaptive_patches(
-            owner: owner,
-            state: state,
-            output_plan: output_plan
-          )
-        end
-
-        erase_entities(owner.entities, derived_output_entities(owner.entities))
-        generate_adaptive(owner: owner, state: state, output_plan: output_plan)
-      end
-
-      def generate_adaptive_patches(owner:, state:, output_plan:)
-        timing = PatchLifecycle::PatchTiming.new
-        output_plan = timing.measure(:adaptivePlanning) do
-          full_adaptive_rebuild_plan(state, output_plan)
-        end
-        @last_adaptive_seam_validation_summary = adaptive_seam_validation_summary(
-          output_plan
-        )
-        patches = timing.measure(:dirtyWindowMapping) do
-          output_plan.adaptive_patch_policy.patch_domains(state.dimensions)
-        end
-        planned = timing.measure(:adaptivePlanning) do
-          planned_adaptive_patch_batch(
-            state: state,
-            output_plan: output_plan,
-            patches: patches
-          )
-        end
-        timing.measure(:mutation) do
-          erase_entities(owner.entities, derived_output_entities(owner.entities))
-          mesh = owner.entities.add_group
-          mark_adaptive_patch_mesh(
-            mesh,
-            batch_id: adaptive_replacement_batch_id(output_plan),
-            output_plan: output_plan,
-            face_count: 0
-          )
-          emit_planned_adaptive_patch_faces(mesh.entities, planned.fetch(:faces))
-          write_adaptive_patch_registry(
-            owner: owner,
-            output_plan: output_plan,
-            patches: planned.fetch(:patches)
-          )
-          mark_adaptive_patch_mesh(
-            mesh,
-            batch_id: adaptive_replacement_batch_id(output_plan),
-            output_plan: output_plan,
-            face_count: entity_faces(mesh.entities).length
-          )
-        end
-        @last_adaptive_patch_timing = timing.to_h
-        generated_result(output_plan)
-      end
-
-      def regenerate_adaptive_patches(owner:, state:, output_plan:)
-        return generate_adaptive_patches(owner: owner, state: state, output_plan: output_plan) if
-          output_plan.intent != :dirty_window
-
-        timing = PatchLifecycle::PatchTiming.new
-        resolution = dirty_adaptive_lifecycle_resolution(timing, output_plan, state)
-
-        mesh = adaptive_patch_mesh(owner.entities)
-        unless mesh
-          return generate_adaptive_patches(owner: owner, state: state, output_plan: output_plan)
-        end
-
-        unsupported = unsupported_child_types(mesh.entities)
-        return unsupported_children_refusal(unsupported) unless unsupported.empty?
-
-        ownership = timing.measure(:ownershipLookup) do
-          owned_adaptive_patch_faces(
-            owner: owner,
-            entities: mesh.entities,
-            patch_ids: resolution.fetch(:replacementPatchIds),
-            output_plan: output_plan
-          )
-        end
-        return cdt_ownership_refusal if ownership.fetch(:outcome) == :refused
-        return generate_adaptive_patches(owner: owner, state: state, output_plan: output_plan) if
-          ownership.fetch(:outcome) == :fallback
-
-        seam_gate = validate_adaptive_seam_plan_before_mutation(
-          owner: owner,
-          output_plan: output_plan,
-          replacement_patch_ids: resolution.fetch(:replacementPatchIds)
-        )
-        @last_adaptive_seam_validation_summary = adaptive_seam_validation_summary(
-          output_plan,
-          retained_result: seam_gate
-        )
-        return cdt_ownership_refusal unless seam_gate.fetch(:status) == :passed
-
-        patches = resolution.fetch(:replacementPatches)
-        planned = timing.measure(:adaptivePlanning) do
-          planned_adaptive_patch_batch(
-            state: state,
-            output_plan: output_plan,
-            patches: patches
-          )
-        end
-        timing.measure(:mutation) do
-          erase_partial_output(mesh.entities, ownership.fetch(:faces))
-          emit_planned_adaptive_patch_faces(mesh.entities, planned.fetch(:faces))
-          cleanup_orphan_derived_edges(mesh.entities)
-          mark_adaptive_patch_mesh(
-            mesh,
-            batch_id: adaptive_replacement_batch_id(output_plan),
-            output_plan: output_plan,
-            face_count: entity_faces(mesh.entities).length
-          )
-          write_adaptive_patch_registry(
-            owner: owner,
-            output_plan: output_plan,
-            patches: planned.fetch(:patches)
-          )
-        end
-        @last_adaptive_patch_timing = timing.to_h
-        generated_result(output_plan)
-      end
-
-      def dirty_adaptive_lifecycle_resolution(timing, output_plan, state)
-        timing.measure(:dirtyWindowMapping) do
-          adaptive_lifecycle_resolution_for(output_plan, state)
-        end
-      end
-
-      def adaptive_lifecycle_resolution_for(output_plan, state)
-        if output_plan.respond_to?(:adaptive_lifecycle_resolution) &&
-           output_plan.adaptive_lifecycle_resolution
-          return output_plan.adaptive_lifecycle_resolution
-        end
-
-        PatchLifecycle::PatchWindowResolver.new(
-          policy: output_plan.adaptive_patch_policy,
-          dimensions: state.dimensions
-        ).resolve(cell_window: output_plan.cell_window)
-      end
-
-      def adaptive_patch_mesh(entities)
-        entities.to_a.find do |entity|
-          derived_output?(entity) &&
-            output_attribute(entity, OUTPUT_KIND_KEY) == ADAPTIVE_PATCH_MESH_OUTPUT_KIND &&
-            entity.respond_to?(:entities)
-        end
-      end
-
-      def adaptive_patch_faces(entities, patch_ids)
-        wanted = patch_ids.to_set
-        entity_faces(entities).select do |face|
-          output_attribute(face, OUTPUT_KIND_KEY) == ADAPTIVE_PATCH_FACE_OUTPUT_KIND &&
-            wanted.include?(output_attribute(face, ADAPTIVE_PATCH_ID_KEY))
-        end
-      end
-
-      def owned_adaptive_patch_faces(owner:, entities:, patch_ids:, output_plan:)
-        faces = adaptive_patch_faces(entities, patch_ids)
-        return fallback_ownership(:missing_ownership) if faces.empty?
-
-        registry = patch_registry_store.read(owner)
-        return { outcome: :refused, reason: :registry_invalid } unless
-          registry.fetch(:status) == 'valid'
-
-        patch_face_counts = registry.fetch(:patches, []).to_h do |patch|
-          [patch.fetch(:patchId), patch.fetch(:faceCount)]
-        end
-        faces_by_patch = faces.group_by { |face| output_attribute(face, ADAPTIVE_PATCH_ID_KEY) }
-        patch_ids.each do |patch_id|
-          patch_faces = faces_by_patch.fetch(patch_id, [])
-          return { outcome: :refused, reason: :ownership_integrity_mismatch } unless
-            adaptive_patch_ownership_complete?(
-              patch_faces,
-              expected_face_count: patch_face_counts.fetch(patch_id, nil),
+          return apply_adaptive_patch_output(
+            adaptive_patch_output_generator.regenerate(
+              owner: owner,
+              state: state,
               output_plan: output_plan
             )
-        end
-
-        { outcome: :owned, faces: faces }
-      end
-
-      def adaptive_patch_ownership_complete?(faces, expected_face_count:, output_plan:)
-        return false unless expected_face_count.is_a?(Integer) && expected_face_count.positive?
-        return false unless faces.length == expected_face_count
-
-        indexes = []
-        faces.each do |face|
-          return false unless adaptive_owned_face_complete?(face, output_plan)
-
-          indexes << output_attribute(face, ADAPTIVE_PATCH_FACE_INDEX_KEY)
-        end
-        indexes.sort == (0...expected_face_count).to_a
-      end
-
-      def adaptive_owned_face_complete?(face, output_plan)
-        output_attribute(face, DERIVED_OUTPUT_KEY) == true &&
-          output_attribute(face, OUTPUT_KIND_KEY) == ADAPTIVE_PATCH_FACE_OUTPUT_KIND &&
-          !output_attribute(face, ADAPTIVE_PATCH_ID_KEY).nil? &&
-          output_attribute(face, ADAPTIVE_PATCH_FACE_INDEX_KEY).is_a?(Integer) &&
-          !output_attribute(face, REPLACEMENT_BATCH_ID_KEY).nil? &&
-          output_attribute(face, TERRAIN_STATE_DIGEST_KEY).is_a?(String) &&
-          output_attribute(face, ADAPTIVE_POLICY_FINGERPRINT_KEY) ==
-            output_plan.adaptive_patch_policy.output_policy_fingerprint
-      end
-
-      def emit_adaptive_patch_batch(owner:, mesh:, state:, output_plan:, patches:)
-        planned = planned_adaptive_patch_batch(
-          state: state,
-          output_plan: output_plan,
-          patches: patches
-        )
-        emit_planned_adaptive_patch_faces(mesh.entities, planned.fetch(:faces))
-        write_adaptive_patch_registry(
-          owner: owner,
-          output_plan: output_plan,
-          patches: planned.fetch(:patches)
-        )
-      end
-
-      def planned_adaptive_patch_batch(state:, output_plan:, patches:)
-        patch_records = []
-        batch_id = adaptive_replacement_batch_id(output_plan)
-        policy_fingerprint = output_plan.adaptive_patch_policy.output_policy_fingerprint
-        vertex_cache = {}
-        face_plans = patches.flat_map do |patch|
-          cells = adaptive_cells_for_patch(output_plan.adaptive_cells, patch)
-          next [] if cells.empty?
-
-          faces = planned_adaptive_patch_faces(
-            state,
-            cells,
-            patch_id: patch.fetch(:patchId),
-            batch_id: batch_id,
-            state_digest: output_plan.state_digest,
-            policy_fingerprint: policy_fingerprint,
-            vertex_cache: vertex_cache
           )
-          patch_records << adaptive_registry_patch_record(
-            patch: patch,
-            batch_id: batch_id,
-            face_count: faces.length,
-            seam_records: adaptive_seam_records_for(output_plan).select do |record|
-              record.fetch(:patchId) == patch.fetch(:patchId)
-            end
-          )
-          faces
         end
-        { faces: face_plans, patches: patch_records }
-      end
 
-      def validate_adaptive_seam_plan_before_mutation(
-        owner:,
-        output_plan:,
-        replacement_patch_ids:
-      )
-        sealed = output_plan.sealed_adaptive_seam_plan
-        return { status: :failed, reason: :missing_seam_plan } unless sealed
-        return { status: :failed, reason: :sealed_scope_mismatch } unless
-          sealed.replacement_patch_ids.sort == replacement_patch_ids.sort
-
-        registry = patch_registry_store.read(owner)
-        return { status: :failed, reason: :registry_invalid } unless
-          registry.fetch(:status) == 'valid'
-
-        retained_seam_validation(
-          registry: registry,
-          output_plan: output_plan,
-          replacement_patch_ids: replacement_patch_ids
+        derived_output_store.erase_entities(
+          owner.entities,
+          derived_output_store.derived_output_entities(owner.entities)
         )
-      end
-
-      def retained_seam_validation(registry:, output_plan:, replacement_patch_ids:)
-        patch_records = registry.fetch(:patches, []).to_h { |patch| [patch.fetch(:patchId), patch] }
-        output_plan.adaptive_seam_records.each do |record|
-          next unless retained_neighbor_record?(record, replacement_patch_ids)
-
-          retained_patch = patch_records[record.fetch(:neighborPatchId)]
-          retained = retained_seam_record(retained_patch, record) ||
-                     legacy_retained_context_seam_record(output_plan, retained_patch, record)
-          return { status: :failed, reason: :retained_seam_missing } unless retained
-
-          result = AdaptiveSeams::AdaptiveSeamValidator.validate_retained(
-            # Pre-erase retained checks compare seam topology/digest/policy. Full z-inclusive
-            # retained validation waits for the post-emit host path so valid edits do not
-            # over-refuse before replacement geometry exists.
-            planned: record_without_z(record),
-            retained: record_without_z(retained)
-          )
-          return result unless result.fetch(:status) == :passed
-        end
-        { status: :passed }
-      end
-
-      def adaptive_seam_records_for(output_plan)
-        return [] unless output_plan.respond_to?(:adaptive_seam_records)
-
-        output_plan.adaptive_seam_records
-      end
-
-      def adaptive_seam_validation_summary(output_plan, retained_result: nil)
-        validations = Array(output_plan.adaptive_seam_validations)
-        retained = adaptive_retained_seam_entry(retained_result)
-        entries = adaptive_seam_validation_entries(validations, retained)
-        {
-          status: adaptive_seam_status(entries),
-          seamRecordCount: adaptive_seam_records_for(output_plan).length,
-          validationCount: validations.length,
-          replacementPatchCount: adaptive_seam_replacement_patch_count(output_plan),
-          maxZGap: adaptive_seam_max_z_gap(entries),
-          mismatchCategory: adaptive_seam_mismatch_category(entries),
-          sameBatch: adaptive_same_batch_seam_entries(entries, validations.length),
-          retained: retained
-        }.compact
-      end
-
-      def adaptive_retained_seam_entry(retained_result)
-        return nil unless retained_result
-
-        adaptive_seam_validation_entry(retained_result)
-      end
-
-      def adaptive_seam_validation_entries(validations, retained)
-        entries = validations.map { |validation| adaptive_seam_validation_entry(validation) }
-        retained ? entries + [retained] : entries
-      end
-
-      def adaptive_seam_status(entries)
-        entries.any? { |entry| entry.fetch(:status) == 'failed' } ? 'failed' : 'passed'
-      end
-
-      def adaptive_seam_max_z_gap(entries)
-        entries.map { |entry| entry.fetch(:maxZGap, 0.0).to_f }.max || 0.0
-      end
-
-      def adaptive_seam_mismatch_category(entries)
-        entries.find { |entry| entry[:mismatchCategory] }&.fetch(:mismatchCategory)
-      end
-
-      def adaptive_same_batch_seam_entries(entries, count)
-        return nil if entries.empty?
-
-        entries.first(count)
-      end
-
-      def adaptive_seam_validation_entry(validation)
-        {
-          status: validation.fetch(:status).to_s,
-          comparisonMode: validation.fetch(:comparisonMode, nil),
-          mismatchCategory: validation.fetch(:mismatchCategory, nil),
-          reason: validation.fetch(:reason, nil)&.to_s,
-          maxZGap: validation.fetch(:maxZGap, 0.0).to_f
-        }.compact
-      end
-
-      def adaptive_seam_replacement_patch_count(output_plan)
-        output_plan.sealed_adaptive_seam_plan&.replacement_patch_ids&.length
-      end
-
-      def record_without_z(record)
-        record.reject { |key, _value| key.to_s == 'zValues' }
-      end
-
-      def retained_neighbor_record?(record, replacement_patch_ids)
-        record.fetch(:replacementSide, false) &&
-          record.fetch(:boundaryKind) == 'neighbor' &&
-          !replacement_patch_ids.include?(record.fetch(:neighborPatchId))
-      end
-
-      def retained_seam_record(patch_records, planned_record)
-        patch = patch_records
-        return nil unless patch && patch.fetch(:seamStatus, 'valid') == 'valid'
-
-        patch.fetch(:seamRecords, []).find do |record|
-          record.fetch(:neighborPatchId, nil) == planned_record.fetch(:patchId) &&
-            record.fetch(:edgeAxis) == planned_record.fetch(:edgeAxis) &&
-            record.fetch(:edgeIndex) == planned_record.fetch(:edgeIndex)
-        end
-      end
-
-      def legacy_retained_context_seam_record(output_plan, retained_patch, planned_record)
-        return nil unless retained_patch && retained_patch.fetch(:seamStatus, 'valid') == 'valid'
-        return nil unless retained_patch.fetch(:seamRecords, []).empty?
-
-        adaptive_seam_records_for(output_plan).find do |record|
-          !record.fetch(:replacementSide, false) &&
-            record.fetch(:patchId) == planned_record.fetch(:neighborPatchId) &&
-            record.fetch(:neighborPatchId, nil) == planned_record.fetch(:patchId) &&
-            record.fetch(:edgeAxis) == planned_record.fetch(:edgeAxis) &&
-            record.fetch(:edgeIndex) == planned_record.fetch(:edgeIndex)
-        end
-      end
-
-      def emit_planned_adaptive_patch_faces(entities, faces)
-        emitted_faces = []
-        unless entities.respond_to?(:build)
-          faces.each do |face|
-            emitted_faces << add_derived_face(
-              entities,
-              *face.fetch(:points),
-              ownership: face.fetch(:ownership),
-              mark_edges: false
-            )
-          end
-          mark_unique_derived_edges(emitted_faces)
-          return emitted_faces
-        end
-
-        entities.build do |builder|
-          faces.each do |face|
-            emitted_faces << add_derived_face(
-              builder,
-              *face.fetch(:points),
-              ownership: face.fetch(:ownership),
-              mark_edges: false
-            )
-          end
-          mark_unique_derived_edges(emitted_faces)
-        end
-      end
-
-      def planned_adaptive_patch_faces(
-        state,
-        cells,
-        patch_id:,
-        batch_id:,
-        state_digest:,
-        policy_fingerprint:,
-        vertex_cache:
-      )
-        face_index = 0
-        cells.flat_map do |cell|
-          cell.fetch(:emission_triangles).map do |triangle|
-            plan = {
-              points: triangle.map do |vertex|
-                vertex_cache[vertex] ||= adaptive_vertex_for_planned_point(state, vertex)
-              end,
-              ownership: {
-                kind: :adaptive_patch,
-                patch_id: patch_id,
-                patch_face_index: face_index,
-                replacement_batch_id: batch_id,
-                state_digest: state_digest,
-                policy_fingerprint: policy_fingerprint
-              }
-            }
-            face_index += 1
-            plan
-          end
-        end
-      end
-
-      def adaptive_cells_for_patch(cells, patch)
-        bounds = patch.fetch(:cell_bounds)
-        cells.select do |cell|
-          cell.fetch(:min_column) >= bounds.fetch(:min_column) &&
-            cell.fetch(:min_row) >= bounds.fetch(:min_row) &&
-            cell.fetch(:max_column) <= bounds.fetch(:max_column) + 1 &&
-            cell.fetch(:max_row) <= bounds.fetch(:max_row) + 1
-        end
-      end
-
-      def entity_faces(entities)
-        return entities.faces if entities.respond_to?(:faces)
-
-        entities.grep(Sketchup::Face)
-      end
-
-      def write_adaptive_patch_registry(owner:, output_plan:, patches:)
-        store = patch_registry_store
-        existing = store.read(owner)
-        retained = existing.fetch(:patches, []).reject do |patch|
-          patches.any? { |new_patch| new_patch.fetch(:patchId) == patch.fetch(:patchId) }
-        end
-        retained = retained.map do |patch|
-          adaptive_patch_record_with_current_seams(patch, output_plan)
-        end
-        store.write!(
-          owner: owner,
-          registry: {
-            outputPolicyFingerprint: output_plan.adaptive_patch_policy.output_policy_fingerprint,
-            stateDigest: output_plan.state_digest,
-            stateRevision: output_plan.state_revision,
-            ownerTransformSignature: nil,
-            patches: retained + patches
-          }
-        )
-      end
-
-      def adaptive_patch_record_with_current_seams(patch, output_plan)
-        seam_records = adaptive_seam_records_for(output_plan).select do |record|
-          record.fetch(:patchId) == patch.fetch(:patchId)
-        end
-        return patch if seam_records.empty?
-
-        patch.merge(seamRecords: seam_records, seamStatus: 'valid')
-      end
-
-      def adaptive_registry_patch_record(patch:, batch_id:, face_count:, seam_records: [])
-        {
-          patchId: patch.fetch(:patchId),
-          bounds: patch.fetch(:bounds),
-          outputBounds: patch.fetch(:bounds),
-          replacementBatchId: batch_id,
-          faceCount: face_count,
-          seamRecords: seam_records,
-          status: 'valid'
-        }
+        generate_adaptive(owner: owner, state: state, output_plan: output_plan)
       end
 
       def patch_registry_store
@@ -1365,53 +939,6 @@ module SU_MCP
         )
       end
 
-      def adaptive_replacement_batch_id(output_plan)
-        "adaptive-batch-#{output_plan.state_digest}"
-      end
-
-      def full_adaptive_rebuild_plan(state, output_plan)
-        return output_plan unless output_plan.intent == :dirty_window
-
-        TerrainOutputPlan.full_grid(
-          state: state,
-          terrain_state_summary: {
-            digest: output_plan.state_digest,
-            revision: output_plan.state_revision
-          },
-          adaptive_patch_policy: output_plan.adaptive_patch_policy
-        )
-      end
-
-      def vertices_for(state, columns, rows)
-        (0...rows).flat_map do |row|
-          (0...columns).map do |column|
-            vertex_for(state, column, row, columns)
-          end
-        end
-      end
-
-      def vertex_for(state, column, row, _columns)
-        origin = state.origin
-        spacing = state.spacing
-        [
-          internal_length(origin.fetch('x') + (column * spacing.fetch('x'))),
-          internal_length(origin.fetch('y') + (row * spacing.fetch('y'))),
-          internal_length(height_at_grid(state, column, row))
-        ]
-      end
-
-      def internal_length(value)
-        length_converter.public_meters_to_internal(value)
-      end
-
-      def each_cell(columns, rows)
-        (0...(rows - 1)).each do |row|
-          (0...(columns - 1)).each do |column|
-            yield column, row
-          end
-        end
-      end
-
       def ownership_context
         {}
       end
@@ -1420,7 +947,7 @@ module SU_MCP
         return nil unless output_plan.intent == :dirty_window
         return nil if output_plan.cell_window.empty? || output_plan.cell_window.whole_grid?
 
-        ownership = owned_faces_for_cell_window(
+        ownership = derived_output_store.owned_faces_for_cell_window(
           owner.entities,
           output_plan.cell_window
         )
@@ -1428,261 +955,17 @@ module SU_MCP
 
         rows = state.dimensions.fetch('rows')
         columns = state.dimensions.fetch('columns')
-        vertices = vertices_for(state, columns, rows)
+        vertices = vertex_projector.vertices_for(state, columns, rows)
         erase_partial_output(owner.entities, ownership.fetch(:faces))
-        emit_cell_window_via_builder(
+        regular_grid_mesh_emitter.emit_cell_window_via_builder(
           owner.entities,
           vertices,
           columns,
           output_plan.cell_window,
           ownership_context
         )
-        cleanup_orphan_derived_edges(owner.entities)
+        derived_output_store.cleanup_orphan_derived_edges(owner.entities)
         generated_result(output_plan)
-      end
-
-      def emit_faces_via_builder(entities, vertices, columns, rows, ownership)
-        unless entities.respond_to?(:build)
-          return emit_faces(entities, vertices, columns, rows, ownership)
-        end
-
-        entities.build do |builder|
-          emit_faces(builder, vertices, columns, rows, ownership)
-        end
-      end
-
-      def emit_adaptive_faces_via_builder(entities, state, cells)
-        return emit_adaptive_faces(entities, state, cells) unless entities.respond_to?(:build)
-
-        entities.build do |builder|
-          emit_adaptive_faces(builder, state, cells)
-        end
-      end
-
-      def emit_adaptive_faces(face_target, state, cells)
-        cells.each do |cell|
-          add_adaptive_cell_triangles(face_target, state, cell)
-        end
-      end
-
-      def add_adaptive_cell_triangles(entities, state, cell)
-        cell.fetch(:emission_triangles).each do |triangle|
-          add_derived_face(
-            entities,
-            *triangle.map { |vertex| adaptive_vertex_for_planned_point(state, vertex) },
-            ownership: nil
-          )
-        end
-      end
-
-      def adaptive_vertex_for_planned_point(state, point)
-        column, row = point
-        return adaptive_vertex_at(state, column, row) if column.is_a?(Integer) && row.is_a?(Integer)
-
-        adaptive_center_vertex_at(state, point)
-      end
-
-      def adaptive_vertex_at(state, column, row)
-        origin = state.origin
-        spacing = state.spacing
-        [
-          internal_length(origin.fetch('x') + (column * spacing.fetch('x'))),
-          internal_length(origin.fetch('y') + (row * spacing.fetch('y'))),
-          internal_length(height_at_grid(state, column, row))
-        ]
-      end
-
-      def adaptive_center_vertex_at(state, center)
-        column, row = center
-        origin = state.origin
-        spacing = state.spacing
-        [
-          internal_length(origin.fetch('x') + (column * spacing.fetch('x'))),
-          internal_length(origin.fetch('y') + (row * spacing.fetch('y'))),
-          internal_length(fitted_adaptive_elevation_at(state, column, row))
-        ]
-      end
-
-      def fitted_adaptive_elevation_at(state, column, row)
-        min_column = column.floor
-        min_row = row.floor
-        max_column = column.ceil
-        max_row = row.ceil
-        x_ratio = max_column == min_column ? 0.0 : column - min_column
-        y_ratio = max_row == min_row ? 0.0 : row - min_row
-        z00 = height_at_grid(state, min_column, min_row)
-        z10 = height_at_grid(state, max_column, min_row)
-        z01 = height_at_grid(state, min_column, max_row)
-        z11 = height_at_grid(state, max_column, max_row)
-        bottom = z00 + ((z10 - z00) * x_ratio)
-        top = z01 + ((z11 - z01) * x_ratio)
-        bottom + ((top - bottom) * y_ratio)
-      end
-
-      def emit_faces(face_target, vertices, columns, rows, ownership)
-        each_cell(columns, rows) do |column, row|
-          add_cell_triangles(face_target, vertices, column, row, columns, ownership)
-        end
-      end
-
-      def emit_cell_window_via_builder(entities, vertices, columns, cell_window, ownership)
-        unless entities.respond_to?(:build)
-          return emit_cell_window(entities, vertices, columns, cell_window, ownership)
-        end
-
-        entities.build do |builder|
-          emit_cell_window(builder, vertices, columns, cell_window, ownership)
-        end
-      end
-
-      def emit_cell_window(face_target, vertices, columns, cell_window, ownership)
-        cell_window.each_cell do |column, row|
-          add_cell_triangles(face_target, vertices, column, row, columns, ownership)
-        end
-      end
-
-      def add_cell_triangles(entities, vertices, column, row, columns, ownership)
-        lower_left = grid_vertex_at(vertices, column, row, columns)
-        lower_right = grid_vertex_at(vertices, column + 1, row, columns)
-        upper_left = grid_vertex_at(vertices, column, row + 1, columns)
-        upper_right = grid_vertex_at(vertices, column + 1, row + 1, columns)
-
-        add_derived_face(
-          entities,
-          lower_left,
-          lower_right,
-          upper_right,
-          ownership: face_ownership(ownership, column, row, 0)
-        )
-        add_derived_face(
-          entities,
-          lower_left,
-          upper_right,
-          upper_left,
-          ownership: face_ownership(ownership, column, row, 1)
-        )
-      end
-
-      def grid_vertex_at(vertices, column, row, columns)
-        vertices.fetch((row * columns) + column)
-      end
-
-      def face_ownership(ownership, column, row, triangle_index)
-        ownership.merge(
-          column: column,
-          row: row,
-          triangle_index: triangle_index
-        )
-      end
-
-      def add_derived_face(entities, *points, ownership:, mark_edges: true)
-        face = entities.add_face(*points)
-        normalize_upward_face!(face)
-        mark_derived(face, ownership: ownership, mark_edges: mark_edges)
-      end
-
-      def normalize_upward_face!(face)
-        return face unless face.respond_to?(:normal) && face.respond_to?(:reverse!)
-
-        normal = face.normal
-        return face unless normal.respond_to?(:z)
-
-        # Heightmap terrain is z-up; generated front faces should point upward.
-        return face unless normal.z.to_f.negative?
-
-        face.reverse!
-        face
-      end
-
-      def mark_derived(entity, ownership: nil, mark_edges: true)
-        return entity unless entity.respond_to?(:set_attribute)
-
-        entity.set_attribute(DERIVED_OUTPUT_DICTIONARY, DERIVED_OUTPUT_KEY, true)
-        entity.hidden = true if entity.is_a?(Sketchup::Edge) && entity.respond_to?(:hidden=)
-        mark_ownership(entity, ownership) if ownership
-        mark_derived_edges(entity) if mark_edges
-        entity
-      end
-
-      def mark_ownership(entity, ownership)
-        return mark_cdt_ownership(entity, ownership) if ownership[:kind] == :cdt_patch
-        return mark_adaptive_patch_ownership(entity, ownership) if
-          ownership[:kind] == :adaptive_patch
-
-        entity.set_attribute(
-          DERIVED_OUTPUT_DICTIONARY,
-          OUTPUT_SCHEMA_VERSION_KEY,
-          OUTPUT_SCHEMA_VERSION
-        )
-        entity.set_attribute(
-          DERIVED_OUTPUT_DICTIONARY,
-          GRID_CELL_COLUMN_KEY,
-          ownership.fetch(:column)
-        )
-        entity.set_attribute(DERIVED_OUTPUT_DICTIONARY, GRID_CELL_ROW_KEY, ownership.fetch(:row))
-        entity.set_attribute(
-          DERIVED_OUTPUT_DICTIONARY,
-          GRID_TRIANGLE_INDEX_KEY,
-          ownership.fetch(:triangle_index)
-        )
-      end
-
-      def mark_adaptive_patch_mesh(mesh, batch_id:, output_plan:, face_count:)
-        mark_derived(mesh)
-        mesh.set_attribute(DERIVED_OUTPUT_DICTIONARY, OUTPUT_KIND_KEY,
-                           ADAPTIVE_PATCH_MESH_OUTPUT_KIND)
-        mesh.set_attribute(DERIVED_OUTPUT_DICTIONARY, REPLACEMENT_BATCH_ID_KEY, batch_id)
-        mesh.set_attribute(DERIVED_OUTPUT_DICTIONARY, TERRAIN_STATE_DIGEST_KEY,
-                           output_plan.state_digest)
-        mesh.set_attribute(DERIVED_OUTPUT_DICTIONARY, TERRAIN_STATE_REVISION_KEY,
-                           output_plan.state_revision)
-        mesh.set_attribute(
-          DERIVED_OUTPUT_DICTIONARY,
-          ADAPTIVE_POLICY_FINGERPRINT_KEY,
-          output_plan.adaptive_patch_policy.output_policy_fingerprint
-        )
-        mesh.set_attribute(DERIVED_OUTPUT_DICTIONARY, FACE_COUNT_KEY, face_count)
-      end
-
-      def mark_adaptive_patch_ownership(entity, ownership)
-        entity.set_attribute(DERIVED_OUTPUT_DICTIONARY, OUTPUT_KIND_KEY,
-                             ADAPTIVE_PATCH_FACE_OUTPUT_KIND)
-        entity.set_attribute(DERIVED_OUTPUT_DICTIONARY, ADAPTIVE_PATCH_ID_KEY,
-                             ownership.fetch(:patch_id))
-        entity.set_attribute(DERIVED_OUTPUT_DICTIONARY, ADAPTIVE_PATCH_FACE_INDEX_KEY,
-                             ownership.fetch(:patch_face_index))
-        entity.set_attribute(DERIVED_OUTPUT_DICTIONARY, REPLACEMENT_BATCH_ID_KEY,
-                             ownership.fetch(:replacement_batch_id))
-        entity.set_attribute(DERIVED_OUTPUT_DICTIONARY, TERRAIN_STATE_DIGEST_KEY,
-                             ownership.fetch(:state_digest))
-        entity.set_attribute(DERIVED_OUTPUT_DICTIONARY, ADAPTIVE_POLICY_FINGERPRINT_KEY,
-                             ownership.fetch(:policy_fingerprint))
-      end
-
-      def mark_cdt_ownership(entity, ownership)
-        entity.set_attribute(DERIVED_OUTPUT_DICTIONARY, OUTPUT_KIND_KEY, CDT_PATCH_OUTPUT_KIND)
-        entity.set_attribute(
-          DERIVED_OUTPUT_DICTIONARY,
-          CDT_OWNERSHIP_SCHEMA_VERSION_KEY,
-          OUTPUT_SCHEMA_VERSION
-        )
-        entity.set_attribute(
-          DERIVED_OUTPUT_DICTIONARY,
-          CDT_PATCH_ID_KEY,
-          ownership.fetch(:patch_id)
-        )
-        entity.set_attribute(
-          DERIVED_OUTPUT_DICTIONARY,
-          CDT_REPLACEMENT_BATCH_ID_KEY,
-          ownership.fetch(:replacement_batch_id)
-        )
-        entity.set_attribute(
-          DERIVED_OUTPUT_DICTIONARY,
-          CDT_PATCH_FACE_INDEX_KEY,
-          ownership.fetch(:patch_face_index)
-        )
-        entity.set_attribute(DERIVED_OUTPUT_DICTIONARY, CDT_BORDER_SIDE_KEY, ownership[:side])
-        entity.set_attribute(DERIVED_OUTPUT_DICTIONARY, CDT_BORDER_SPAN_ID_KEY, ownership[:span_id])
       end
 
       def no_data_refusal
@@ -1710,53 +993,14 @@ module SU_MCP
         }
       end
 
-      def owned_faces_for_cell_window(entities, cell_window)
-        derived_faces = derived_output_entities(entities).select do |entity|
-          derived_face_entity?(entity)
-        end
-        if derived_faces.any? { |face| legacy_owned_face?(face) }
-          return fallback_ownership(:legacy_output)
-        end
-
-        faces_by_cell = Hash.new { |hash, key| hash[key] = {} }
-        derived_faces.each do |face|
-          column = output_attribute(face, GRID_CELL_COLUMN_KEY)
-          row = output_attribute(face, GRID_CELL_ROW_KEY)
-          triangle_index = output_attribute(face, GRID_TRIANGLE_INDEX_KEY)
-          next unless cell_in_window?(cell_window, column, row)
-
-          cell_faces = faces_by_cell[[column, row]]
-          return fallback_ownership(:duplicate_ownership) if cell_faces.key?(triangle_index)
-
-          cell_faces[triangle_index] = face
-        end
-
-        affected_faces = []
-        cell_window.each_cell do |column, row|
-          cell_faces = faces_by_cell[[column, row]]
-          return fallback_ownership(:incomplete_ownership) unless cell_faces.keys.sort == [0, 1]
-
-          affected_faces.push(cell_faces.fetch(0), cell_faces.fetch(1))
-        end
-
-        { outcome: :owned, faces: affected_faces }
-      end
-
-      def fallback_ownership(reason)
-        {
-          outcome: :fallback,
-          reason: reason
-        }
-      end
-
       def owned_cdt_patch_faces(owner:, entities:, patch_ids:)
         wanted = patch_ids.to_set
-        faces = derived_output_entities(entities).select do |entity|
+        faces = derived_output_store.derived_output_entities(entities).select do |entity|
           derived_face_entity?(entity) &&
             output_attribute(entity, OUTPUT_KIND_KEY) == CDT_PATCH_OUTPUT_KIND &&
             wanted.include?(output_attribute(entity, CDT_PATCH_ID_KEY))
         end
-        return fallback_ownership(:missing_ownership) if faces.empty?
+        return derived_output_store.fallback_ownership(:missing_ownership) if faces.empty?
 
         registry = patch_registry_store.read(owner)
         return { outcome: :refused, reason: :registry_invalid } unless
@@ -1805,7 +1049,7 @@ module SU_MCP
         replacement = replacement_patch_ids.to_set
         patch_domains_by_id = patch_domains_by_id(patch_domains)
         span_groups = {}
-        derived_output_entities(entities).each do |entity|
+        derived_output_store.derived_output_entities(entities).each do |entity|
           add_retained_boundary_entity!(
             span_groups: span_groups,
             entity: entity,
@@ -1925,16 +1169,11 @@ module SU_MCP
       end
 
       def state_vertex_at(state, column, row)
-        [
-          state.origin.fetch('x') + (column * state.spacing.fetch('x')),
-          state.origin.fetch('y') + (row * state.spacing.fetch('y')),
-          state.origin.fetch('z') + height_at_grid(state, column, row)
-        ]
+        vertex_projector.state_vertex_at(state, column, row)
       end
 
       def height_at_grid(state, column, row)
-        oracle = height_oracle_for(state)
-        oracle.height_at_grid(column: column, row: row)
+        vertex_projector.height_at_grid(state, column, row)
       end
 
       def height_oracle_for(state)
@@ -1970,23 +1209,15 @@ module SU_MCP
       end
 
       def legacy_owned_face?(face)
-        [
-          OUTPUT_SCHEMA_VERSION_KEY,
-          GRID_CELL_COLUMN_KEY,
-          GRID_CELL_ROW_KEY,
-          GRID_TRIANGLE_INDEX_KEY
-        ].any? { |key| output_attribute(face, key).nil? }
+        derived_output_store.legacy_owned_face?(face)
       end
 
       def cell_in_window?(cell_window, column, row)
-        return false unless column.is_a?(Integer) && row.is_a?(Integer)
-
-        column.between?(cell_window.min_column, cell_window.max_column) &&
-          row.between?(cell_window.min_row, cell_window.max_row)
+        derived_output_store.cell_in_window?(cell_window, column, row)
       end
 
       def output_attribute(entity, key)
-        entity.get_attribute(DERIVED_OUTPUT_DICTIONARY, key)
+        derived_output_store.output_attribute(entity, key)
       end
 
       def cdt_patch_ownership_context(replacement, state:)
@@ -2180,92 +1411,15 @@ module SU_MCP
       end
 
       def erase_partial_output(entities, faces)
-        erase_entities(entities, faces + edges_owned_only_by(faces))
-      end
-
-      def edges_owned_only_by(faces)
-        affected_faces = faces.to_set
-        faces.flat_map(&:edges).uniq.select do |edge|
-          edge.respond_to?(:faces) &&
-            edge.faces.respond_to?(:all?) &&
-            edge.faces.all? { |face| affected_faces.include?(face) }
-        end
-      end
-
-      def cleanup_orphan_derived_edges(entities)
-        orphan_edges = derived_output_entities(entities).select do |entity|
-          entity.is_a?(Sketchup::Edge) &&
-            entity.respond_to?(:faces) &&
-            entity.faces.empty?
-        end
-        erase_entities(entities, orphan_edges)
+        derived_output_store.erase_partial_output(entities, faces)
       end
 
       def derived_face_entity?(entity)
-        entity.is_a?(Sketchup::Face) || entity.respond_to?(:points)
-      end
-
-      def mark_derived_edges(entity)
-        return unless entity.respond_to?(:edges)
-
-        edges = entity.edges
-        return unless edges.respond_to?(:each)
-
-        edges.each { |edge| mark_derived(edge, mark_edges: false) }
-      end
-
-      def mark_unique_derived_edges(faces)
-        edges = Set.new
-        faces.each do |face|
-          next unless face.respond_to?(:edges)
-
-          face.edges.each { |edge| edges.add(edge) }
-        end
-        edges.each { |edge| mark_derived(edge, mark_edges: false) }
-      end
-
-      def derived_output_entities(entities)
-        entities.to_a.select { |entity| derived_output?(entity) }
-      end
-
-      def unsupported_child_types(entities)
-        entities.each_with_object([]) do |entity, types|
-          next if derived_output?(entity)
-
-          types << entity_type(entity)
-        end
+        derived_output_store.derived_face_entity?(entity)
       end
 
       def derived_output?(entity)
-        entity.respond_to?(:get_attribute) &&
-          entity.get_attribute(DERIVED_OUTPUT_DICTIONARY, DERIVED_OUTPUT_KEY) == true
-      end
-
-      def erase_entities(entities, output_entities)
-        return if output_entities.empty?
-
-        if entities.respond_to?(:erase_entities)
-          entities.erase_entities(output_entities)
-        else
-          output_entities.each { |entity| entities.delete_entity(entity) }
-        end
-      end
-
-      def entity_type(entity)
-        case entity
-        when Sketchup::Group
-          'group'
-        when Sketchup::ComponentInstance
-          'component_instance'
-        when Sketchup::ConstructionPoint
-          'construction_point'
-        when Sketchup::Face
-          'face'
-        when Sketchup::Edge
-          'edge'
-        else
-          entity.class.name.to_s.split('::').last.to_s
-        end
+        derived_output_store.derived_output?(entity)
       end
 
       def unsupported_children_refusal(types)

@@ -1,7 +1,7 @@
 # Task: MTA-44B Add Contained Production Feature Cut Graph Output
 **Task ID**: `MTA-44B`
 **Title**: `Add Contained Production Feature Cut Graph Output`
-**Status**: `defined`
+**Status**: `closed-blocked`
 **Priority**: `core`
 **Date**: `2026-05-28`
 
@@ -123,7 +123,7 @@ Scenario: Unsupported boundary-touching cuts skip enhancement safely
 
 ## Related Technical Plan
 
-- none yet
+- [Technical Implementation Plan](./plan.md)
 
 ## Success Metrics
 
