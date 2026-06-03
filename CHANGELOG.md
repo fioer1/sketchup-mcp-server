@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.17.1 (2026-06-03)
+
+### Refactoring
+
+- **terrain**: Split out the mesh generator
+  ([`7b5e70f`](https://github.com/SidhNor/sketchup-mcp-server/commit/7b5e70f1c187befb767c514e7c777a6be8f4ecbc))
+
+
 ## v1.17.0 (2026-06-01)
 
 ### Bug Fixes
