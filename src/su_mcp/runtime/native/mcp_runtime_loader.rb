@@ -11,7 +11,7 @@ module SU_MCP
   # Loader for the staged Ruby-native MCP runtime.
   class McpRuntimeLoader
     JSON_SCHEMA_SPEC = 'json-schema'
-    REQUIRED_GEMS = %w[public_suffix addressable rack mcp json-schema].freeze
+    REQUIRED_GEMS = %w[public_suffix addressable rack mcp json-schema rubyzip].freeze
     BASE_DIR = begin
       dir = __dir__.dup
       dir.force_encoding('UTF-8') if dir.respond_to?(:force_encoding)
@@ -24,6 +24,10 @@ module SU_MCP
     end
 
     attr_reader :vendor_root
+
+    def self.preload_layout_dependencies!
+      new.preload_layout_dependencies!
+    end
 
     def available?
       missing_gems.empty?
@@ -41,10 +45,17 @@ module SU_MCP
       json_schema_dir = find_gem_dir(JSON_SCHEMA_SPEC)
       add_lib_path(json_schema_dir)
       register_loaded_spec(JSON_SCHEMA_SPEC, json_schema_dir)
+      preload_layout_dependencies!
 
       # Loaded only after vendored runtime paths have been added.
       require 'mcp' # NOSONAR
       require 'mcp/server/transports/streamable_http_transport' # NOSONAR
+    end
+
+    def preload_layout_dependencies!
+      rubyzip_dir = find_gem_dir('rubyzip', raise_on_missing: false)
+      add_lib_path(rubyzip_dir) if rubyzip_dir
+      require 'zip' # NOSONAR
     end
 
     def build_transport(handlers: nil, ping_handler: nil, scene_info_handler: nil)

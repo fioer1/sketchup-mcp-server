@@ -14,7 +14,7 @@ class RuntimePackageManifestTest < Minitest::Test
 
     gem_names = gems.map { |entry| entry.fetch('name') }.sort
 
-    assert_equal(%w[addressable json-schema mcp public_suffix rack], gem_names)
+    assert_equal(%w[addressable json-schema mcp public_suffix rack rubyzip], gem_names)
 
     gems.each do |entry|
       assert_match(/\A\d+\.\d+\.\d+/, entry.fetch('version'))

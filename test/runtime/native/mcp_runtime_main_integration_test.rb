@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+$LOAD_PATH.unshift(File.expand_path('../..', __dir__))
+
 require_relative '../../test_helper'
 require_relative '../../../src/su_mcp/main'
 
@@ -66,6 +68,18 @@ class McpRuntimeMainIntegrationTest < Minitest::Test
     refute_includes(main_source, "require_relative 'transport/socket_server'")
     refute_match(/\bsocket_server\b/, main_source)
     refute_match(/\bBridge\b/, main_source)
+  end
+
+  def test_main_preloads_layout_dependencies_before_loading_the_runtime_facade
+    main_source = File.read(File.expand_path('../../../src/su_mcp/main.rb', __dir__),
+                            encoding: 'utf-8')
+
+    preload_index = main_source.index('McpRuntimeLoader.preload_layout_dependencies!')
+    facade_require_index = main_source.index("require_relative 'runtime/native/mcp_runtime_facade'")
+
+    refute_nil(preload_index)
+    refute_nil(facade_require_index)
+    assert_operator(preload_index, :<, facade_require_index)
   end
 
   def test_auto_start_runs_only_when_native_runtime_is_available

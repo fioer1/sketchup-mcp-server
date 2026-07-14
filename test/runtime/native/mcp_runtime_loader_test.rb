@@ -33,6 +33,13 @@ class McpRuntimeLoaderTest < Minitest::Test
     transform_entities
     get_selection
     set_material
+    layout_get_document_info
+    layout_list_pages
+    layout_inspect_page
+    layout_find_text
+    layout_copy_document
+    layout_replace_text
+    layout_validate_document
     eval_ruby
   ].freeze
 
@@ -141,6 +148,10 @@ class McpRuntimeLoaderTest < Minitest::Test
       refute(loader.available?)
       assert_includes(loader.missing_gems, 'mcp')
     end
+  end
+
+  def test_required_gems_include_rubyzip_for_layout_document_commands
+    assert_includes(SU_MCP::McpRuntimeLoader::REQUIRED_GEMS, 'rubyzip')
   end
 
   def test_load_registers_vendored_dependencies_and_runtime_load_paths

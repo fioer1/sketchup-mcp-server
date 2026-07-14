@@ -2,10 +2,13 @@
 
 require 'sketchup'
 require_relative 'runtime/native/mcp_runtime_config'
+require_relative 'runtime/native/mcp_runtime_loader'
+
+SU_MCP::McpRuntimeLoader.preload_layout_dependencies!
+
 require_relative 'runtime/native/mcp_runtime_facade'
 require_relative 'runtime/native/mcp_runtime_http_backend'
 require_relative 'runtime/native/mcp_runtime_lifecycle_observer'
-require_relative 'runtime/native/mcp_runtime_loader'
 require_relative 'runtime/native/mcp_runtime_server'
 require_relative 'runtime/runtime_logger'
 require_relative 'terrain/ui/installer'

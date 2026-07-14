@@ -31,7 +31,7 @@ class RuntimePackageVendorStagerTest < Minitest::Test
       vendor_root = stager.stage!
 
       assert_equal(1, command_calls.length)
-      assert_equal(['gem', 'fetch', 'demo', '--version', '1.2.3', '--clear-sources', '--source',
+      assert_equal([gem_fetch_executable, 'fetch', 'demo', '--version', '1.2.3', '--clear-sources', '--source',
                     'https://rubygems.org'], command_calls.first[:command])
       assert(File.file?(File.join(vendor_root, 'demo-1.2.3', 'lib', 'demo.rb')))
       assert(File.file?(File.join(vendor_root, 'demo-1.2.3', 'schemas', 'tool.json')))
@@ -134,5 +134,11 @@ class RuntimePackageVendorStagerTest < Minitest::Test
       File.write(File.join(destination, 'schemas', 'tool.json'), "{}\n")
       File.write(File.join(destination, 'test', 'demo_test.rb'), "# noop\n")
     end
+  end
+
+  def gem_fetch_executable
+    return 'gem' unless Gem.win_platform?
+
+    File.join(Gem.bindir, 'gem.cmd')
   end
 end

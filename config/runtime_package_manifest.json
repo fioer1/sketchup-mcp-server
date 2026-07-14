@@ -30,6 +30,15 @@
       "runtime_exceptions": []
     },
     {
+      "name": "rubyzip",
+      "version": "2.4.1",
+      "sha256": "8577c88edc1fde8935eb91064c5cb1aef9ad5494b940cf19c775ee833e075615",
+      "require_paths": [
+        "lib"
+      ],
+      "runtime_exceptions": []
+    },
+    {
       "name": "addressable",
       "version": "2.9.0",
       "sha256": "7fdf6ac3660f7f4e867a0838be3f6cf722ace541dd97767fa42bc6cfa980c7af",

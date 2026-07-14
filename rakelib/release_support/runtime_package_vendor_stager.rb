@@ -62,7 +62,7 @@ module ReleaseSupport
       FileUtils.mkdir_p(downloads_root)
       command_runner.call(
         command: [
-          'gem',
+          gem_fetch_executable,
           'fetch',
           entry.fetch('name'),
           '--version',
@@ -79,6 +79,12 @@ module ReleaseSupport
 
     def resolve_local_archive(entry)
       ReleaseSupport::ROOT.join("#{entry.fetch('name')}-#{entry.fetch('version')}.gem").to_s
+    end
+
+    def gem_fetch_executable
+      return 'gem' unless Gem.win_platform?
+
+      File.join(Gem.bindir, 'gem.cmd')
     end
 
     def verify_checksum!(archive_path, expected_sha256)
