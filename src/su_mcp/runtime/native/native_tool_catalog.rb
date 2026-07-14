@@ -421,6 +421,37 @@ module SU_MCP
           annotations: { read_only_hint: true, destructive_hint: false },
           classification: 'first_class',
           input_schema: layout_find_text_schema
+        ),
+        tool_entry(
+          name: 'layout_copy_document',
+          title: 'Copy LayOut Document',
+          description: 'Copy a .layout source file to an explicit output path and validate ' \
+                       'the copied document. This tool never writes to the source file.',
+          handler_key: :layout_copy_document,
+          annotations: { read_only_hint: false, destructive_hint: false },
+          classification: 'first_class',
+          input_schema: layout_copy_document_schema
+        ),
+        tool_entry(
+          name: 'layout_replace_text',
+          title: 'Replace Text In LayOut Copy',
+          description: 'Create a new .layout output file by replacing exact text in XML ' \
+                       'archive entries only, then validate the output document. Binary ' \
+                       'entries are copied without text decoding.',
+          handler_key: :layout_replace_text,
+          annotations: { read_only_hint: false, destructive_hint: false },
+          classification: 'first_class',
+          input_schema: layout_replace_text_schema
+        ),
+        tool_entry(
+          name: 'layout_validate_document',
+          title: 'Validate LayOut Document',
+          description: 'Validate that a .layout document is readable and return page count, ' \
+                       'page size evidence, and page names without mutating the file.',
+          handler_key: :layout_validate_document,
+          annotations: { read_only_hint: true, destructive_hint: false },
+          classification: 'first_class',
+          input_schema: layout_path_schema
         )
       ]
     end
@@ -505,6 +536,36 @@ module SU_MCP
           caseSensitive: boolean_schema
         },
         additionalProperties: false
+      }
+    end
+
+    def layout_copy_document_schema
+      {
+        type: 'object',
+        required: %w[sourcePath outputPath],
+        properties: layout_source_output_properties,
+        additionalProperties: false
+      }
+    end
+
+    def layout_replace_text_schema
+      {
+        type: 'object',
+        required: %w[sourcePath outputPath findText replaceText],
+        properties: layout_source_output_properties.merge(
+          findText: described_schema(string_schema, 'Exact text to find in XML archive entries.'),
+          replaceText: described_schema(string_schema, 'Replacement text written to XML entries.'),
+          allowNoop: described_schema(boolean_schema, 'Allow successful output when no matches exist.')
+        ),
+        additionalProperties: false
+      }
+    end
+
+    def layout_source_output_properties
+      {
+        sourcePath: described_schema(string_schema, 'Existing source .layout file path.'),
+        outputPath: described_schema(string_schema, 'Output .layout file path. Must differ from sourcePath.'),
+        overwriteOutput: described_schema(boolean_schema, 'When true, allows replacing an existing output file.')
       }
     end
 

@@ -29,6 +29,9 @@ Current tools include:
 - `layout_list_pages`
 - `layout_inspect_page`
 - `layout_find_text`
+- `layout_copy_document`
+- `layout_replace_text`
+- `layout_validate_document`
 - `eval_ruby`
 
 ## MCP prompts
@@ -388,11 +391,11 @@ between controls, not as a terrain validation verdict or pass/fail policy.
 - `set_material` applies a material to one explicitly referenced supported group/component instance.
 - All three tools use canonical `targetReference` with `sourceElementId`, `persistentId`, or compatibility `entityId`.
 
-#### LayOut document audit
+#### LayOut document audit and safe copy edits
 
-The `layout_*` tools inspect `.layout` packages read-only. They open the LayOut document as an
-archive, summarize page XML evidence, and return JSON-serializable results without editing or
-rewriting the file.
+The `layout_*` tools inspect `.layout` packages as archives, summarize page XML evidence, and
+return JSON-serializable results. Write-capable tools always require an explicit `outputPath`;
+they never write to the source `.layout` file.
 
 - `layout_get_document_info` returns page count, page-size evidence, file size, and archive entry
   summaries.
@@ -402,9 +405,15 @@ rewriting the file.
   XML tag counts, and referenced resource paths.
 - `layout_find_text` searches page XML text and returns page-scoped snippets. Matching is
   case-insensitive unless `caseSensitive` is true.
+- `layout_copy_document` copies a source `.layout` document to a different explicit output path
+  and validates the copy.
+- `layout_replace_text` creates a new `.layout` output by replacing exact text in XML archive
+  entries only, copying binary entries byte-for-byte, then validating the output.
+- `layout_validate_document` validates that a `.layout` document can be read and returns document
+  summary evidence without mutating the file.
 
-These tools are for document audit and preparation work. They do not automate the LayOut
-application, replace viewports, update dimensions, or write `.layout` files.
+These tools are for document audit and narrow template text preparation. They do not automate the
+LayOut application, replace viewports, update dimensions, edit references, or modify page geometry.
 
 #### `eval_ruby`
 
@@ -447,6 +456,34 @@ when moving data between `eval_ruby` code and first-class MCP tool payloads.
 {
   "path": "H:/project/Design Document Template.layout",
   "query": "KITCHEN"
+}
+```
+
+### `layout_copy_document`
+
+```json
+{
+  "sourcePath": "H:/project/Design Document Template.layout",
+  "outputPath": "H:/project/output/Molina Residence.layout"
+}
+```
+
+### `layout_replace_text`
+
+```json
+{
+  "sourcePath": "H:/project/Design Document Template.layout",
+  "outputPath": "H:/project/output/Molina Residence.layout",
+  "findText": "PROJECT NAME",
+  "replaceText": "MOLINA RESIDENCE"
+}
+```
+
+### `layout_validate_document`
+
+```json
+{
+  "path": "H:/project/output/Molina Residence.layout"
 }
 ```
 

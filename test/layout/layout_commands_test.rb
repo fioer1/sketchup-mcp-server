@@ -101,6 +101,104 @@ class LayoutCommandsTest < Minitest::Test
     end
   end
 
+  def test_layout_copy_document_writes_output_and_validates_it
+    with_layout_archive do |path|
+      output_path = File.join(File.dirname(path), 'copy.layout')
+
+      result = @commands.layout_copy_document('sourcePath' => path, 'outputPath' => output_path)
+
+      assert_equal(true, result[:success])
+      assert_equal(output_path, result[:outputPath])
+      assert_equal(2, result.dig(:validation, :pageCount))
+      assert(File.exist?(output_path))
+    end
+  end
+
+  def test_layout_replace_text_writes_output_with_replacement_evidence
+    with_layout_archive do |path|
+      output_path = File.join(File.dirname(path), 'replaced.layout')
+
+      result = @commands.layout_replace_text(
+        'sourcePath' => path,
+        'outputPath' => output_path,
+        'findText' => 'Kitchen Note',
+        'replaceText' => 'Pantry Note'
+      )
+
+      assert_equal(true, result[:success])
+      assert_equal(1, result[:replacementCount])
+      assert_equal(2, result.dig(:validation, :pageCount))
+      inspect = @commands.layout_inspect_page('path' => output_path, 'pageName' => 'FLOORPLAN (PROPOSED)')
+      assert_includes(inspect[:textSnippets], 'Pantry Note')
+    end
+  end
+
+  def test_layout_validate_document_returns_page_names
+    with_layout_archive do |path|
+      result = @commands.layout_validate_document('path' => path)
+
+      assert_equal(true, result[:success])
+      assert_equal(2, result[:pageCount])
+      assert_equal(['Cover Page', 'FLOORPLAN (PROPOSED)'], result[:pageNames])
+    end
+  end
+
+  def test_layout_copy_document_refuses_missing_source_path
+    result = @commands.layout_copy_document('outputPath' => 'H:/out.layout')
+
+    assert_refusal(result, 'missing_source_path')
+  end
+
+  def test_layout_copy_document_refuses_missing_output_path
+    result = @commands.layout_copy_document('sourcePath' => 'H:/source.layout')
+
+    assert_refusal(result, 'missing_output_path')
+  end
+
+  def test_layout_copy_document_refuses_same_source_and_output
+    with_layout_archive do |path|
+      result = @commands.layout_copy_document('sourcePath' => path, 'outputPath' => path)
+
+      assert_refusal(result, 'layout_output_same_as_source')
+    end
+  end
+
+  def test_layout_copy_document_refuses_existing_output
+    with_layout_archive do |path|
+      output_path = File.join(File.dirname(path), 'existing.layout')
+      File.write(output_path, 'existing')
+
+      result = @commands.layout_copy_document('sourcePath' => path, 'outputPath' => output_path)
+
+      assert_refusal(result, 'layout_output_exists')
+    end
+  end
+
+  def test_layout_replace_text_refuses_missing_find_text
+    with_layout_archive do |path|
+      result = @commands.layout_replace_text(
+        'sourcePath' => path,
+        'outputPath' => File.join(File.dirname(path), 'out.layout'),
+        'replaceText' => 'Replacement'
+      )
+
+      assert_refusal(result, 'missing_find_text')
+    end
+  end
+
+  def test_layout_replace_text_refuses_no_replacements
+    with_layout_archive do |path|
+      result = @commands.layout_replace_text(
+        'sourcePath' => path,
+        'outputPath' => File.join(File.dirname(path), 'out.layout'),
+        'findText' => 'Not Present',
+        'replaceText' => 'Replacement'
+      )
+
+      assert_refusal(result, 'layout_no_replacements')
+    end
+  end
+
   private
 
   def assert_refusal(result, reason)

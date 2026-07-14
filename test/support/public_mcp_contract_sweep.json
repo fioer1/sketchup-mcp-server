@@ -25,7 +25,10 @@
     "layout_get_document_info",
     "layout_list_pages",
     "layout_inspect_page",
-    "layout_find_text"
+    "layout_find_text",
+    "layout_copy_document",
+    "layout_replace_text",
+    "layout_validate_document"
   ],
   "removed_tools": [
     {

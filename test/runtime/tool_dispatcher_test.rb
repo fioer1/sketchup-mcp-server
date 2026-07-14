@@ -182,6 +182,21 @@ class ToolDispatcherTest < Minitest::Test
       @calls << [:layout_find_text, args]
       { success: true, matchCount: 1, query: args['query'] }
     end
+
+    def layout_copy_document(args)
+      @calls << [:layout_copy_document, args]
+      { success: true, outputPath: args['outputPath'] }
+    end
+
+    def layout_replace_text(args)
+      @calls << [:layout_replace_text, args]
+      { success: true, replacementCount: 1, outputPath: args['outputPath'] }
+    end
+
+    def layout_validate_document(args)
+      @calls << [:layout_validate_document, args]
+      { success: true, path: args['path'], pageCount: 2 }
+    end
     # rubocop:enable Naming/AccessorMethodName
 
     private :get_scene_info, :transform_entities, :selection_info, :find_entities,
@@ -193,7 +208,8 @@ class ToolDispatcherTest < Minitest::Test
             :curate_staged_asset, :list_staged_assets, :instantiate_staged_asset,
             :set_entity_metadata, :apply_material,
             :layout_get_document_info, :layout_list_pages, :layout_inspect_page,
-            :layout_find_text
+            :layout_find_text, :layout_copy_document, :layout_replace_text,
+            :layout_validate_document
   end
 
   def setup
@@ -715,6 +731,38 @@ class ToolDispatcherTest < Minitest::Test
 
     assert_equal({ success: true, matchCount: 1, query: 'kitchen' }, result)
     assert_equal([[:layout_find_text, payload]], @target.calls.last(1))
+  end
+
+  def test_dispatches_layout_copy_document_to_layout_command
+    payload = { 'sourcePath' => 'H:/source.layout', 'outputPath' => 'H:/copy.layout' }
+
+    result = @dispatcher.call('layout_copy_document', payload)
+
+    assert_equal({ success: true, outputPath: 'H:/copy.layout' }, result)
+    assert_equal([[:layout_copy_document, payload]], @target.calls.last(1))
+  end
+
+  def test_dispatches_layout_replace_text_to_layout_command
+    payload = {
+      'sourcePath' => 'H:/source.layout',
+      'outputPath' => 'H:/copy.layout',
+      'findText' => 'A',
+      'replaceText' => 'B'
+    }
+
+    result = @dispatcher.call('layout_replace_text', payload)
+
+    assert_equal({ success: true, replacementCount: 1, outputPath: 'H:/copy.layout' }, result)
+    assert_equal([[:layout_replace_text, payload]], @target.calls.last(1))
+  end
+
+  def test_dispatches_layout_validate_document_to_layout_command
+    payload = { 'path' => 'H:/copy.layout' }
+
+    result = @dispatcher.call('layout_validate_document', payload)
+
+    assert_equal({ success: true, path: 'H:/copy.layout', pageCount: 2 }, result)
+    assert_equal([[:layout_validate_document, payload]], @target.calls.last(1))
   end
 
   def test_raises_for_unknown_tool

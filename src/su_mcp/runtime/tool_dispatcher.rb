@@ -28,6 +28,9 @@ module SU_MCP
       'layout_list_pages' => :layout_list_pages,
       'layout_inspect_page' => :layout_inspect_page,
       'layout_find_text' => :layout_find_text,
+      'layout_copy_document' => :layout_copy_document,
+      'layout_replace_text' => :layout_replace_text,
+      'layout_validate_document' => :layout_validate_document,
       'eval_ruby' => :eval_ruby
     }.freeze
 
