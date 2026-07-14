@@ -1,0 +1,47 @@
+# frozen_string_literal: true
+
+require_relative '../../test_helper'
+require_relative '../../../src/su_mcp/runtime/native/native_tool_catalog'
+
+class NativeToolCatalogTest < Minitest::Test
+  LAYOUT_TOOLS = %w[
+    layout_get_document_info
+    layout_list_pages
+    layout_inspect_page
+    layout_find_text
+  ].freeze
+
+  def test_catalog_exposes_read_only_layout_tools
+    tools = SU_MCP::NativeToolCatalog.new.entries
+    names = tools.map { |tool| tool.fetch(:name) }
+
+    LAYOUT_TOOLS.each do |name|
+      assert_includes(names, name)
+      tool = tools.find { |entry| entry.fetch(:name) == name }
+      assert_equal('first_class', tool.fetch(:classification))
+      assert_equal(true, tool.dig(:metadata, :annotations, :read_only_hint))
+      assert_equal(false, tool.dig(:metadata, :annotations, :destructive_hint))
+      assert_includes(tool.dig(:input_schema, :required), 'path')
+    end
+  end
+
+  def test_layout_inspect_page_schema_accepts_page_name_or_index
+    tool = SU_MCP::NativeToolCatalog
+           .new
+           .entries
+           .find { |entry| entry.fetch(:name) == 'layout_inspect_page' }
+
+    properties = tool.fetch(:input_schema).fetch(:properties)
+    assert_includes(properties.keys, :pageName)
+    assert_includes(properties.keys, :pageIndex)
+  end
+
+  def test_layout_find_text_schema_requires_query
+    tool = SU_MCP::NativeToolCatalog
+           .new
+           .entries
+           .find { |entry| entry.fetch(:name) == 'layout_find_text' }
+
+    assert_includes(tool.fetch(:input_schema).fetch(:required), 'query')
+  end
+end

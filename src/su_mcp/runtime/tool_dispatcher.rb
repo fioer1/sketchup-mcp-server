@@ -24,6 +24,10 @@ module SU_MCP
       'transform_entities' => :transform_entities,
       'get_selection' => :selection_info,
       'set_material' => :apply_material,
+      'layout_get_document_info' => :layout_get_document_info,
+      'layout_list_pages' => :layout_list_pages,
+      'layout_inspect_page' => :layout_inspect_page,
+      'layout_find_text' => :layout_find_text,
       'eval_ruby' => :eval_ruby
     }.freeze
 

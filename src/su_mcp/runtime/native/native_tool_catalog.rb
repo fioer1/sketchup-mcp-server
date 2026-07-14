@@ -18,6 +18,7 @@ module SU_MCP
         primary_tool_catalog +
         scene_tool_catalog +
         mutation_tool_catalog +
+        layout_tool_catalog +
         developer_tool_catalog
       ).freeze
     end
@@ -377,6 +378,53 @@ module SU_MCP
       ]
     end
 
+    def layout_tool_catalog
+      [
+        tool_entry(
+          name: 'layout_get_document_info',
+          title: 'Get LayOut Document Info',
+          description: 'Inspect a .layout document read-only and return page count, ' \
+                       'page size evidence, and archive entry summaries. This tool does ' \
+                       'not modify the LayOut file.',
+          handler_key: :layout_get_document_info,
+          annotations: { read_only_hint: true, destructive_hint: false },
+          classification: 'first_class',
+          input_schema: layout_path_schema
+        ),
+        tool_entry(
+          name: 'layout_list_pages',
+          title: 'List LayOut Pages',
+          description: 'List pages in a .layout document read-only, preserving document ' \
+                       'order and returning page names, XML paths, and basic text counts.',
+          handler_key: :layout_list_pages,
+          annotations: { read_only_hint: true, destructive_hint: false },
+          classification: 'first_class',
+          input_schema: layout_path_schema
+        ),
+        tool_entry(
+          name: 'layout_inspect_page',
+          title: 'Inspect LayOut Page',
+          description: 'Inspect one LayOut page selected by pageIndex or pageName and ' \
+                       'return text snippets, XML tag counts, and referenced resource ' \
+                       'paths. This tool is read-only.',
+          handler_key: :layout_inspect_page,
+          annotations: { read_only_hint: true, destructive_hint: false },
+          classification: 'first_class',
+          input_schema: layout_inspect_page_schema
+        ),
+        tool_entry(
+          name: 'layout_find_text',
+          title: 'Find Text In LayOut Document',
+          description: 'Search page XML text in a .layout document read-only and return ' \
+                       'page-scoped matches with short snippets.',
+          handler_key: :layout_find_text,
+          annotations: { read_only_hint: true, destructive_hint: false },
+          classification: 'first_class',
+          input_schema: layout_find_text_schema
+        )
+      ]
+    end
+
     # Shared schema primitives and cross-tool selectors.
     def default_object_schema
       {
@@ -420,6 +468,43 @@ module SU_MCP
       {
         type: 'array',
         items: string_schema
+      }
+    end
+
+    def layout_path_schema
+      {
+        type: 'object',
+        required: ['path'],
+        properties: {
+          path: described_schema(string_schema, 'Absolute or project-relative .layout file path.')
+        },
+        additionalProperties: false
+      }
+    end
+
+    def layout_inspect_page_schema
+      {
+        type: 'object',
+        required: ['path'],
+        properties: {
+          path: described_schema(string_schema, 'Absolute or project-relative .layout file path.'),
+          pageIndex: described_schema(integer_schema, 'Zero-based LayOut page index.'),
+          pageName: described_schema(string_schema, 'Exact LayOut page name.')
+        },
+        additionalProperties: false
+      }
+    end
+
+    def layout_find_text_schema
+      {
+        type: 'object',
+        required: %w[path query],
+        properties: {
+          path: described_schema(string_schema, 'Absolute or project-relative .layout file path.'),
+          query: described_schema(string_schema, 'Text to find in LayOut page XML.'),
+          caseSensitive: boolean_schema
+        },
+        additionalProperties: false
       }
     end
 

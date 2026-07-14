@@ -162,6 +162,26 @@ class ToolDispatcherTest < Minitest::Test
         managedObject: nil
       }
     end
+
+    def layout_get_document_info(args)
+      @calls << [:layout_get_document_info, args]
+      { success: true, pageCount: 2 }
+    end
+
+    def layout_list_pages(args)
+      @calls << [:layout_list_pages, args]
+      { success: true, pages: [{ name: 'Cover Page' }] }
+    end
+
+    def layout_inspect_page(args)
+      @calls << [:layout_inspect_page, args]
+      { success: true, page: { name: args['pageName'] } }
+    end
+
+    def layout_find_text(args)
+      @calls << [:layout_find_text, args]
+      { success: true, matchCount: 1, query: args['query'] }
+    end
     # rubocop:enable Naming/AccessorMethodName
 
     private :get_scene_info, :transform_entities, :selection_info, :find_entities,
@@ -171,7 +191,9 @@ class ToolDispatcherTest < Minitest::Test
             :create_group, :reparent_entities, :create_site_element, :create_terrain_surface,
             :edit_terrain_surface,
             :curate_staged_asset, :list_staged_assets, :instantiate_staged_asset,
-            :set_entity_metadata, :apply_material
+            :set_entity_metadata, :apply_material,
+            :layout_get_document_info, :layout_list_pages, :layout_inspect_page,
+            :layout_find_text
   end
 
   def setup
@@ -657,6 +679,42 @@ class ToolDispatcherTest < Minitest::Test
       ]],
       @target.calls.last(1)
     )
+  end
+
+  def test_dispatches_layout_document_info_to_layout_command
+    payload = { 'path' => 'H:/project/sample.layout' }
+
+    result = @dispatcher.call('layout_get_document_info', payload)
+
+    assert_equal({ success: true, pageCount: 2 }, result)
+    assert_equal([[:layout_get_document_info, payload]], @target.calls.last(1))
+  end
+
+  def test_dispatches_layout_list_pages_to_layout_command
+    payload = { 'path' => 'H:/project/sample.layout' }
+
+    result = @dispatcher.call('layout_list_pages', payload)
+
+    assert_equal({ success: true, pages: [{ name: 'Cover Page' }] }, result)
+    assert_equal([[:layout_list_pages, payload]], @target.calls.last(1))
+  end
+
+  def test_dispatches_layout_inspect_page_to_layout_command
+    payload = { 'path' => 'H:/project/sample.layout', 'pageName' => 'Cover Page' }
+
+    result = @dispatcher.call('layout_inspect_page', payload)
+
+    assert_equal({ success: true, page: { name: 'Cover Page' } }, result)
+    assert_equal([[:layout_inspect_page, payload]], @target.calls.last(1))
+  end
+
+  def test_dispatches_layout_find_text_to_layout_command
+    payload = { 'path' => 'H:/project/sample.layout', 'query' => 'kitchen' }
+
+    result = @dispatcher.call('layout_find_text', payload)
+
+    assert_equal({ success: true, matchCount: 1, query: 'kitchen' }, result)
+    assert_equal([[:layout_find_text, payload]], @target.calls.last(1))
   end
 
   def test_raises_for_unknown_tool

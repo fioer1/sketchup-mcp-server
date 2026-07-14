@@ -3,6 +3,7 @@
 require_relative '../adapters/model_adapter'
 require_relative '../developer/developer_commands'
 require_relative '../editing/editing_commands'
+require_relative '../layout/layout_commands'
 require_relative '../scene_query/scene_query_commands'
 require_relative '../scene_validation/measure_scene_commands'
 require_relative '../scene_validation/scene_validation_commands'
@@ -31,6 +32,7 @@ module SU_MCP
         semantic_commands,
         hierarchy_maintenance_commands,
         editing_commands,
+        layout_commands,
         developer_commands
       ]
     end
@@ -75,6 +77,10 @@ module SU_MCP
         model_adapter: model_adapter,
         logger: logger
       )
+    end
+
+    def layout_commands
+      @layout_commands ||= Layout::LayoutCommands.new
     end
 
     def developer_commands

@@ -25,6 +25,10 @@ Current tools include:
 - `delete_entities`
 - `transform_entities`
 - `set_material`
+- `layout_get_document_info`
+- `layout_list_pages`
+- `layout_inspect_page`
+- `layout_find_text`
 - `eval_ruby`
 
 ## MCP prompts
@@ -384,6 +388,24 @@ between controls, not as a terrain validation verdict or pass/fail policy.
 - `set_material` applies a material to one explicitly referenced supported group/component instance.
 - All three tools use canonical `targetReference` with `sourceElementId`, `persistentId`, or compatibility `entityId`.
 
+#### LayOut document audit
+
+The `layout_*` tools inspect `.layout` packages read-only. They open the LayOut document as an
+archive, summarize page XML evidence, and return JSON-serializable results without editing or
+rewriting the file.
+
+- `layout_get_document_info` returns page count, page-size evidence, file size, and archive entry
+  summaries.
+- `layout_list_pages` returns ordered page summaries with page names, XML paths, bounds when
+  available, and text counts.
+- `layout_inspect_page` inspects one page by `pageIndex` or `pageName` and returns text snippets,
+  XML tag counts, and referenced resource paths.
+- `layout_find_text` searches page XML text and returns page-scoped snippets. Matching is
+  case-insensitive unless `caseSensitive` is true.
+
+These tools are for document audit and preparation work. They do not automate the LayOut
+application, replace viewports, update dimensions, or write `.layout` files.
+
 #### `eval_ruby`
 
 `eval_ruby` is an escape hatch for host-side investigation or unsupported operations. Prefer
@@ -401,6 +423,32 @@ SketchUp internal inches. Public MCP tool inputs and outputs use meters, so conv
 when moving data between `eval_ruby` code and first-class MCP tool payloads.
 
 ## Example payloads
+
+### `layout_get_document_info`
+
+```json
+{
+  "path": "H:/project/Design Document Template.layout"
+}
+```
+
+### `layout_inspect_page`
+
+```json
+{
+  "path": "H:/project/Design Document Template.layout",
+  "pageName": "FLOORPLAN (PROPOSED)"
+}
+```
+
+### `layout_find_text`
+
+```json
+{
+  "path": "H:/project/Design Document Template.layout",
+  "query": "KITCHEN"
+}
+```
 
 ### `curate_staged_asset`
 

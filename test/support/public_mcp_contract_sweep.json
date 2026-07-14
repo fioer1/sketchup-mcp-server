@@ -21,7 +21,11 @@
     "delete_entities",
     "transform_entities",
     "get_selection",
-    "set_material"
+    "set_material",
+    "layout_get_document_info",
+    "layout_list_pages",
+    "layout_inspect_page",
+    "layout_find_text"
   ],
   "removed_tools": [
     {
